@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "AstroKraft Admin",
+    "slug": "astrokraft-admin",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "astrokraftadmin",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#041C17",
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "monochromeImage": "./assets/adaptive-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#041C17",
+          "image": "./assets/splash-mark.png",
+          "imageWidth": 220
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "AstroKraft Admin uses your photo library to select images for promo banners and product listings."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

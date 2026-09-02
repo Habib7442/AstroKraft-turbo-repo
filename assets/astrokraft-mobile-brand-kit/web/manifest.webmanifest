@@ -1,0 +1,28 @@
+{
+  "name": "AstroKraft",
+  "short_name": "AstroKraft",
+  "description": "Astrology, charted.",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "theme_color": "#041C17",
+  "background_color": "#041C17",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/"
+}

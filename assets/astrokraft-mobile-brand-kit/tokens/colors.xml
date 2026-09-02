@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AstroKraft brand tokens — generated from the logo -->
+    <color name="emerald_50">#E8FAF3</color>
+    <color name="emerald_100">#D6F5ED</color>
+    <color name="emerald_200">#94E6D1</color>
+    <color name="emerald_300">#61DBBD</color>
+    <color name="emerald_400">#28D19E</color>
+    <color name="emerald_500">#12B58C</color>
+    <color name="emerald_600">#049A75</color>
+    <color name="emerald_700">#039C73</color>
+    <color name="emerald_800">#02664F</color>
+    <color name="emerald_900">#023C31</color>
+    <color name="emerald_950">#041C17</color>
+    <color name="coral_50">#FEF0EC</color>
+    <color name="coral_100">#FDDCD3</color>
+    <color name="coral_200">#FDC0AF</color>
+    <color name="coral_300">#FC997D</color>
+    <color name="coral_400">#FB7B52</color>
+    <color name="coral_500">#FA542C</color>
+    <color name="coral_600">#E63D0F</color>
+    <color name="coral_700">#B23310</color>
+    <color name="coral_800">#85280F</color>
+    <color name="coral_900">#5A1D0C</color>
+    <color name="night_50">#F7FAF9</color>
+    <color name="night_100">#EFF3F2</color>
+    <color name="night_200">#DCE4E2</color>
+    <color name="night_300">#C1CDCA</color>
+    <color name="night_400">#94A8A3</color>
+    <color name="night_500">#687D78</color>
+    <color name="night_600">#4E5F5B</color>
+    <color name="night_700">#384744</color>
+    <color name="night_800">#25312E</color>
+    <color name="night_900">#17211F</color>
+    <color name="night_950">#0D1412</color>
+
+    <!-- semantic -->
+    <color name="app_background">#041C17</color>
+    <color name="surface">#17211F</color>
+    <color name="surface_raised">#25312E</color>
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#DCE4E2</color>
+    <color name="text_tertiary">#94A8A3</color>
+    <color name="accent">#28D19E</color>
+    <color name="highlight">#FA542C</color>
+    <color name="ic_launcher_background">#041C17</color>
+</resources>

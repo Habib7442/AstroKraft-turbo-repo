@@ -1,0 +1,19 @@
+{
+  "name": "@astrokraft/validators",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "check-types": "tsc --noEmit",
+    "lint": "echo 'lint validators'"
+  },
+  "dependencies": {
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@astrokraft/config": "*",
+    "typescript": "^5.7.3"
+  }
+}

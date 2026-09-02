@@ -1,0 +1,36 @@
+{
+  "name": "astrokraft",
+  "private": true,
+  "version": "1.0.0",
+  "description": "AstroKraft Turborepo Monorepo — Vedic Astrology & Gemstones Marketplace",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "check-types": "turbo run check-types",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.3"
+  },
+  "overrides": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@astrokraft/admin": {
+      "react": "19.2.3",
+      "react-dom": "19.2.3",
+      "@types/react": "~19.2.4"
+    }
+  },
+  "packageManager": "npm@11.18.0",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

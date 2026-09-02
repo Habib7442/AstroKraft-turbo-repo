@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#041C17</color>
+    <color name="brand_emerald">#039C73</color>
+    <color name="brand_emerald_dark">#023C31</color>
+    <color name="brand_coral">#FA542C</color>
+    <color name="splash_background">#041C17</color>
+    <color name="status_bar">#041C17</color>
+</resources>

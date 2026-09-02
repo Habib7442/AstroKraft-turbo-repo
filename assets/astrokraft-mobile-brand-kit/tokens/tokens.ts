@@ -1,0 +1,52 @@
+// AstroKraft brand tokens — generated from the logo
+export const AKColors = {
+  emerald: {
+    50: '#E8FAF3',
+    100: '#D6F5ED',
+    200: '#94E6D1',
+    300: '#61DBBD',
+    400: '#28D19E',
+    500: '#12B58C',
+    600: '#049A75',
+    700: '#039C73',
+    800: '#02664F',
+    900: '#023C31',
+    950: '#041C17',
+  },
+  coral: {
+    50: '#FEF0EC',
+    100: '#FDDCD3',
+    200: '#FDC0AF',
+    300: '#FC997D',
+    400: '#FB7B52',
+    500: '#FA542C',
+    600: '#E63D0F',
+    700: '#B23310',
+    800: '#85280F',
+    900: '#5A1D0C',
+  },
+  night: {
+    50: '#F7FAF9',
+    100: '#EFF3F2',
+    200: '#DCE4E2',
+    300: '#C1CDCA',
+    400: '#94A8A3',
+    500: '#687D78',
+    600: '#4E5F5B',
+    700: '#384744',
+    800: '#25312E',
+    900: '#17211F',
+    950: '#0D1412',
+  },
+} as const;
+
+export const AKSemantic = {
+  appBackground: AKColors.emerald[950],
+  surface: AKColors.night[900],
+  surfaceRaised: AKColors.night[800],
+  textPrimary: '#FFFFFF',
+  textSecondary: AKColors.night[200],
+  textTertiary: AKColors.night[400],
+  accent: AKColors.emerald[400],
+  highlight: AKColors.coral[500],
+} as const;

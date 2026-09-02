@@ -1,0 +1,20 @@
+{
+  "name": "@astrokraft/storage",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "check-types": "tsc --noEmit",
+    "lint": "echo 'lint storage'"
+  },
+  "devDependencies": {
+    "@astrokraft/config": "*",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1121.0",
+    "@aws-sdk/s3-request-presigner": "^3.1121.0"
+  }
+}
