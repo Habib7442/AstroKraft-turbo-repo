@@ -56,12 +56,23 @@ export default async function SearchPage({
       astrologerQuery = astrologerQuery.or(`name.ilike.%${query}%,bio.ilike.%${query}%`);
     }
 
+    // A query like "gemstones" is a category name, not any single product's
+    // title (e.g. "Ruby (Manik)") — resolve matching categories first so
+    // browsing by category name works the same as browsing by product name.
+    const { data: matchingCategories } = await supabase.from("categories").select("id").ilike("name", `%${query}%`);
+    const matchingCategoryIds = (matchingCategories ?? []).map((c) => c.id);
+
+    let productFilter = `title.ilike.%${query}%,subtitle.ilike.%${query}%,description.ilike.%${query}%`;
+    if (matchingCategoryIds.length > 0) {
+      productFilter += `,category_id.in.(${matchingCategoryIds.join(",")})`;
+    }
+
     const [{ data: productData }, { data: astrologerData }, { data: categoryData }] = await Promise.all([
       supabase
         .from("products")
         .select("*, categories(name), product_variants(id, quality, price)")
         .eq("is_active", true)
-        .ilike("title", `%${query}%`)
+        .or(productFilter)
         .order("sort_order", { ascending: true }),
       astrologerQuery,
       supabase.from("consultation_categories").select("id, name").eq("is_active", true)
