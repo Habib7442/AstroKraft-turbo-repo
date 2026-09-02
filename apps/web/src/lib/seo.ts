@@ -183,7 +183,14 @@ export function constructMetadata(input: BuildMetaInput = {}): Metadata {
       apple: "/apple-touch-icon.png"
     },
     manifest: "/site.webmanifest",
-    category: "shopping"
+    category: "shopping",
+    // Google Search Console's HTML-tag verification method — set
+    // GOOGLE_SITE_VERIFICATION to the content value Search Console gives you
+    // (Settings > Ownership verification > HTML tag). Only needs to render
+    // once; root layout's metadata is inherited by every page.
+    ...(root && process.env.GOOGLE_SITE_VERIFICATION
+      ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+      : {})
   };
 }
 
