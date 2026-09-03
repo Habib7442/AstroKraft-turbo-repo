@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
@@ -12,6 +12,10 @@ import { useSupabase } from "@/lib/supabase";
 // user.id, not on `supabase` — useSupabase() re-memoizes every render
 // (Clerk's getToken isn't referentially stable), so depending on it here
 // would re-run registration on every render.
+//
+// Every early-return and catch below shows an Alert — there's no way to
+// attach a debugger to a real device running a production APK, so this is
+// the only way to see why registration failed without adb.
 export function useRegisterPushToken() {
   const { user } = useUser();
   const supabase = useSupabase();
@@ -21,7 +25,10 @@ export function useRegisterPushToken() {
     let cancelled = false;
 
     async function register() {
-      if (!Device.isDevice) return; // push tokens require a physical device
+      if (!Device.isDevice) {
+        Alert.alert("Push setup skipped", "Not running on a physical device.");
+        return;
+      }
 
       if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync("default", {
@@ -39,10 +46,16 @@ export function useRegisterPushToken() {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-      if (finalStatus !== "granted") return;
+      if (finalStatus !== "granted") {
+        Alert.alert("Push setup skipped", `Notification permission not granted (status: ${finalStatus}).`);
+        return;
+      }
 
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      if (!projectId) return;
+      if (!projectId) {
+        Alert.alert("Push setup failed", "No EAS project ID found in app config (extra.eas.projectId).");
+        return;
+      }
 
       const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
       if (cancelled || !tokenResponse?.data || !user?.id) return;
@@ -50,10 +63,17 @@ export function useRegisterPushToken() {
       const { error } = await supabase
         .from("push_tokens")
         .upsert({ user_id: user.id, token: tokenResponse.data, platform: Platform.OS }, { onConflict: "token" });
-      if (error) console.error("Failed to save push token:", error);
+
+      if (error) {
+        Alert.alert("Push token save failed", error.message);
+      } else {
+        Alert.alert("Push notifications ready", "This device is registered to receive order/consultation alerts.");
+      }
     }
 
-    register().catch((err) => console.error("Push token registration failed:", err));
+    register().catch((err) => {
+      Alert.alert("Push setup error", err?.message || String(err));
+    });
 
     return () => {
       cancelled = true;
