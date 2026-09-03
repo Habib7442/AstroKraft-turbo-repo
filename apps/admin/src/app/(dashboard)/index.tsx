@@ -33,6 +33,12 @@ const WORKING_SCREENS = [
 
 const NEW_SCREENS = [
   {
+    href: "/consultations",
+    emoji: "📅",
+    title: "Consultations",
+    description: "Bookings, birth details & schedule"
+  },
+  {
     href: "/consultation-categories",
     emoji: "🔯",
     title: "Consultation Categories",

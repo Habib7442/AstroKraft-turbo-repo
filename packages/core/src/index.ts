@@ -29,6 +29,21 @@ export function canTransitionOrder(current: OrderStatus, next: OrderStatus): boo
   return ORDER_TRANSITIONS[current]?.includes(next) ?? false;
 }
 
+export type ConsultationStatus = "payment_pending" | "payment_failed" | "booked" | "completed" | "cancelled" | "no_show";
+
+export const CONSULTATION_TRANSITIONS: Record<ConsultationStatus, ConsultationStatus[]> = {
+  payment_pending: ["booked", "payment_failed", "cancelled"],
+  payment_failed: ["payment_pending", "cancelled"],
+  booked: ["completed", "no_show", "cancelled"],
+  completed: [],
+  cancelled: [],
+  no_show: []
+};
+
+export function canTransitionConsultation(current: ConsultationStatus, next: ConsultationStatus): boolean {
+  return CONSULTATION_TRANSITIONS[current]?.includes(next) ?? false;
+}
+
 export function formatINR(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",

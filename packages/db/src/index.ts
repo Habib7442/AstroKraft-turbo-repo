@@ -122,6 +122,14 @@ export interface Consultation {
   created_at: string;
 }
 
+export interface PushToken {
+  id: string;
+  user_id: string;
+  token: string;
+  platform: string;
+  created_at: string;
+}
+
 export interface ConsultationCategory {
   id: string;
   name: string;

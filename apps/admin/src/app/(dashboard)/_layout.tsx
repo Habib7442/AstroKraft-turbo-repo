@@ -4,16 +4,23 @@ import { useAuth, useClerk } from "@clerk/expo";
 import { getRoleFromSessionClaims } from "@astrokraft/auth";
 import { DashboardTabs } from "@/components/dashboard-tabs";
 import { Button, Screen } from "@/components/ui";
+import { useRegisterPushToken } from "@/hooks/use-register-push-token";
 
 export default function DashboardLayout() {
   const { isSignedIn, sessionClaims } = useAuth();
   const { signOut } = useClerk();
+  const role = getRoleFromSessionClaims(sessionClaims);
+
+  // Registers this device's push token whenever a confirmed admin has the
+  // dashboard mounted — hooks must run unconditionally, so this sits above
+  // the early-return guards below and no-ops internally until isSignedIn
+  // && role === "admin" (the hook itself checks user?.id, which is only
+  // set once signed in).
+  useRegisterPushToken();
 
   if (!isSignedIn) {
     return <Redirect href="/sign-in" />;
   }
-
-  const role = getRoleFromSessionClaims(sessionClaims);
 
   if (role !== "admin") {
     return (

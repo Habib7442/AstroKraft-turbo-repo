@@ -35,6 +35,14 @@
         {
           "photosPermission": "AstroKraft Admin uses your photo library to select images for promo banners and product listings."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/adaptive-icon-monochrome.png",
+          "color": "#E2C27A",
+          "defaultChannel": "default"
+        }
       ]
     ],
     "experiments": {

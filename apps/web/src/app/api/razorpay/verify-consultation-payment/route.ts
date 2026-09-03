@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyRazorpaySignature } from "@astrokraft/payments";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendInvoiceEmail } from "@/lib/send-invoice-email";
+import { sendPushNotificationToAdmins } from "@/lib/send-push-notification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -88,6 +89,18 @@ export async function POST(req: NextRequest) {
       }
     } catch (emailError) {
       console.error("razorpay verify-consultation-payment: invoice email failed:", emailError);
+    }
+
+    // Push a WhatsApp-style alert (banner + sound) to every admin device —
+    // best effort, same reasoning as the invoice email above.
+    try {
+      await sendPushNotificationToAdmins({
+        title: "New Consultation Booked 🔮",
+        body: `${data.astrologer_name} — ₹${data.amount.toLocaleString("en-IN")} (${data.customer_name || "Guest"})`,
+        data: { type: "consultation", consultationId: data.id }
+      });
+    } catch (pushError) {
+      console.error("razorpay verify-consultation-payment: push notification failed:", pushError);
     }
 
     return NextResponse.json({ success: true, astrologerName: data.astrologer_name });

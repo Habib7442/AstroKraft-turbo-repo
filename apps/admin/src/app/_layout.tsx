@@ -1,4 +1,5 @@
 import "../global.css";
+import "@/lib/notifications";
 import { useEffect } from "react";
 import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
