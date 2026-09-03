@@ -60,6 +60,8 @@ export function DashboardTabs() {
       {/* Reachable from the Dashboard's link list, not shown as a tab — the bar is already full. */}
       <Tabs.Screen name="astrologers" options={{ href: null }} />
       <Tabs.Screen name="consultation-categories" options={{ href: null }} />
+      {/* Reachable only by tapping an order card — not a tab destination. */}
+      <Tabs.Screen name="order-detail" options={{ href: null }} />
     </Tabs>
   );
 }

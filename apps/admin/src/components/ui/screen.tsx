@@ -6,7 +6,7 @@ export function Screen({ children }: { children: ReactNode }) {
   return (
     <SafeAreaView style={styles.flex1}>
       <View className="flex-1 bg-background font-sans">
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex1}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.flex1}>
           {children}
         </KeyboardAvoidingView>
       </View>

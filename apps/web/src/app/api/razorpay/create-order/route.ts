@@ -8,6 +8,35 @@ interface CheckoutItemInput {
   quantity: number;
 }
 
+interface ShippingAddressInput {
+  fullName: string;
+  phone: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+
+function isValidShippingAddress(value: unknown): value is ShippingAddressInput {
+  if (!value || typeof value !== "object") return false;
+  const a = value as Record<string, unknown>;
+  return (
+    typeof a.fullName === "string" &&
+    a.fullName.trim().length > 0 &&
+    typeof a.phone === "string" &&
+    a.phone.trim().length > 0 &&
+    typeof a.line1 === "string" &&
+    a.line1.trim().length > 0 &&
+    typeof a.city === "string" &&
+    a.city.trim().length > 0 &&
+    typeof a.state === "string" &&
+    a.state.trim().length > 0 &&
+    typeof a.pincode === "string" &&
+    a.pincode.trim().length > 0
+  );
+}
+
 interface VariantRow {
   id: string;
   title: string;
@@ -30,6 +59,11 @@ export async function POST(req: NextRequest) {
     if (items.length === 0) {
       return NextResponse.json({ error: "Your cart is empty." }, { status: 400 });
     }
+
+    if (!isValidShippingAddress(body?.shippingAddress)) {
+      return NextResponse.json({ error: "A complete shipping address is required." }, { status: 400 });
+    }
+    const shippingAddress = body.shippingAddress as ShippingAddressInput;
 
     const supabase = getSupabaseAdminClient();
     const variantIds = [...new Set(items.map((item) => item.variantId))];
@@ -75,7 +109,7 @@ export async function POST(req: NextRequest) {
         order_number: orderNumber,
         status: "payment_pending",
         total_amount: totalAmount,
-        shipping_address: {}
+        shipping_address: shippingAddress
       })
       .select()
       .single();

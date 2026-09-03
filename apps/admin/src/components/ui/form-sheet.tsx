@@ -25,7 +25,7 @@ export function FormSheet({
 }: FormSheetProps) {
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.backdrop}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.backdrop}>
         <View className="bg-surface-alt rounded-t-3xl max-h-[88%]">
           <View className="items-center pt-3 pb-1">
             <View className="w-10 h-1.5 rounded-full bg-surface-border" />

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { Order } from "@astrokraft/db";
 import { formatINR, ORDER_TRANSITIONS } from "@astrokraft/core";
 import { useSupabase } from "@/lib/supabase";
@@ -27,6 +29,7 @@ const NEXT_STATUS_ACTION: Record<string, { next: string; label: string; variant:
 
 export default function OrdersScreen() {
   const supabase = useSupabase();
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<OrderFilter>("all");
@@ -101,30 +104,39 @@ export default function OrdersScreen() {
           orders.map((item) => {
             const action = NEXT_STATUS_ACTION[item.status];
             return (
-              <Card key={item.id} className="gap-2">
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-sm font-rubik-bold text-foreground">#{item.order_number}</Text>
-                  <StatusBadge label={item.status} tone="primary" />
-                </View>
-
-                <View className="flex-row justify-between items-center my-1">
-                  <Text className="text-xs text-ink-body">
-                    Total: <Text className="font-rubik-bold text-primary">{formatINR(item.total_amount)}</Text>
-                  </Text>
-                  <Text className="text-[10px] text-ink-muted">{new Date(item.created_at).toLocaleDateString()}</Text>
-                </View>
-
-                {action ? (
-                  <View className="pt-2 border-t border-surface-border flex-row gap-2">
-                    <Button
-                      label={action.label}
-                      variant={action.variant}
-                      flex
-                      onPress={() => handleUpdateStatus(item.id, item.status, action.next)}
-                    />
+              <TouchableOpacity
+                key={item.id}
+                activeOpacity={0.7}
+                onPress={() => router.push({ pathname: "/order-detail", params: { id: item.id } })}
+              >
+                <Card className="gap-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-sm font-rubik-bold text-foreground">#{item.order_number}</Text>
+                    <StatusBadge label={item.status} tone="primary" />
                   </View>
-                ) : null}
-              </Card>
+
+                  <View className="flex-row justify-between items-center my-1">
+                    <Text className="text-xs text-ink-body">
+                      Total: <Text className="font-rubik-bold text-primary">{formatINR(item.total_amount)}</Text>
+                    </Text>
+                    <Text className="text-[10px] text-ink-muted">{new Date(item.created_at).toLocaleDateString()}</Text>
+                  </View>
+
+                  <View className="pt-2 border-t border-surface-border flex-row gap-2 items-center">
+                    {action ? (
+                      <Button
+                        label={action.label}
+                        variant={action.variant}
+                        flex
+                        onPress={() => handleUpdateStatus(item.id, item.status, action.next)}
+                      />
+                    ) : (
+                      <Text className="text-xs text-ink-muted flex-1">Tap for details</Text>
+                    )}
+                    <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+                  </View>
+                </Card>
+              </TouchableOpacity>
             );
           })
         )}

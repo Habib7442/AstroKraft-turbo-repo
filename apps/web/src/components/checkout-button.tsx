@@ -5,8 +5,13 @@ import { useAuth, useClerk } from "@clerk/nextjs";
 import { useCartStore } from "@astrokraft/core";
 import { loadRazorpayScript } from "@/lib/load-razorpay-script";
 import { useHasMounted } from "@/hooks/use-has-mounted";
+import { isShippingAddressComplete, type ShippingAddress } from "@/components/shipping-address-form";
 
-export function CheckoutButton() {
+interface CheckoutButtonProps {
+  shippingAddress: ShippingAddress;
+}
+
+export function CheckoutButton({ shippingAddress }: CheckoutButtonProps) {
   const mounted = useHasMounted();
   const storeItems = useCartStore((state) => state.items);
   const items = mounted ? storeItems : [];
@@ -17,11 +22,18 @@ export function CheckoutButton() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const addressComplete = isShippingAddressComplete(shippingAddress);
+
   const handleCheckout = async () => {
     if (items.length === 0) return;
 
     if (!isSignedIn) {
       openSignIn({});
+      return;
+    }
+
+    if (!addressComplete) {
+      setError("Please fill in your shipping address before checking out.");
       return;
     }
 
@@ -38,7 +50,8 @@ export function CheckoutButton() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((item) => ({ variantId: item.variantId ?? item.id, quantity: item.quantity }))
+          items: items.map((item) => ({ variantId: item.variantId ?? item.id, quantity: item.quantity })),
+          shippingAddress
         })
       });
 
@@ -110,12 +123,15 @@ export function CheckoutButton() {
       <button
         type="button"
         onClick={handleCheckout}
-        disabled={loading || items.length === 0}
+        disabled={loading || items.length === 0 || (isSignedIn ? !addressComplete : false)}
         className="w-full rounded-md bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? "Starting checkout…" : isSignedIn ? "Proceed to Pay" : "Sign In to Checkout"}
       </button>
       {error ? <p className="mt-2 text-xs font-medium text-destructive">{error}</p> : null}
+      {isSignedIn && !addressComplete && !error ? (
+        <p className="mt-2 text-xs text-ink-muted">Fill in your shipping address above to continue.</p>
+      ) : null}
     </div>
   );
 }

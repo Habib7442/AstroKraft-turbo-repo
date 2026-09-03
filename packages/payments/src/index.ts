@@ -46,6 +46,21 @@ export async function createRazorpayOrder(options: RazorpayOrderOptions) {
   });
 }
 
+export interface RazorpayRefundOptions {
+  paymentId: string;
+  /** Amount in paise. Omit for a full refund of the original payment. */
+  amount?: number;
+  notes?: Record<string, string>;
+}
+
+export async function createRazorpayRefund(options: RazorpayRefundOptions) {
+  const client = getRazorpayClient();
+  return client.payments.refund(options.paymentId, {
+    ...(options.amount !== undefined ? { amount: options.amount } : {}),
+    notes: options.notes
+  });
+}
+
 export function verifyRazorpaySignature({
   orderId,
   paymentId,

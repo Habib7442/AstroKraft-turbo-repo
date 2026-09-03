@@ -1,0 +1,45 @@
+{
+  "cli": {
+    "version": ">= 20.5.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_cHJlcGFyZWQtbWFjYXF1ZS0zMzUxLmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://svfhlhmrnoywfqmkcgue.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_FFEDW4myuFLBYkadxlpxdA_dOfJ4S8o"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_cHJlcGFyZWQtbWFjYXF1ZS0zMzUxLmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://svfhlhmrnoywfqmkcgue.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_FFEDW4myuFLBYkadxlpxdA_dOfJ4S8o"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_cHJlcGFyZWQtbWFjYXF1ZS0zMzUxLmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://svfhlhmrnoywfqmkcgue.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_FFEDW4myuFLBYkadxlpxdA_dOfJ4S8o"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

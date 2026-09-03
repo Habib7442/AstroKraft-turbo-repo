@@ -1,0 +1,13 @@
+# EAS Build uploads a tarball of the whole monorepo (this file's directory).
+# None of the AI-agent skill/doc directories are needed to build the app, and
+# .claude/skills/* are symlinks into .agents/skills/* which EAS's Windows
+# shallow-clone step can't recreate without elevated permissions (EPERM) —
+# excluding them entirely avoids that failure and shrinks the upload.
+#
+# Patterns are anchored to the repo root (leading /) — apps/admin/assets
+# holds the actual app icons and must NOT be excluded.
+/.agents
+/.claude
+/agent
+/assets
+/scratch

@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCartStore } from "@astrokraft/core";
 import { CheckoutButton } from "@/components/checkout-button";
+import { ShippingAddressForm, EMPTY_SHIPPING_ADDRESS } from "@/components/shipping-address-form";
 import { useHasMounted } from "@/hooks/use-has-mounted";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -19,6 +21,7 @@ export default function CartPage() {
   const removeItem = useCartStore((state) => state.removeItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const totalAmount = useCartStore((state) => state.getTotalAmount());
+  const [shippingAddress, setShippingAddress] = useState(EMPTY_SHIPPING_ADDRESS);
   // The cart store is skipHydration-ed (it only knows what's in localStorage
   // after mount), so its real content must not affect the very first client
   // render — otherwise that render won't match the server's, and React
@@ -103,6 +106,10 @@ export default function CartPage() {
                   </button>
                 </div>
               ))}
+
+              <div className="mt-4">
+                <ShippingAddressForm value={shippingAddress} onChange={setShippingAddress} />
+              </div>
             </div>
 
             <div className="h-fit rounded-lg border border-surface-border bg-surface-card p-5">
@@ -113,7 +120,7 @@ export default function CartPage() {
               <p className="mt-1 text-xs text-ink-muted">Shipping & taxes calculated at payment.</p>
 
               <div className="mt-4">
-                <CheckoutButton />
+                <CheckoutButton shippingAddress={shippingAddress} />
               </div>
             </div>
           </div>

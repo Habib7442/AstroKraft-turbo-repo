@@ -8,6 +8,7 @@
     "scheme": "astrokraftadmin",
     "userInterfaceStyle": "automatic",
     "android": {
+      "package": "com.astrokraft.admin",
       "adaptiveIcon": {
         "backgroundColor": "#041C17",
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -39,6 +40,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b8986f5e-f137-4c7a-89cc-2ea0af0e111b"
+      }
+    },
+    "owner": "astrokraft"
   }
 }
