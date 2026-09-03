@@ -21,6 +21,14 @@ const nextConfig = {
     // the optimized output for a long time instead of re-fetching/re-processing
     // it on every page load.
     minimumCacheTTL: 31536000,
+    // Next.js's defaults (8 device sizes up to 3840px, 8 image sizes down to
+    // 16px) generate far more distinct transformations than this site ever
+    // requests — every real `sizes` prop in the codebase is either a small
+    // fixed thumbnail (48-240px) or caps out at desktop widths (~1920px),
+    // never 2K/4K. Fewer buckets = fewer Image Optimization transformations
+    // counted against the Vercel Hobby plan's monthly quota.
+    deviceSizes: [640, 750, 1080, 1200, 1920],
+    imageSizes: [48, 64, 96, 128, 256],
     remotePatterns: [
       {
         protocol: "https",
