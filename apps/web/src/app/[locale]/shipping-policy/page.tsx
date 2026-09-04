@@ -7,8 +7,8 @@ import { PolicyPage } from "@/components/policy-page";
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   return constructMetadata({
-    title: "Shipping Policy",
-    description: "Shipping timelines, charges, and delivery information for AstroKraft orders.",
+    title: "Shipping & Exchange Policy",
+    description: "Shipping timelines, charges, delivery, and exchange information for AstroKraft orders.",
     path: "/shipping-policy",
     locale: isValidLocale(locale) ? locale : "en"
   });
@@ -19,7 +19,7 @@ export default async function ShippingPolicyPage({ params }: { params: Promise<{
   if (!isValidLocale(locale)) notFound();
 
   return (
-    <PolicyPage title="Shipping Policy" updatedAt="September 2, 2026">
+    <PolicyPage title="Shipping & Exchange Policy" updatedAt="September 4, 2026">
       <p>
         We ship gemstones, Rudraksha, and crystal bracelets across India. Here&rsquo;s what to expect after you
         place an order.
@@ -61,6 +61,26 @@ export default async function ShippingPolicyPage({ params }: { params: Promise<{
           Delivery timelines are estimates. Delays may occur due to courier disruptions, weather, or events beyond
           our control — we&rsquo;ll keep you informed if this happens.
         </p>
+      </div>
+
+      <div>
+        <h2>Exchange</h2>
+        <ul>
+          <li>
+            Exchanges are accepted within 3 days of delivery if the item received is defective, damaged, or
+            different from what was ordered. Please share unboxing photos/video when requesting an exchange.
+          </li>
+          <li>
+            Gemstones and Rudraksha that have been energized/worn are not eligible for exchange, for hygiene and
+            authenticity reasons, unless found defective on arrival.
+          </li>
+          <li>
+            To request an exchange, email{" "}
+            <a href="mailto:vastubipra@gmail.com">vastubipra@gmail.com</a> with your order number, photos of the
+            item, and the reason for the exchange. We&rsquo;ll confirm eligibility and arrange a replacement or
+            reverse pickup.
+          </li>
+        </ul>
       </div>
     </PolicyPage>
   );

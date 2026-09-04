@@ -21,7 +21,7 @@ export function SiteFooter({ categories, locale }: SiteFooterProps) {
   const legalLinks = [
     { label: "Privacy Policy", href: `/${locale}/privacy-policy` },
     { label: "Terms & Conditions", href: `/${locale}/terms-conditions` },
-    { label: "Shipping Policy", href: `/${locale}/shipping-policy` },
+    { label: "Shipping & Exchange", href: `/${locale}/shipping-policy` },
     { label: "Refund & Cancellation Policy", href: `/${locale}/refund-policy` }
   ];
 
