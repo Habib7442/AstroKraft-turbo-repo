@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createRazorpayOrder } from "@astrokraft/payments";
 import { getSupabaseAdminClient } from "@/lib/supabase";
+import { ensureProfile } from "@/lib/ensure-profile";
 
 interface CheckoutItemInput {
   variantId: string;
@@ -52,6 +53,11 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Please sign in to checkout." }, { status: 401 });
     }
+
+    // orders.user_id has a FK to profiles(id) — the Clerk webhook that
+    // normally creates that row is async and not guaranteed to have run
+    // yet, so make sure it exists before we ever try to insert an order.
+    await ensureProfile(userId);
 
     const body = await req.json().catch(() => null);
     const items: CheckoutItemInput[] = Array.isArray(body?.items) ? body.items : [];

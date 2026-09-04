@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createRazorpayOrder } from "@astrokraft/payments";
 import { getSupabaseAdminClient } from "@/lib/supabase";
+import { ensureProfile } from "@/lib/ensure-profile";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,6 +10,10 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Please sign in to book a consultation." }, { status: 401 });
     }
+
+    // consultations.user_id has a FK to profiles(id) — same reasoning as
+    // create-order: don't depend on the Clerk webhook's async timing.
+    await ensureProfile(userId);
 
     const body = await req.json().catch(() => null);
     const astrologerId = body?.astrologerId;
