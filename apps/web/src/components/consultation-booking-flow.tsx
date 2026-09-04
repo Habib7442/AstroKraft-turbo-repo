@@ -29,6 +29,7 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
   const [categoryId, setCategoryId] = useState<string | null>(initialAstrologer?.astrologer_categories[0]?.category_id ?? null);
   const [astrologerId, setAstrologerId] = useState<string | null>(initialAstrologer?.id ?? null);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [dob, setDob] = useState("");
   const [timeOfBirth, setTimeOfBirth] = useState("");
   const [placeOfBirth, setPlaceOfBirth] = useState("");
@@ -42,7 +43,7 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
   }, [astrologers, categoryId]);
 
   const selectedAstrologer = astrologers.find((a) => a.id === astrologerId) ?? null;
-  const canBook = Boolean(categoryId && astrologerId && name.trim().length > 0);
+  const canBook = Boolean(categoryId && astrologerId && name.trim().length > 0 && phone.trim().length >= 10);
 
   const categoryNameById = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
@@ -71,7 +72,15 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
       const createRes = await fetch("/api/razorpay/create-consultation-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ astrologerId, categoryId, customerName: name.trim(), dob, timeOfBirth, placeOfBirth })
+        body: JSON.stringify({
+          astrologerId,
+          categoryId,
+          customerName: name.trim(),
+          customerPhone: phone.trim(),
+          dob,
+          timeOfBirth,
+          placeOfBirth
+        })
       });
 
       const createData = await createRes.json();
@@ -234,15 +243,27 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
           )}
 
           <div className="flex flex-col gap-4">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Full Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your full name"
-                className="w-full rounded-lg border border-surface-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Full Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your full name"
+                  className="w-full rounded-lg border border-surface-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Phone Number</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="10-digit mobile number"
+                  className="w-full rounded-lg border border-surface-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

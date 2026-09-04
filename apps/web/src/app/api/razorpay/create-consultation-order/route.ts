@@ -14,11 +14,12 @@ export async function POST(req: NextRequest) {
     const astrologerId = body?.astrologerId;
     const categoryId = body?.categoryId;
     const customerName = body?.customerName;
+    const customerPhone = body?.customerPhone;
     const dob = body?.dob;
     const timeOfBirth = body?.timeOfBirth;
     const placeOfBirth = body?.placeOfBirth;
 
-    if (!astrologerId || !categoryId || !customerName?.trim()) {
+    if (!astrologerId || !categoryId || !customerName?.trim() || !customerPhone?.trim()) {
       return NextResponse.json({ error: "Missing required booking details." }, { status: 400 });
     }
 
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
         category_id: categoryId,
         astrologer_name: astrologer.name,
         customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
         kundli_details: { dob: dob || null, time_of_birth: timeOfBirth || null, place_of_birth: placeOfBirth || null },
         status: "payment_pending",
         amount: astrologer.price
