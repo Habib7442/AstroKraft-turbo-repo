@@ -23,6 +23,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required booking details." }, { status: 400 });
     }
 
+    if (body?.termsAccepted !== true) {
+      return NextResponse.json({ error: "You must accept the Terms & Conditions to book." }, { status: 400 });
+    }
+
     const supabase = getSupabaseAdminClient();
 
     const { data: astrologer, error: astrologerError } = await supabase

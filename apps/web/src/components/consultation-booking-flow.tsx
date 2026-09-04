@@ -6,6 +6,7 @@ import { useAuth, useClerk } from "@clerk/nextjs";
 import type { ConsultationCategory } from "@astrokraft/db";
 import { loadRazorpayScript } from "@/lib/load-razorpay-script";
 import { AstrologerCard, type AstrologerCardData } from "@/components/astrologer-card";
+import { TermsCheckbox } from "@/components/terms-checkbox";
 
 export type AstrologerWithCategories = AstrologerCardData;
 
@@ -13,13 +14,14 @@ interface ConsultationBookingFlowProps {
   categories: ConsultationCategory[];
   astrologers: AstrologerWithCategories[];
   initialAstrologerId?: string;
+  locale: string;
 }
 
 function formatPrice(price: number) {
   return `₹${price.toLocaleString("en-IN")}`;
 }
 
-export function ConsultationBookingFlow({ categories, astrologers, initialAstrologerId }: ConsultationBookingFlowProps) {
+export function ConsultationBookingFlow({ categories, astrologers, initialAstrologerId, locale }: ConsultationBookingFlowProps) {
   const { isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
 
@@ -33,6 +35,7 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
   const [dob, setDob] = useState("");
   const [timeOfBirth, setTimeOfBirth] = useState("");
   const [placeOfBirth, setPlaceOfBirth] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -43,7 +46,9 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
   }, [astrologers, categoryId]);
 
   const selectedAstrologer = astrologers.find((a) => a.id === astrologerId) ?? null;
-  const canBook = Boolean(categoryId && astrologerId && name.trim().length > 0 && phone.trim().length >= 10);
+  const canBook = Boolean(
+    categoryId && astrologerId && name.trim().length > 0 && phone.trim().length >= 10 && termsAccepted
+  );
 
   const categoryNameById = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
@@ -79,7 +84,8 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
           customerPhone: phone.trim(),
           dob,
           timeOfBirth,
-          placeOfBirth
+          placeOfBirth,
+          termsAccepted
         })
       });
 
@@ -299,6 +305,8 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
                 className="w-full rounded-lg border border-surface-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
+
+            <TermsCheckbox checked={termsAccepted} onChange={setTermsAccepted} locale={locale} />
 
             <button
               type="button"

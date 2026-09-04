@@ -9,9 +9,10 @@ import { isShippingAddressComplete, type ShippingAddress } from "@/components/sh
 
 interface CheckoutButtonProps {
   shippingAddress: ShippingAddress;
+  termsAccepted: boolean;
 }
 
-export function CheckoutButton({ shippingAddress }: CheckoutButtonProps) {
+export function CheckoutButton({ shippingAddress, termsAccepted }: CheckoutButtonProps) {
   const mounted = useHasMounted();
   const storeItems = useCartStore((state) => state.items);
   const items = mounted ? storeItems : [];
@@ -37,6 +38,11 @@ export function CheckoutButton({ shippingAddress }: CheckoutButtonProps) {
       return;
     }
 
+    if (!termsAccepted) {
+      setError("Please accept the Terms & Conditions before checking out.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -51,7 +57,8 @@ export function CheckoutButton({ shippingAddress }: CheckoutButtonProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map((item) => ({ variantId: item.variantId ?? item.id, quantity: item.quantity })),
-          shippingAddress
+          shippingAddress,
+          termsAccepted
         })
       });
 
@@ -123,7 +130,7 @@ export function CheckoutButton({ shippingAddress }: CheckoutButtonProps) {
       <button
         type="button"
         onClick={handleCheckout}
-        disabled={loading || items.length === 0 || (isSignedIn ? !addressComplete : false)}
+        disabled={loading || items.length === 0 || (isSignedIn ? !addressComplete || !termsAccepted : false)}
         className="w-full rounded-md bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? "Starting checkout…" : isSignedIn ? "Proceed to Pay" : "Sign In to Checkout"}
@@ -131,6 +138,9 @@ export function CheckoutButton({ shippingAddress }: CheckoutButtonProps) {
       {error ? <p className="mt-2 text-xs font-medium text-destructive">{error}</p> : null}
       {isSignedIn && !addressComplete && !error ? (
         <p className="mt-2 text-xs text-ink-muted">Fill in your shipping address above to continue.</p>
+      ) : null}
+      {isSignedIn && addressComplete && !termsAccepted && !error ? (
+        <p className="mt-2 text-xs text-ink-muted">Please accept the Terms &amp; Conditions to continue.</p>
       ) : null}
     </div>
   );

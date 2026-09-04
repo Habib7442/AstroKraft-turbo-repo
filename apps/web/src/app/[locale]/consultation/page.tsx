@@ -55,6 +55,7 @@ export default async function ConsultationPage({ params, searchParams }: Consult
           categories={categories ?? []}
           astrologers={(astrologers as AstrologerWithCategories[] | null) ?? []}
           initialAstrologerId={initialAstrologerId}
+          locale={locale}
         />
       </div>
     </main>

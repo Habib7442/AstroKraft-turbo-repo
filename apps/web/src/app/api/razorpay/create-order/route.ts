@@ -65,6 +65,10 @@ export async function POST(req: NextRequest) {
     }
     const shippingAddress = body.shippingAddress as ShippingAddressInput;
 
+    if (body?.termsAccepted !== true) {
+      return NextResponse.json({ error: "You must accept the Terms & Conditions to checkout." }, { status: 400 });
+    }
+
     const supabase = getSupabaseAdminClient();
     const variantIds = [...new Set(items.map((item) => item.variantId))];
 
