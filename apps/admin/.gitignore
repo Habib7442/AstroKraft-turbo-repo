@@ -33,6 +33,9 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Firebase (FCM push credentials) — device-registration config, keep local
+google-services.json
+
 # typescript
 *.tsbuildinfo
 
