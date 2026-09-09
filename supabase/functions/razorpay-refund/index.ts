@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
     const { payload } = await jwtVerify(token, clerkJwks);
     role = (payload.metadata as { role?: string } | undefined)?.role;
   } catch (err) {
-    return jsonResponse({ error: `Invalid token: ${err instanceof Error ? err.message : "verification failed"}` }, 401);
+    console.error("razorpay-refund token verification error:", err);
+    return jsonResponse({ error: "Invalid or expired token" }, 401);
   }
 
   if (role !== "admin") {
@@ -71,7 +72,8 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (fetchError) {
-    return jsonResponse({ error: fetchError.message }, 500);
+    console.error("razorpay-refund order fetch error:", fetchError);
+    return jsonResponse({ error: "Failed to look up order." }, 500);
   }
   if (!order) {
     return jsonResponse({ error: "Order not found" }, 404);
@@ -104,8 +106,9 @@ Deno.serve(async (req) => {
     .eq("id", orderId);
 
   if (updateError) {
+    console.error("razorpay-refund order status update error:", updateError);
     return jsonResponse(
-      { error: `Refund succeeded on Razorpay but failed to update order status: ${updateError.message}`, refund: refundData },
+      { error: "Refund succeeded on Razorpay but failed to update order status.", refund: refundData },
       500
     );
   }

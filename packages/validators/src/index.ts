@@ -50,7 +50,13 @@ export const purohitBookingSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "A valid preferred date is required")
     .refine(isValidCalendarDate, "A valid preferred date is required"),
-  preferredTime: z.string().optional(),
+  // Same failure class as preferredDate above: with no format check, a
+  // caller posting e.g. "later today" hits Postgres' TIME cast at insert
+  // time instead of failing validation here — a 500 instead of a 400.
+  preferredTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "A valid preferred time is required")
+    .optional(),
   languagePreference: z.string().trim().min(2, "Language preference is required"),
   materialsOption: z.enum(["purohit_only", "purohit_and_samagri"]),
   message: z.string().optional(),

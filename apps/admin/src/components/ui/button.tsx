@@ -18,6 +18,8 @@ interface ButtonProps extends Omit<PressableProps, "children"> {
   flex?: boolean;
   compact?: boolean;
   className?: string;
+  /** Optional leading icon, e.g. `<Ionicons name="attach-outline" size={14} color="#5B21B6" />`. */
+  icon?: React.ReactNode;
 }
 
 export function Button({
@@ -28,6 +30,7 @@ export function Button({
   compact,
   disabled,
   className = "",
+  icon,
   ...rest
 }: ButtonProps) {
   const styles = VARIANT_STYLES[variant];
@@ -38,7 +41,7 @@ export function Button({
   return (
     <Pressable
       disabled={isDisabled}
-      className={`${styles.container} ${sizeClasses} items-center justify-center ${flex ? "flex-1" : ""} ${
+      className={`${styles.container} ${sizeClasses} flex-row items-center justify-center gap-1.5 ${flex ? "flex-1" : ""} ${
         isDisabled ? "opacity-60" : ""
       } ${className}`}
       {...rest}
@@ -46,7 +49,10 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={styles.spinner} />
       ) : (
-        <Text className={`font-rubik-bold ${textSize} ${styles.label}`}>{label}</Text>
+        <>
+          {icon}
+          <Text className={`font-rubik-bold ${textSize} ${styles.label}`}>{label}</Text>
+        </>
       )}
     </Pressable>
   );

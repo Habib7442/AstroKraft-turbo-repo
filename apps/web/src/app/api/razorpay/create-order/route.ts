@@ -141,7 +141,16 @@ export async function POST(req: NextRequest) {
         notes: { orderId: order.id }
       });
     } catch (err: any) {
-      console.error("razorpay create-order Razorpay API error:", err);
+      // Named fields only, never the raw err — the razorpay SDK normally
+      // strips the Axios request config (which carries the key secret via
+      // Basic Auth) before throwing, but that's an internal detail of a
+      // third-party package that could change on a future version bump
+      // without anyone noticing the security implication.
+      console.error("razorpay create-order Razorpay API error:", {
+        statusCode: err?.statusCode,
+        code: err?.error?.code,
+        description: err?.error?.description
+      });
       await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.id);
       const status = err?.statusCode === 401 ? 401 : 500;
       // err?.error?.description is Razorpay's own user-facing error text

@@ -22,9 +22,19 @@ ALTER TABLE public.purohit_bookings RENAME COLUMN attachment_url TO attachment_k
 COMMENT ON COLUMN public.purohit_bookings.attachment_key IS
   'R2 object key under purohit-uploads/, not a URL. The object is private — fetch a short-lived signed download URL via the r2-presign-download edge function rather than reading this column as a link.';
 
+-- CREATE OR REPLACE cannot rename an existing parameter (p_attachment_url ->
+-- p_attachment_key) — Postgres raises 42P13 "cannot change name of input
+-- parameter" and refuses the whole statement. The function has to be
+-- dropped and recreated instead. Only one overload of this function has
+-- ever existed, so the signature below (matching the previous migration
+-- exactly) unambiguously identifies it.
+DROP FUNCTION IF EXISTS public.create_purohit_booking(
+  TEXT, TEXT, TEXT, TEXT, TEXT, DATE, TIME, TEXT, TEXT, TEXT, TEXT, INTEGER, INTERVAL
+);
+
 -- Recreated with the renamed parameter/column and the same advisory-lock
 -- rate limiting from the previous migration (unchanged otherwise).
-CREATE OR REPLACE FUNCTION public.create_purohit_booking(
+CREATE FUNCTION public.create_purohit_booking(
   p_user_id TEXT,
   p_name TEXT,
   p_phone TEXT,

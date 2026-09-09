@@ -48,7 +48,8 @@ Deno.serve(async (req) => {
     const { payload } = await jwtVerify(token, clerkJwks);
     role = (payload.metadata as { role?: string } | undefined)?.role;
   } catch (err) {
-    return jsonResponse({ error: `Invalid token: ${err instanceof Error ? err.message : "verification failed"}` }, 401);
+    console.error("r2-presign token verification error:", err);
+    return jsonResponse({ error: "Invalid or expired token" }, 401);
   }
 
   if (role !== "admin") {
@@ -77,6 +78,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ uploadUrl, publicUrl, key });
   } catch (err) {
-    return jsonResponse({ error: err instanceof Error ? err.message : "Failed to generate upload URL" }, 500);
+    console.error("r2-presign error:", err);
+    return jsonResponse({ error: "Failed to generate upload URL" }, 500);
   }
 });

@@ -45,10 +45,20 @@ export function useNotificationRouting() {
       }
 
       // Covers the app already being alive in the background and the user
-      // tapping a notification to bring it to the foreground.
+      // tapping a notification to bring it to the foreground. Registration
+      // happens after several awaits above, so the effect's cleanup could
+      // already have run by now (e.g. a sign-out/sign-in cycle remounting
+      // this layout) — guard against registering (and thus leaking) a
+      // listener that calls router.push through an unmounted layout's
+      // stale router and is never removed.
+      if (cancelled) return;
       subscription = Notifications.addNotificationResponseReceivedListener((response) => {
         navigate(response.notification.request.content.data);
       });
+      if (cancelled) {
+        subscription.remove();
+        subscription = undefined;
+      }
     }
 
     setup().catch((err) => console.error("Notification routing setup failed:", err));

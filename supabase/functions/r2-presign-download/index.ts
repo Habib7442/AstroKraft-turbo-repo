@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
     const downloadUrl = await getSignedUrl(r2Client, command, { expiresIn: 300 });
     return jsonResponse({ downloadUrl });
   } catch (err) {
-    return jsonResponse({ error: err instanceof Error ? err.message : "Failed to generate download URL" }, 500);
+    console.error("r2-presign-download error:", err);
+    return jsonResponse({ error: "Failed to generate download URL" }, 500);
   }
 });

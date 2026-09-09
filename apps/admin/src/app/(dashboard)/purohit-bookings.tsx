@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Alert, Linking, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Linking, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { PurohitBooking } from "@astrokraft/db";
 import { PUROHIT_BOOKING_TRANSITIONS, type PurohitBookingStatus } from "@astrokraft/core";
 import { useSupabase } from "@/lib/supabase";
@@ -134,6 +135,13 @@ export default function PurohitBookingsScreen() {
       if (requestId !== requestRef.current) return;
       console.error("Error refreshing purohit bookings:", err);
       setLoadError("Could not load bookings. Pull to refresh.");
+    } finally {
+      // A pull-to-refresh that starts while the initial fetchBookings is
+      // still in flight becomes the newest request — fetchBookings' own
+      // finally then defers to it instead of clearing loading itself (see
+      // the requestRef comment above). Without this, loading would stay
+      // true forever once that happens, even though bookings did update.
+      if (requestId === requestRef.current) setLoading(false);
     }
   });
 
@@ -160,12 +168,19 @@ export default function PurohitBookingsScreen() {
     // "Failed to update" (the admin would otherwise retry an action that
     // already went through, or worse, second-guess a status that's correct
     // in the database but stale on screen).
+    const requestId = ++requestRef.current;
     try {
-      await loadBookings(++requestRef.current);
+      await loadBookings(requestId);
     } catch (err) {
       console.error("Error reloading bookings after status update:", err);
       setLoadError("Status updated, but the list couldn't refresh. Pull to refresh.");
     } finally {
+      // Same requestRef contract as fetchBookings/onRefresh (see the ref's
+      // own comment above): this reload only clears loading if it's still
+      // the current owner — otherwise an even newer request (e.g. another
+      // filter change while this reload was in flight) is the one that
+      // should control the spinner, not this superseded one.
+      if (requestId === requestRef.current) setLoading(false);
       setActionLoading(null);
     }
   };
@@ -200,62 +215,75 @@ export default function PurohitBookingsScreen() {
       <RefreshableScrollView refreshing={refreshing} onRefresh={onRefresh} contentContainerStyle={{ padding: 16, gap: 14 }}>
         {loading ? (
           <LoadingState />
-        ) : loadError ? (
+        ) : loadError && bookings.length === 0 ? (
           <EmptyState title="Load Failed" description={loadError} />
         ) : bookings.length === 0 ? (
           <EmptyState title="No Requests Found" description="Purohit booking requests from the website will appear here." />
         ) : (
-          bookings.map((item) => {
-            const actions = STATUS_ACTIONS[item.status] ?? [];
+          <>
+            {loadError ? (
+              <View className="rounded-xl border border-saffron bg-saffron/10 px-4 py-3">
+                <Text className="text-xs font-rubik-medium text-saffron">{loadError}</Text>
+              </View>
+            ) : null}
+            {bookings.map((item) => {
+              const actions = STATUS_ACTIONS[item.status] ?? [];
 
-            return (
-              <Card key={item.id} className="gap-2">
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-sm font-rubik-bold text-foreground flex-1" numberOfLines={1}>
-                    {item.ritual_type}
-                  </Text>
-                  <StatusBadge label={formatStatusLabel(item.status)} tone={STATUS_TONE[item.status]} />
-                </View>
-
-                <View className="border-t border-surface-border pt-2 gap-1">
-                  <Text className="text-xs text-ink-body">
-                    Client: <Text className="font-rubik-medium text-foreground">{item.name}</Text>
-                  </Text>
-                  <Text className="text-xs text-ink-body">Phone: {item.phone}</Text>
-                  <Text className="text-xs text-ink-body">Location: {item.location}</Text>
-                  <Text className="text-xs text-ink-muted">
-                    Preferred: {formatDate(item.preferred_date)}
-                    {item.preferred_time ? ` · ${item.preferred_time}` : ""} · {item.language_preference}
-                  </Text>
-                  <Text className="text-xs text-ink-muted">{MATERIALS_LABEL[item.materials_option]}</Text>
-                  {item.message ? <Text className="text-xs text-ink-body">Note: {item.message}</Text> : null}
-                  {item.attachment_key ? (
-                    <TouchableOpacity disabled={attachmentLoading} onPress={() => handleViewAttachment(item.attachment_key!)}>
-                      <Text className="text-xs font-rubik-semibold text-primary underline">View Attachment</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-
-                <View className="flex-row justify-between items-center pt-1">
-                  <Text className="text-[10px] text-ink-muted">{formatDate(item.created_at)}</Text>
-                </View>
-
-                {actions.length > 0 ? (
-                  <View className="pt-2 border-t border-surface-border gap-2">
-                    {actions.map((action) => (
-                      <Button
-                        key={action.next}
-                        label={action.label}
-                        variant={action.variant}
-                        loading={actionLoading === item.id + action.next}
-                        onPress={() => handleAction(item, action)}
-                      />
-                    ))}
+              return (
+                <Card key={item.id} className="gap-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-sm font-rubik-bold text-foreground flex-1" numberOfLines={1}>
+                      {item.ritual_type}
+                    </Text>
+                    <StatusBadge label={formatStatusLabel(item.status)} tone={STATUS_TONE[item.status]} />
                   </View>
-                ) : null}
-              </Card>
-            );
-          })
+
+                  <View className="border-t border-surface-border pt-2 gap-1">
+                    <Text className="text-xs text-ink-body">
+                      Client: <Text className="font-rubik-medium text-foreground">{item.name}</Text>
+                    </Text>
+                    <Text className="text-xs text-ink-body">Phone: {item.phone}</Text>
+                    <Text className="text-xs text-ink-body">Location: {item.location}</Text>
+                    <Text className="text-xs text-ink-muted">
+                      Preferred: {formatDate(item.preferred_date)}
+                      {item.preferred_time ? ` · ${item.preferred_time}` : ""} · {item.language_preference}
+                    </Text>
+                    <Text className="text-xs text-ink-muted">{MATERIALS_LABEL[item.materials_option]}</Text>
+                    {item.message ? <Text className="text-xs text-ink-body">Note: {item.message}</Text> : null}
+                    {item.attachment_key ? (
+                      <Button
+                        label="View Attachment"
+                        variant="secondary"
+                        compact
+                        loading={attachmentLoading}
+                        icon={<Ionicons name="attach-outline" size={14} color="#5B21B6" />}
+                        className="self-start mt-1"
+                        onPress={() => handleViewAttachment(item.attachment_key!)}
+                      />
+                    ) : null}
+                  </View>
+
+                  <View className="flex-row justify-between items-center pt-1">
+                    <Text className="text-[10px] text-ink-muted">{formatDate(item.created_at)}</Text>
+                  </View>
+
+                  {actions.length > 0 ? (
+                    <View className="pt-2 border-t border-surface-border gap-2">
+                      {actions.map((action) => (
+                        <Button
+                          key={action.next}
+                          label={action.label}
+                          variant={action.variant}
+                          loading={actionLoading === item.id + action.next}
+                          onPress={() => handleAction(item, action)}
+                        />
+                      ))}
+                    </View>
+                  ) : null}
+                </Card>
+              );
+            })}
+          </>
         )}
       </RefreshableScrollView>
     </Screen>

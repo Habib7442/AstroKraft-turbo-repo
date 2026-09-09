@@ -80,7 +80,13 @@ export async function POST(req: NextRequest) {
         notes: { consultationId: consultation.id }
       });
     } catch (err: any) {
-      console.error("razorpay create-consultation-order Razorpay API error:", err);
+      // Named fields only, never the raw err — see the identical comment in
+      // create-order/route.ts.
+      console.error("razorpay create-consultation-order Razorpay API error:", {
+        statusCode: err?.statusCode,
+        code: err?.error?.code,
+        description: err?.error?.description
+      });
       await supabase.from("consultations").update({ status: "payment_failed" }).eq("id", consultation.id);
       const status = err?.statusCode === 401 ? 401 : 500;
       // err?.error?.description is Razorpay's own user-facing error text —

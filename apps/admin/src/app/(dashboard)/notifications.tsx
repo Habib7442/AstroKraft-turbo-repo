@@ -24,24 +24,34 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadNotifications = useCallback(async () => {
     if (isExpoGo) {
       setItems([]);
       return;
     }
-    const Notifications = await import("expo-notifications");
-    const presented = await Notifications.getPresentedNotificationsAsync();
-    const sorted = [...presented].sort((a, b) => b.date - a.date);
-    setItems(
-      sorted.map((n) => ({
-        identifier: n.request.identifier,
-        title: n.request.content.title || "Notification",
-        body: n.request.content.body || "",
-        data: n.request.content.data,
-        date: n.date
-      }))
-    );
+    try {
+      const Notifications = await import("expo-notifications");
+      const presented = await Notifications.getPresentedNotificationsAsync();
+      const sorted = [...presented].sort((a, b) => b.date - a.date);
+      setItems(
+        sorted.map((n) => ({
+          identifier: n.request.identifier,
+          title: n.request.content.title || "Notification",
+          body: n.request.content.body || "",
+          data: n.request.content.data,
+          // expo-notifications reports `date` in seconds on some platforms
+          // (expo/expo#25131) despite the type saying milliseconds — a raw
+          // seconds value passed to `new Date()` renders as a 1970 date.
+          date: n.date < 1e12 ? Math.round(n.date * 1000) : n.date
+        }))
+      );
+      setLoadError(null);
+    } catch (err) {
+      console.error("Failed to load notifications:", err);
+      setLoadError("Could not load notifications. Pull to refresh.");
+    }
   }, []);
 
   useEffect(() => {
@@ -88,6 +98,8 @@ export default function NotificationsScreen() {
       <RefreshableScrollView refreshing={refreshing} onRefresh={onRefresh} contentContainerStyle={{ padding: 16, gap: 14 }}>
         {loading ? (
           <LoadingState />
+        ) : loadError ? (
+          <EmptyState title="Load Failed" description={loadError} />
         ) : items.length === 0 ? (
           <EmptyState title="No Notifications" description="New order, booking, and consultation alerts will appear here." />
         ) : (

@@ -127,6 +127,13 @@ export default function ReviewsScreen() {
       if (requestId !== requestIdRef.current) return;
       console.error("Error refreshing reviews:", err);
       setLoadError("Could not load reviews. Pull to refresh.");
+    } finally {
+      // A pull-to-refresh that starts while the initial fetchReviews is
+      // still in flight becomes the newest request — fetchReviews' own
+      // finally then defers to it instead of clearing loading itself (see
+      // the requestIdRef comment above). Without this, loading would stay
+      // true forever once that happens, even though reviews did update.
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   });
 
@@ -150,12 +157,19 @@ export default function ReviewsScreen() {
     // "Failed to update" (the admin would otherwise retry an action that
     // already went through, or worse, second-guess a status that's correct
     // in the database but stale on screen).
+    const requestId = ++requestIdRef.current;
     try {
-      await loadReviews(++requestIdRef.current);
+      await loadReviews(requestId);
     } catch (err) {
       console.error("Error reloading reviews after status update:", err);
       setLoadError("Status updated, but the list couldn't refresh. Pull to refresh.");
     } finally {
+      // Same requestIdRef contract as fetchReviews/onRefresh (see the ref's
+      // own comment above): this reload only clears loading if it's still
+      // the current owner — otherwise an even newer request (e.g. another
+      // filter change while this reload was in flight) is the one that
+      // should control the spinner, not this superseded one.
+      if (requestId === requestIdRef.current) setLoading(false);
       transitioningReviewIds.current.delete(review.id);
       setActionLoading(null);
     }
@@ -182,52 +196,59 @@ export default function ReviewsScreen() {
       <RefreshableScrollView refreshing={refreshing} onRefresh={onRefresh} contentContainerStyle={{ padding: 16, gap: 14 }}>
         {loading ? (
           <LoadingState />
-        ) : loadError ? (
+        ) : loadError && reviews.length === 0 ? (
           <EmptyState title="Load Failed" description={loadError} />
         ) : reviews.length === 0 ? (
           <EmptyState title="No Reviews Found" description="Customer reviews submitted on the website will appear here." />
         ) : (
-          reviews.map((item) => {
-            const actions = STATUS_ACTIONS[item.status] ?? [];
+          <>
+            {loadError ? (
+              <View className="rounded-xl border border-saffron bg-saffron/10 px-4 py-3">
+                <Text className="text-xs font-rubik-medium text-saffron">{loadError}</Text>
+              </View>
+            ) : null}
+            {reviews.map((item) => {
+              const actions = STATUS_ACTIONS[item.status] ?? [];
 
-            return (
-              <Card key={item.id} className="gap-2">
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-sm font-rubik-bold text-foreground flex-1" numberOfLines={1}>
-                    {item.products?.title || "Unknown Product"}
-                  </Text>
-                  <StatusBadge label={item.status.toUpperCase()} tone={STATUS_TONE[item.status]} />
-                </View>
-
-                <View className="border-t border-surface-border pt-2 gap-1">
-                  <View className="flex-row items-center gap-2">
-                    <Stars rating={item.rating} />
-                    {item.is_verified_buyer ? (
-                      <Text className="text-[10px] font-rubik-bold uppercase text-primary">Verified Buyer</Text>
-                    ) : null}
+              return (
+                <Card key={item.id} className="gap-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-sm font-rubik-bold text-foreground flex-1" numberOfLines={1}>
+                      {item.products?.title || "Unknown Product"}
+                    </Text>
+                    <StatusBadge label={item.status.toUpperCase()} tone={STATUS_TONE[item.status]} />
                   </View>
-                  <Text className="text-xs text-ink-body">{item.comment}</Text>
-                  <Text className="text-xs text-ink-muted">
-                    {item.profiles?.full_name || "Anonymous"} · {formatDate(item.created_at)}
-                  </Text>
-                </View>
 
-                {actions.length > 0 ? (
-                  <View className="pt-2 border-t border-surface-border gap-2">
-                    {actions.map((action) => (
-                      <Button
-                        key={action.next}
-                        label={action.label}
-                        variant={action.variant}
-                        loading={actionLoading === item.id}
-                        onPress={() => handleAction(item, action)}
-                      />
-                    ))}
+                  <View className="border-t border-surface-border pt-2 gap-1">
+                    <View className="flex-row items-center gap-2">
+                      <Stars rating={item.rating} />
+                      {item.is_verified_buyer ? (
+                        <Text className="text-[10px] font-rubik-bold uppercase text-primary">Verified Buyer</Text>
+                      ) : null}
+                    </View>
+                    <Text className="text-xs text-ink-body">{item.comment}</Text>
+                    <Text className="text-xs text-ink-muted">
+                      {item.profiles?.full_name || "Anonymous"} · {formatDate(item.created_at)}
+                    </Text>
                   </View>
-                ) : null}
-              </Card>
-            );
-          })
+
+                  {actions.length > 0 ? (
+                    <View className="pt-2 border-t border-surface-border gap-2">
+                      {actions.map((action) => (
+                        <Button
+                          key={action.next}
+                          label={action.label}
+                          variant={action.variant}
+                          loading={actionLoading === item.id}
+                          onPress={() => handleAction(item, action)}
+                        />
+                      ))}
+                    </View>
+                  ) : null}
+                </Card>
+              );
+            })}
+          </>
         )}
       </RefreshableScrollView>
     </Screen>
