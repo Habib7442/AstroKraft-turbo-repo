@@ -28,10 +28,22 @@ const WORKING_SCREENS = [
     emoji: "📦",
     title: "Orders",
     description: "Paid → Shipped → Delivered"
+  },
+  {
+    href: "/reviews",
+    emoji: "⭐",
+    title: "Reviews",
+    description: "Approve or reject customer reviews"
   }
 ] as const;
 
 const NEW_SCREENS = [
+  {
+    href: "/purohit-bookings",
+    emoji: "🪔",
+    title: "Purohit Bookings",
+    description: "Puja leads awaiting a callback"
+  },
   {
     href: "/consultations",
     emoji: "📅",

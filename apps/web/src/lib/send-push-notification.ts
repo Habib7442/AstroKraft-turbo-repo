@@ -22,7 +22,7 @@ export async function sendPushNotificationToAdmins({ title, body, data }: PushNo
     body,
     sound: "default",
     priority: "high",
-    channelId: "default",
+    channelId: "alerts",
     data: data ?? {}
   }));
 

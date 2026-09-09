@@ -34,7 +34,15 @@ const nextConfig = {
         protocol: "https",
         hostname: "media.astrokraft.online"
       },
-      ...(r2PublicHostname
+      // Some existing rows (e.g. banners uploaded via the r2-presign Supabase
+      // Edge Function, which has its own R2_PUBLIC_DOMAIN secret) still store
+      // R2's raw public dev URL instead of the custom media.astrokraft.online
+      // domain — allow it too so those images keep rendering.
+      {
+        protocol: "https",
+        hostname: "pub-*.r2.dev"
+      },
+      ...(r2PublicHostname && r2PublicHostname !== "media.astrokraft.online"
         ? [
             {
               protocol: "https",

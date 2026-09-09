@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { Alert, Platform } from "react-native";
-import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
-import Constants from "expo-constants";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { useUser } from "@clerk/expo";
 import { useSupabase } from "@/lib/supabase";
 
@@ -30,9 +29,31 @@ export function useRegisterPushToken() {
         return;
       }
 
+      // expo-notifications' Android remote push support was removed from
+      // Expo Go in SDK 53 — merely IMPORTING the module (not just calling
+      // into it) throws and crashes the dashboard layout, because it runs
+      // auto-registration side effects at import time. So this early return
+      // must happen before expo-notifications is ever imported below —
+      // that's why the import is dynamic instead of static at the top of
+      // this file.
+      if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+        Alert.alert("Push setup skipped", "Push notifications aren't supported in Expo Go — use a development build.");
+        return;
+      }
+
+      const Notifications = await import("expo-notifications");
+
       if (Platform.OS === "android") {
-        await Notifications.setNotificationChannelAsync("default", {
-          name: "default",
+        // Android 8+ locks a channel's sound/importance the first time it's
+        // created with a given ID — later calls to setNotificationChannelAsync
+        // with different settings are silently ignored for an existing
+        // channel. "alerts" is a fresh ID so this actually takes effect;
+        // "default" may have been created earlier (e.g. during dev testing)
+        // before sound was configured correctly, and Android would keep
+        // honoring whatever that original channel had, forever, regardless
+        // of what this call says now.
+        await Notifications.setNotificationChannelAsync("alerts", {
+          name: "Alerts",
           importance: Notifications.AndroidImportance.MAX,
           sound: "default",
           vibrationPattern: [0, 250, 250, 250],

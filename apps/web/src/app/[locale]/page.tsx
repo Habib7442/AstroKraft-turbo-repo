@@ -5,6 +5,7 @@ import { BannerCarousel } from "@/components/banner-carousel";
 import { CategoryStories } from "@/components/category-stories";
 import { ProductShowcase } from "@/components/product-showcase";
 import { AstrologerShowcase } from "@/components/astrologer-showcase";
+import { PurohitBookingCta } from "@/components/purohit-booking-cta";
 import { LOCALES, isValidLocale } from "@/lib/locales";
 import { constructMetadata } from "@/lib/seo";
 
@@ -49,6 +50,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             .select("*, categories!inner(name), product_variants(id, quality, price)")
             .eq("is_active", true)
             .eq("categories.slug", category.slug)
+            .order("badge", { ascending: false, nullsFirst: false })
             .order("sort_order", { ascending: true })
             .limit(8);
           return { category, products: products ?? [] };
@@ -94,6 +96,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           bgClassName="bg-white"
         />
       ) : null}
+
+      <PurohitBookingCta locale={locale} />
 
       {categoryShowcases.slice(1).map(({ category, products }, index) =>
         products.length > 0 ? (

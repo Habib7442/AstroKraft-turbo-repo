@@ -44,6 +44,20 @@ export function canTransitionConsultation(current: ConsultationStatus, next: Con
   return CONSULTATION_TRANSITIONS[current]?.includes(next) ?? false;
 }
 
+export type PurohitBookingStatus = "new" | "contacted" | "confirmed" | "completed" | "cancelled";
+
+export const PUROHIT_BOOKING_TRANSITIONS: Record<PurohitBookingStatus, PurohitBookingStatus[]> = {
+  new: ["contacted", "cancelled"],
+  contacted: ["confirmed", "cancelled"],
+  confirmed: ["completed", "cancelled"],
+  completed: [],
+  cancelled: []
+};
+
+export function canTransitionPurohitBooking(current: PurohitBookingStatus, next: PurohitBookingStatus): boolean {
+  return PUROHIT_BOOKING_TRANSITIONS[current]?.includes(next) ?? false;
+}
+
 export function formatINR(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",

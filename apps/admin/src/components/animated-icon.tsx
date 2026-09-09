@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -10,6 +10,19 @@ const DURATION = 600;
 export function AnimatedSplashOverlay() {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
+
+  // Was previously triggered from the overlay View's onLayout prop, which
+  // called setAnimate() from inside an async .finally() — React flagged
+  // this as a state update racing ahead of the component's own commit
+  // ("hasn't mounted yet"). useLayoutEffect is the same "wait until laid
+  // out, before paint" timing onLayout gave us, but is where React expects
+  // this kind of side effect to live.
+  useLayoutEffect(() => {
+    if (!visible || animate) return;
+    SplashScreen.hideAsync().finally(() => {
+      setAnimate(true);
+    });
+  }, [visible, animate]);
 
   if (!visible) return null;
 
@@ -47,13 +60,7 @@ export function AnimatedSplashOverlay() {
       {image}
     </Animated.View>
   ) : (
-    <View
-      onLayout={() => {
-        SplashScreen.hideAsync().finally(() => {
-          setAnimate(true);
-        });
-      }}
-      style={styles.splashOverlay}>
+    <View style={styles.splashOverlay}>
       {image}
     </View>
   );

@@ -44,7 +44,9 @@
           "color": "#E2C27A",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "expo-image",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

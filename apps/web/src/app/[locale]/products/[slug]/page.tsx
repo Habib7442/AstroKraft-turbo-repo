@@ -6,6 +6,7 @@ import type { Product, ProductVariant } from "@astrokraft/db";
 import { getSupabaseClient } from "@/lib/supabase";
 import { isValidLocale } from "@/lib/locales";
 import { TierSelector } from "@/components/tier-selector";
+import { ProductReviews, type ReviewRow } from "@/components/product-reviews";
 import { constructMetadata, productSchema } from "@/lib/seo";
 
 export const revalidate = 60;
@@ -25,6 +26,29 @@ async function getProduct(slug: string): Promise<ProductDetail | null> {
     .maybeSingle();
 
   return data as ProductDetail | null;
+}
+
+// Reviewer names aren't shown: `profiles` RLS only lets a user (or an admin)
+// read their own row, so an anonymous/other-visitor page read can never see
+// another customer's full_name — the "Verified Buyer" badge does the
+// trust-signaling work instead, without leaking who wrote what.
+async function getApprovedReviews(productId: string): Promise<ReviewRow[]> {
+  const supabase = getSupabaseClient();
+  const { data } = await supabase
+    .from("reviews")
+    .select("id, rating, comment, is_verified_buyer, created_at")
+    .eq("product_id", productId)
+    .eq("status", "approved")
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    comment: r.comment,
+    is_verified_buyer: r.is_verified_buyer,
+    created_at: r.created_at,
+    reviewerName: "AstroKraft Customer"
+  }));
 }
 
 export async function generateMetadata({
@@ -64,6 +88,8 @@ export default async function ProductDetailPage({
   if (!typedProduct) {
     notFound();
   }
+
+  const reviews = await getApprovedReviews(typedProduct.id);
 
   const variants = typedProduct.product_variants.filter((v) => v.quality);
   const prices = typedProduct.product_variants.map((v) => v.price).filter((p) => typeof p === "number");
@@ -135,7 +161,13 @@ export default async function ProductDetailPage({
 
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1 text-sm text-ink-muted">
-              <span className="text-gold">★</span> {typedProduct.rating} ({typedProduct.review_count} reviews)
+              {typedProduct.review_count > 0 ? (
+                <>
+                  <span className="text-gold">★</span> {typedProduct.rating} ({typedProduct.review_count} reviews)
+                </>
+              ) : (
+                "No reviews yet"
+              )}
             </span>
             {typedProduct.emi_available ? (
               <span className="whitespace-nowrap rounded-full bg-gold px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
@@ -151,6 +183,13 @@ export default async function ProductDetailPage({
           <TierSelector variants={variants} product={typedProduct} />
         </div>
       </div>
+
+      <ProductReviews
+        productId={typedProduct.id}
+        reviews={reviews}
+        averageRating={typedProduct.rating}
+        reviewCount={typedProduct.review_count}
+      />
     </main>
   );
 }

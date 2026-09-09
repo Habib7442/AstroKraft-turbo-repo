@@ -15,6 +15,7 @@ export function SiteFooter({ categories, locale }: SiteFooterProps) {
     { label: "About Us", href: `/${locale}/about` },
     { label: "Contact Us", href: `/${locale}/contact` },
     { label: "Book a Consultation", href: `/${locale}/consultation` },
+    { label: "Book a Purohit", href: `/${locale}/purohit-booking` },
     { label: "My Orders", href: `/${locale}/orders` }
   ];
 

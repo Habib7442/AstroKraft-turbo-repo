@@ -122,6 +122,24 @@ export interface Consultation {
   created_at: string;
 }
 
+export interface PurohitBooking {
+  id: string;
+  user_id?: string;
+  name: string;
+  phone: string;
+  location: string;
+  ritual_type: string;
+  preferred_date: string;
+  preferred_time?: string;
+  language_preference: string;
+  materials_option: "purohit_only" | "purohit_and_samagri";
+  message?: string;
+  attachment_url?: string;
+  status: "new" | "contacted" | "confirmed" | "completed" | "cancelled";
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PushToken {
   id: string;
   user_id: string;

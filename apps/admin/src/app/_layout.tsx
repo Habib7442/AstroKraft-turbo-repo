@@ -1,16 +1,17 @@
 import "../global.css";
-import "@/lib/notifications";
+import { setupNotificationHandler } from "@/lib/notifications";
 import { useEffect } from "react";
 import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useColorScheme } from "react-native";
+import { ActivityIndicator, Text, useColorScheme, View } from "react-native";
 import { useFonts } from "expo-font";
-import { ClerkProvider, ClerkLoaded } from "@clerk/expo";
+import { ClerkProvider, ClerkLoaded, ClerkLoading } from "@clerk/expo";
 import { tokenCache } from "@/utils/token-cache";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 
 SplashScreen.preventAutoHideAsync();
+setupNotificationHandler();
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
 
@@ -37,8 +38,23 @@ export default function RootLayout() {
     return null;
   }
 
+  if (!publishableKey) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <Text style={{ textAlign: "center" }}>
+          Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY. Check apps/admin/.env.local.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+      <ClerkLoading>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" />
+        </View>
+      </ClerkLoading>
       <ClerkLoaded>
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
           <AnimatedSplashOverlay />

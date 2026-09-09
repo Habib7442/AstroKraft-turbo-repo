@@ -56,8 +56,14 @@ export function SiteHeader({ categories, locale }: SiteHeaderProps) {
             </Link>
           ))}
           <Link
+            href={`/${locale}/purohit-booking`}
+            className="whitespace-nowrap rounded-full bg-saffron px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-transform hover:-translate-y-0.5 sm:text-sm"
+          >
+            Book a Purohit
+          </Link>
+          <Link
             href={`/${locale}/consultation`}
-            className="whitespace-nowrap text-xs font-bold uppercase tracking-wide text-gold transition-colors hover:text-white sm:text-sm"
+            className="whitespace-nowrap rounded-full bg-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-transform hover:-translate-y-0.5 sm:text-sm"
           >
             Book Consultation
           </Link>

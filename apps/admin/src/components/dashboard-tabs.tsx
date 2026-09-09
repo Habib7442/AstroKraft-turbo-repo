@@ -61,6 +61,8 @@ export function DashboardTabs() {
       <Tabs.Screen name="astrologers" options={{ href: null }} />
       <Tabs.Screen name="consultation-categories" options={{ href: null }} />
       <Tabs.Screen name="consultations" options={{ href: null }} />
+      <Tabs.Screen name="purohit-bookings" options={{ href: null }} />
+      <Tabs.Screen name="reviews" options={{ href: null }} />
       {/* Reachable only by tapping an order card — not a tab destination. */}
       <Tabs.Screen name="order-detail" options={{ href: null }} />
     </Tabs>
