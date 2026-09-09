@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, Linking, Text, TouchableOpacity, View } from "react-native";
 import { PurohitBooking } from "@astrokraft/db";
 import { PUROHIT_BOOKING_TRANSITIONS, type PurohitBookingStatus } from "@astrokraft/core";
 import { useSupabase } from "@/lib/supabase";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useAttachmentDownload } from "@/hooks/use-attachment-download";
 import {
   Button,
   Card,
@@ -56,7 +57,15 @@ const STATUS_ACTIONS: Partial<Record<PurohitBookingStatus, PurohitBookingAction[
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  // preferred_date is a plain DATE column ("YYYY-MM-DD", no time/zone) while
+  // created_at is a real TIMESTAMPTZ — both get formatted here. A bare
+  // "YYYY-MM-DD" string is parsed as UTC midnight per spec, which shifts to
+  // the previous day once toLocaleDateString renders it in a negative-UTC
+  // device timezone. Anchoring date-only values to local midnight avoids
+  // that shift; a full timestamp already carries its own offset.
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+  const value = dateOnly ? new Date(`${iso}T00:00:00`) : new Date(iso);
+  return value.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 function formatStatusLabel(status: string) {
@@ -65,30 +74,50 @@ function formatStatusLabel(status: string) {
 
 export default function PurohitBookingsScreen() {
   const supabase = useSupabase();
+  const { loading: attachmentLoading, getDownloadUrl } = useAttachmentDownload();
   const [bookings, setBookings] = useState<PurohitBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<PurohitBookingFilter>("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // Guards against an in-flight request resolving after a newer one (e.g.
+  // rapidly tapping filter pills) — only the caller holding the latest
+  // requestRef value is allowed to act on its result. requestId is minted
+  // by the CALLER (fetchBookings/onRefresh/runTransition), not inside
+  // loadBookings, so a superseded caller can recognize its own result as
+  // stale even when the query throws, and skip touching `loading`/
+  // `loadError` too, not just `bookings` — checking staleness only around
+  // setBookings would still let a stale request's *error* propagate to a
+  // newer request's caller, and still let a stale request's `finally`
+  // clear the spinner while a newer request was still in flight.
+  const requestRef = useRef(0);
 
-  const loadBookings = async () => {
+  const loadBookings = async (requestId: number) => {
     let query = supabase.from("purohit_bookings").select("*").order("created_at", { ascending: false });
     if (filter !== "all") {
       query = query.eq("status", filter);
     }
 
     const { data, error } = await query;
+    if (requestId !== requestRef.current) return;
     if (error) throw error;
     setBookings((data as PurohitBooking[]) || []);
   };
 
   const fetchBookings = async () => {
+    const requestId = ++requestRef.current;
     setLoading(true);
+    setLoadError(null);
     try {
-      await loadBookings();
+      await loadBookings(requestId);
     } catch (err) {
+      if (requestId !== requestRef.current) return;
       console.error("Error fetching purohit bookings:", err);
+      setLoadError("Could not load bookings. Pull to refresh.");
     } finally {
-      setLoading(false);
+      if (requestId === requestRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -97,10 +126,14 @@ export default function PurohitBookingsScreen() {
   }, [filter]);
 
   const { refreshing, onRefresh } = usePullToRefresh(async () => {
+    const requestId = ++requestRef.current;
     try {
-      await loadBookings();
+      await loadBookings(requestId);
+      if (requestId === requestRef.current) setLoadError(null);
     } catch (err) {
+      if (requestId !== requestRef.current) return;
       console.error("Error refreshing purohit bookings:", err);
+      setLoadError("Could not load bookings. Pull to refresh.");
     }
   });
 
@@ -112,14 +145,37 @@ export default function PurohitBookingsScreen() {
     }
 
     setActionLoading(booking.id + nextStatus);
+
     try {
       const { error } = await supabase.from("purohit_bookings").update({ status: nextStatus }).eq("id", booking.id);
       if (error) throw error;
-      await loadBookings();
     } catch (err: any) {
+      setActionLoading(null);
       Alert.alert("Error", err.message || "Failed to update booking status.");
+      return;
+    }
+
+    // The update itself already succeeded — a failure past this point is a
+    // reload problem, not an update problem, and must never surface as
+    // "Failed to update" (the admin would otherwise retry an action that
+    // already went through, or worse, second-guess a status that's correct
+    // in the database but stale on screen).
+    try {
+      await loadBookings(++requestRef.current);
+    } catch (err) {
+      console.error("Error reloading bookings after status update:", err);
+      setLoadError("Status updated, but the list couldn't refresh. Pull to refresh.");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleViewAttachment = async (key: string) => {
+    try {
+      const downloadUrl = await getDownloadUrl(key);
+      await Linking.openURL(downloadUrl);
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Could not open the attachment.");
     }
   };
 
@@ -144,6 +200,8 @@ export default function PurohitBookingsScreen() {
       <RefreshableScrollView refreshing={refreshing} onRefresh={onRefresh} contentContainerStyle={{ padding: 16, gap: 14 }}>
         {loading ? (
           <LoadingState />
+        ) : loadError ? (
+          <EmptyState title="Load Failed" description={loadError} />
         ) : bookings.length === 0 ? (
           <EmptyState title="No Requests Found" description="Purohit booking requests from the website will appear here." />
         ) : (
@@ -171,8 +229,8 @@ export default function PurohitBookingsScreen() {
                   </Text>
                   <Text className="text-xs text-ink-muted">{MATERIALS_LABEL[item.materials_option]}</Text>
                   {item.message ? <Text className="text-xs text-ink-body">Note: {item.message}</Text> : null}
-                  {item.attachment_url ? (
-                    <TouchableOpacity onPress={() => Linking.openURL(item.attachment_url!)}>
+                  {item.attachment_key ? (
+                    <TouchableOpacity disabled={attachmentLoading} onPress={() => handleViewAttachment(item.attachment_key!)}>
                       <Text className="text-xs font-rubik-semibold text-primary underline">View Attachment</Text>
                     </TouchableOpacity>
                   ) : null}

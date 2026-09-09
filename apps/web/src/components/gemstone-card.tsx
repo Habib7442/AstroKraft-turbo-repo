@@ -73,16 +73,12 @@ export function GemstoneCard({ product, locale, className = "" }: GemstoneCardPr
 
         <h3 className="line-clamp-1 text-sm font-semibold text-foreground sm:text-base">{product.title}</h3>
 
-        <span className="flex items-center gap-1 text-xs text-ink-muted">
-          {product.review_count > 0 ? (
-            <>
-              <span className="text-gold">★</span>
-              {product.rating} ({product.review_count})
-            </>
-          ) : (
-            "No reviews yet"
-          )}
-        </span>
+        {product.review_count > 0 ? (
+          <span className="flex items-center gap-1 text-xs text-ink-muted">
+            <span className="text-gold">★</span>
+            {product.rating} ({product.review_count})
+          </span>
+        ) : null}
 
         {tiers.length > 0 ? (
           <GemstoneTierSelector product={product} tiers={tiers} categoryName={product.categories?.name} />

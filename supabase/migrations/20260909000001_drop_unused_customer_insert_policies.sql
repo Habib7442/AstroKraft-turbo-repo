@@ -1,0 +1,24 @@
+-- ========================================================
+-- Migration: Drop unused, exploitable customer INSERT policies
+-- ========================================================
+-- SECURITY FIX: "Users insert own orders" and "Users insert own
+-- consultations" only ever checked that user_id matched the caller's own
+-- Clerk id — neither restricted `status` or the amount columns. Since
+-- 'paid'/'booked' are valid values under each table's own CHECK constraint
+-- even on INSERT (not just UPDATE), a genuinely signed-in customer could
+-- INSERT a fraudulent already-"paid" order or already-"booked" consultation
+-- directly via the public Supabase REST API (NEXT_PUBLIC_SUPABASE_URL and
+-- NEXT_PUBLIC_SUPABASE_ANON_KEY are both public by design, and any signed-in
+-- user can read their own Clerk session token straight out of the browser),
+-- completely bypassing Razorpay.
+--
+-- Neither policy serves any legitimate purpose: apps/web never uses a
+-- Clerk-authenticated Supabase client (grep confirms createClerkSupabaseClient
+-- is never imported there) — every real order/consultation write already
+-- goes through a server-side API route on the service-role client, which
+-- bypasses RLS entirely and is unaffected by this change. Dropping these
+-- policies removes the attack surface with zero functional impact; the
+-- existing "Users read own X" SELECT policies are untouched, so a customer
+-- can still see their own past orders/consultations exactly as before.
+DROP POLICY IF EXISTS "Users insert own orders" ON public.orders;
+DROP POLICY IF EXISTS "Users insert own consultations" ON public.consultations;

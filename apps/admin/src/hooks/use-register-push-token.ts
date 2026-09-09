@@ -43,6 +43,15 @@ export function useRegisterPushToken() {
 
       const Notifications = await import("expo-notifications");
 
+      // Which channel this device actually has, if any — null on iOS
+      // (channels are an Android concept) and for any early return below
+      // that skips channel creation. The server sends pushes on whatever
+      // channel_id this device last reported, falling back to "default"
+      // for a device that hasn't run this code yet, so it never targets a
+      // channel this device doesn't have (Android silently drops a push
+      // whose channel doesn't exist locally).
+      let channelId: string | null = null;
+
       if (Platform.OS === "android") {
         // Android 8+ locks a channel's sound/importance the first time it's
         // created with a given ID — later calls to setNotificationChannelAsync
@@ -59,6 +68,7 @@ export function useRegisterPushToken() {
           vibrationPattern: [0, 250, 250, 250],
           lightColor: "#E2C27A"
         });
+        channelId = "alerts";
       }
 
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -83,7 +93,10 @@ export function useRegisterPushToken() {
 
       const { error } = await supabase
         .from("push_tokens")
-        .upsert({ user_id: user.id, token: tokenResponse.data, platform: Platform.OS }, { onConflict: "token" });
+        .upsert(
+          { user_id: user.id, token: tokenResponse.data, platform: Platform.OS, channel_id: channelId },
+          { onConflict: "token" }
+        );
 
       if (error) {
         Alert.alert("Push token save failed", error.message);

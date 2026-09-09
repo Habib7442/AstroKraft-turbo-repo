@@ -33,3 +33,9 @@ supabase/.temp
 # OS files
 .DS_Store
 Thumbs.db
+
+# One-off dev/debug/maintenance scripts — local convenience only, never
+# shared/pushed. Some touch production secrets (service-role keys, payment
+# credentials) via process.env; keeping them out of git history entirely
+# is safer than trusting every future script here to be equally careful.
+scratch/

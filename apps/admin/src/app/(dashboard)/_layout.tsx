@@ -5,6 +5,7 @@ import { getRoleFromSessionClaims } from "@astrokraft/auth";
 import { DashboardTabs } from "@/components/dashboard-tabs";
 import { Button, Screen } from "@/components/ui";
 import { useRegisterPushToken } from "@/hooks/use-register-push-token";
+import { useNotificationRouting } from "@/hooks/use-notification-routing";
 
 export default function DashboardLayout() {
   const { isSignedIn, sessionClaims } = useAuth();
@@ -17,6 +18,10 @@ export default function DashboardLayout() {
   // && role === "admin" (the hook itself checks user?.id, which is only
   // set once signed in).
   useRegisterPushToken();
+  // Deep-links a tapped notification straight to its screen instead of the
+  // dashboard home — needs the router to be mounted, which is exactly what
+  // this layout guarantees once past the auth/role checks below.
+  useNotificationRouting();
 
   if (!isSignedIn) {
     return <Redirect href="/sign-in" />;

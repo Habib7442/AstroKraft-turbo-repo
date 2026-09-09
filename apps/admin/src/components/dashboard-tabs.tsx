@@ -65,6 +65,8 @@ export function DashboardTabs() {
       <Tabs.Screen name="reviews" options={{ href: null }} />
       {/* Reachable only by tapping an order card — not a tab destination. */}
       <Tabs.Screen name="order-detail" options={{ href: null }} />
+      {/* Reachable only via the home screen's notification bell — not a tab destination. */}
+      <Tabs.Screen name="notifications" options={{ href: null }} />
     </Tabs>
   );
 }

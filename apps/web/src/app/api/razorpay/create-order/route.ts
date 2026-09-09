@@ -141,10 +141,15 @@ export async function POST(req: NextRequest) {
         notes: { orderId: order.id }
       });
     } catch (err: any) {
+      console.error("razorpay create-order Razorpay API error:", err);
       await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.id);
       const status = err?.statusCode === 401 ? 401 : 500;
+      // err?.error?.description is Razorpay's own user-facing error text
+      // (e.g. "International cards are not supported") — safe to show. The
+      // raw err.message fallback is dropped: it can be an internal error
+      // (e.g. a Postgres error) that leaks table/column/constraint names.
       return NextResponse.json(
-        { error: err?.error?.description || err?.message || "Failed to create Razorpay order." },
+        { error: err?.error?.description || "Failed to create Razorpay order." },
         { status }
       );
     }
@@ -159,6 +164,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("razorpay create-order error:", err);
-    return NextResponse.json({ error: err.message || "Failed to create order." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create order." }, { status: 500 });
   }
 }

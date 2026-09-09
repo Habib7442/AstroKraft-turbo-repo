@@ -25,12 +25,21 @@ export async function generatePresignedUploadUrl(params: {
   bucket: string;
   key: string;
   contentType: string;
+  contentLength?: number;
   expiresIn?: number;
 }): Promise<string> {
   const command = new PutObjectCommand({
     Bucket: params.bucket,
     Key: params.key,
-    ContentType: params.contentType
+    ContentType: params.contentType,
+    // Signing ContentLength forces it into the presigned URL's signed
+    // headers, so the actual PUT must carry a matching Content-Length or
+    // R2 rejects the signature. This is the only way to bound the size of
+    // an object uploaded via presigned PUT (R2/S3 has no equivalent of a
+    // POST policy's content-length-range for PUT) — a max-size check made
+    // only when minting the URL is unenforceable, since nothing stops the
+    // holder of that URL from streaming more bytes than they declared.
+    ...(params.contentLength != null ? { ContentLength: params.contentLength } : {})
   });
 
   return getSignedUrl(params.client, command, {

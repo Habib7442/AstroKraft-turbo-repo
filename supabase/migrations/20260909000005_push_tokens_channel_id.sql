@@ -1,0 +1,23 @@
+-- ========================================================
+-- Migration: Track each push token's Android notification channel
+-- ========================================================
+-- CORRECTNESS FIX: the server started sending every push with
+-- channelId: "alerts", but Android only shows a push on a channel the
+-- device has actually created (Notifications.setNotificationChannelAsync
+-- must have run on that device first — see the comment in
+-- apps/admin/src/hooks/use-register-push-token.ts explaining why "alerts"
+-- replaced "default"). An admin device that hasn't yet relaunched the
+-- updated app build has no "alerts" channel, so pushes sent to it in that
+-- gap can silently fail to display, regardless of channelId being correct
+-- for devices that have updated.
+--
+-- Fix: record which channel each token's device has actually created.
+-- The admin app's registration hook now upserts channel_id: "alerts"
+-- every time it runs (i.e. every app launch while signed in), so a
+-- device's row updates itself the first time it opens the updated app —
+-- no reinstall required. The server sends channelId: t.channel_id ||
+-- "default" per token, so already-migrated devices get the correctly
+-- configured "alerts" channel and not-yet-migrated devices keep getting
+-- notifications (on whatever "default" already is for them) instead of
+-- silently dropping them.
+ALTER TABLE public.push_tokens ADD COLUMN channel_id TEXT;

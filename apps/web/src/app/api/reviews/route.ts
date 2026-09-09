@@ -67,11 +67,21 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      // 23505 = unique_violation on reviews_user_id_product_id_key — the
+      // SELECT check above is best-effort only; this is what actually
+      // catches a duplicate under concurrent requests for the same
+      // (user_id, product_id) that both passed that check before either
+      // insert committed.
+      if (insertError.code === "23505") {
+        return NextResponse.json({ error: "You've already reviewed this product." }, { status: 400 });
+      }
+      throw insertError;
+    }
 
     return NextResponse.json({ reviewId: review.id, status: review.status });
   } catch (err: any) {
     console.error("reviews create error:", err);
-    return NextResponse.json({ error: err.message || "Failed to submit your review." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to submit your review." }, { status: 500 });
   }
 }

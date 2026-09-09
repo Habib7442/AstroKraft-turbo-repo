@@ -23,6 +23,10 @@ const MATERIALS_OPTIONS: { value: "purohit_only" | "purohit_and_samagri"; label:
 ];
 
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+// UX only — the actual limit is enforced server-side (upload-url route caps
+// fileSize and signs it as the presigned PUT's Content-Length), since a
+// client-side check alone can't stop a direct request to the API.
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 function todayISODate() {
   const now = new Date();
@@ -69,6 +73,12 @@ export function PurohitBookingForm() {
     const selected = e.target.files?.[0] ?? null;
     if (selected && !ALLOWED_FILE_TYPES.includes(selected.type)) {
       setError("Please attach a JPEG, PNG, WEBP, or PDF file.");
+      setFile(null);
+      return;
+    }
+    if (selected && selected.size > MAX_FILE_SIZE_BYTES) {
+      setError("File must be smaller than 10 MB.");
+      setFile(null);
       return;
     }
     setError(null);
@@ -83,7 +93,7 @@ export function PurohitBookingForm() {
       const res = await fetch("/api/purohit-bookings/upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, contentType: file.type })
+        body: JSON.stringify({ fileName: file.name, contentType: file.type, fileSize: file.size })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -95,7 +105,7 @@ export function PurohitBookingForm() {
       });
       if (!putRes.ok) throw new Error("Upload failed");
 
-      return data.publicUrl as string;
+      return data.key as string;
     } catch (err) {
       console.error("purohit booking attachment upload failed:", err);
       return undefined;
@@ -109,7 +119,7 @@ export function PurohitBookingForm() {
     setError(null);
 
     try {
-      const attachmentUrl = await uploadAttachment();
+      const attachmentKey = await uploadAttachment();
 
       const res = await fetch("/api/purohit-bookings", {
         method: "POST",
@@ -124,7 +134,7 @@ export function PurohitBookingForm() {
           languagePreference: resolvedLanguage,
           materialsOption,
           message: message.trim() || undefined,
-          attachmentUrl,
+          attachmentKey,
           website
         })
       });
@@ -163,18 +173,39 @@ export function PurohitBookingForm() {
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className={fieldLabelClass}>Full Name</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your full name" className={fieldInputClass} />
+            <label htmlFor="pb-name" className={fieldLabelClass}>
+              Full Name
+            </label>
+            <input
+              id="pb-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your full name"
+              className={fieldInputClass}
+            />
           </div>
           <div>
-            <label className={fieldLabelClass}>Mobile / WhatsApp Number</label>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="10-digit mobile number" className={fieldInputClass} />
+            <label htmlFor="pb-phone" className={fieldLabelClass}>
+              Mobile / WhatsApp Number
+            </label>
+            <input
+              id="pb-phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="10-digit mobile number"
+              className={fieldInputClass}
+            />
           </div>
         </div>
 
         <div>
-          <label className={fieldLabelClass}>Location</label>
+          <label htmlFor="pb-location" className={fieldLabelClass}>
+            Location
+          </label>
           <input
+            id="pb-location"
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
@@ -185,8 +216,10 @@ export function PurohitBookingForm() {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className={fieldLabelClass}>Ritual Type</label>
-            <select value={ritualType} onChange={(e) => setRitualType(e.target.value)} className={fieldInputClass}>
+            <label htmlFor="pb-ritual-type" className={fieldLabelClass}>
+              Ritual Type
+            </label>
+            <select id="pb-ritual-type" value={ritualType} onChange={(e) => setRitualType(e.target.value)} className={fieldInputClass}>
               <option value="">Select a ritual</option>
               {RITUAL_TYPES.map((option) => (
                 <option key={option} value={option}>
@@ -197,6 +230,7 @@ export function PurohitBookingForm() {
             {ritualType === "Other" ? (
               <input
                 type="text"
+                aria-label="Ritual type"
                 value={ritualTypeOther}
                 onChange={(e) => setRitualTypeOther(e.target.value)}
                 placeholder="Tell us the ritual you need"
@@ -205,8 +239,15 @@ export function PurohitBookingForm() {
             ) : null}
           </div>
           <div>
-            <label className={fieldLabelClass}>Language Preference</label>
-            <select value={languagePreference} onChange={(e) => setLanguagePreference(e.target.value)} className={fieldInputClass}>
+            <label htmlFor="pb-language" className={fieldLabelClass}>
+              Language Preference
+            </label>
+            <select
+              id="pb-language"
+              value={languagePreference}
+              onChange={(e) => setLanguagePreference(e.target.value)}
+              className={fieldInputClass}
+            >
               <option value="">Select a language</option>
               {LANGUAGES.map((option) => (
                 <option key={option} value={option}>
@@ -217,6 +258,7 @@ export function PurohitBookingForm() {
             {languagePreference === "Other" ? (
               <input
                 type="text"
+                aria-label="Language preference"
                 value={languageOther}
                 onChange={(e) => setLanguageOther(e.target.value)}
                 placeholder="Tell us your preferred language"
@@ -228,12 +270,29 @@ export function PurohitBookingForm() {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className={fieldLabelClass}>Preferred Date</label>
-            <input type="date" value={preferredDate} min={minDate} onChange={(e) => setPreferredDate(e.target.value)} className={fieldInputClass} />
+            <label htmlFor="pb-preferred-date" className={fieldLabelClass}>
+              Preferred Date
+            </label>
+            <input
+              id="pb-preferred-date"
+              type="date"
+              value={preferredDate}
+              min={minDate}
+              onChange={(e) => setPreferredDate(e.target.value)}
+              className={fieldInputClass}
+            />
           </div>
           <div>
-            <label className={fieldLabelClass}>Preferred Time (optional)</label>
-            <input type="time" value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)} className={fieldInputClass} />
+            <label htmlFor="pb-preferred-time" className={fieldLabelClass}>
+              Preferred Time (optional)
+            </label>
+            <input
+              id="pb-preferred-time"
+              type="time"
+              value={preferredTime}
+              onChange={(e) => setPreferredTime(e.target.value)}
+              className={fieldInputClass}
+            />
           </div>
         </div>
 
@@ -258,8 +317,11 @@ export function PurohitBookingForm() {
         </div>
 
         <div>
-          <label className={fieldLabelClass}>Message (optional)</label>
+          <label htmlFor="pb-message" className={fieldLabelClass}>
+            Message (optional)
+          </label>
           <textarea
+            id="pb-message"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Anything else the team should know?"
@@ -269,8 +331,11 @@ export function PurohitBookingForm() {
         </div>
 
         <div>
-          <label className={fieldLabelClass}>Attachment (optional)</label>
+          <label htmlFor="pb-attachment" className={fieldLabelClass}>
+            Attachment (optional)
+          </label>
           <input
+            id="pb-attachment"
             type="file"
             accept={ALLOWED_FILE_TYPES.join(",")}
             onChange={handleFileChange}

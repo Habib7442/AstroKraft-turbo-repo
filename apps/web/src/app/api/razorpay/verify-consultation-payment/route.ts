@@ -106,6 +106,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, astrologerName: data.astrologer_name });
   } catch (err: any) {
     console.error("razorpay verify-consultation-payment error:", err);
-    return NextResponse.json({ error: err.message || "Failed to verify payment." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to verify payment." }, { status: 500 });
   }
 }

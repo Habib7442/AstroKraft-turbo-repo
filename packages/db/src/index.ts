@@ -134,7 +134,10 @@ export interface PurohitBooking {
   language_preference: string;
   materials_option: "purohit_only" | "purohit_and_samagri";
   message?: string;
-  attachment_url?: string;
+  // R2 object key under purohit-uploads/, never a URL — the object is
+  // private. Admins get a short-lived signed download URL from the
+  // r2-presign-download edge function, on demand.
+  attachment_key?: string;
   status: "new" | "contacted" | "confirmed" | "completed" | "cancelled";
   created_at: string;
   updated_at: string;
@@ -145,6 +148,11 @@ export interface PushToken {
   user_id: string;
   token: string;
   platform: string;
+  // Which Android notification channel this device last confirmed it has
+  // created; null on iOS or for a token registered before this column
+  // existed. The send-push helper falls back to "default" when null so it
+  // never targets a channel the device might not have.
+  channel_id?: string | null;
   created_at: string;
 }
 

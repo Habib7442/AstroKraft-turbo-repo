@@ -3,6 +3,7 @@ import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useUser, useClerk } from "@clerk/expo";
 import { Button, Screen } from "@/components/ui";
+import { NotificationBell } from "@/components/notification-bell";
 
 const WORKING_SCREENS = [
   {
@@ -84,7 +85,10 @@ export default function DashboardScreen() {
           <Image source={require("../../../assets/logo.png")} style={{ width: 30, height: 30, resizeMode: "contain" }} />
           <Text className="text-lg font-rubik-bold text-white tracking-tight">AstroKraft</Text>
         </View>
-        <Button label="Sign Out" variant="secondary" compact onPress={handleSignOut} />
+        <View className="flex-row items-center gap-1">
+          <NotificationBell />
+          <Button label="Sign Out" variant="secondary" compact onPress={handleSignOut} />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }}>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { purohitBookingSchema } from "@astrokraft/validators";
+import type { PurohitBooking } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendPurohitBookingEmail } from "@/lib/send-purohit-booking-email";
 import { sendPushNotificationToAdmins } from "@/lib/send-push-notification";
@@ -30,44 +31,45 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = getSupabaseAdminClient();
-
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count, error: rateLimitError } = await supabase
-      .from("purohit_bookings")
-      .select("id", { count: "exact", head: true })
-      .eq("phone", data.phone)
-      .gte("created_at", oneHourAgo);
-
-    if (rateLimitError) throw rateLimitError;
-    if ((count ?? 0) >= RATE_LIMIT_MAX_PER_HOUR) {
-      return NextResponse.json(
-        { error: "You've already sent a few requests. Please wait for our team's callback before submitting again." },
-        { status: 429 }
-      );
-    }
+    // One normalized value for both the rate-limit lookup and the insert —
+    // otherwise a caller varying whitespace between requests never matches
+    // the already-stored (trimmed) rows and bypasses the limit entirely.
+    const phone = data.phone.trim();
 
     const { userId } = await auth();
 
-    const { data: booking, error: insertError } = await supabase
-      .from("purohit_bookings")
-      .insert({
-        user_id: userId || null,
-        name: data.name.trim(),
-        phone: data.phone.trim(),
-        location: data.location.trim(),
-        ritual_type: data.ritualType.trim(),
-        preferred_date: data.preferredDate,
-        preferred_time: data.preferredTime || null,
-        language_preference: data.languagePreference.trim(),
-        materials_option: data.materialsOption,
-        message: data.message?.trim() || null,
-        attachment_url: data.attachmentUrl || null,
-        status: "new"
+    // Count-then-insert as two separate round-trips would let two
+    // concurrent requests for the same phone both read count < limit before
+    // either commits (TOCTOU). create_purohit_booking does both inside one
+    // transaction, serialized per-phone with a Postgres advisory lock, so
+    // the limit holds even under real concurrency.
+    const { data: booking, error: rpcError } = await supabase
+      .rpc("create_purohit_booking", {
+        p_user_id: userId || null,
+        p_name: data.name.trim(),
+        p_phone: phone,
+        p_location: data.location.trim(),
+        p_ritual_type: data.ritualType.trim(),
+        p_preferred_date: data.preferredDate,
+        p_preferred_time: data.preferredTime || null,
+        p_language_preference: data.languagePreference.trim(),
+        p_materials_option: data.materialsOption,
+        p_message: data.message?.trim() || null,
+        p_attachment_key: data.attachmentKey || null,
+        p_rate_limit_max: RATE_LIMIT_MAX_PER_HOUR,
+        p_rate_limit_window: "1 hour"
       })
-      .select()
-      .single();
+      .single<PurohitBooking>();
 
-    if (insertError) throw insertError;
+    if (rpcError) {
+      if (rpcError.message?.includes("rate_limit_exceeded")) {
+        return NextResponse.json(
+          { error: "You've already sent a few requests. Please wait for our team's callback before submitting again." },
+          { status: 429 }
+        );
+      }
+      throw rpcError;
+    }
 
     try {
       await sendPurohitBookingEmail(booking);
@@ -90,6 +92,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ bookingId: booking.id, status: booking.status });
   } catch (err: any) {
     console.error("purohit-bookings create error:", err);
-    return NextResponse.json({ error: err.message || "Failed to submit your request." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to submit your request." }, { status: 500 });
   }
 }
