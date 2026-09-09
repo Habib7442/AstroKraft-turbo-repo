@@ -63,6 +63,7 @@ export default async function CategoryPage({
     .select("*, categories!inner(name), product_variants(id, quality, price)")
     .eq("is_active", true)
     .eq("categories.slug", slug)
+    .order("badge", { ascending: false, nullsFirst: false })
     .order("sort_order", { ascending: true });
 
   return (
