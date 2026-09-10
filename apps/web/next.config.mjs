@@ -3,15 +3,32 @@ const r2PublicHostname = process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN
   : undefined;
 
 // Origins this app's CLIENT-SIDE code actually loads scripts from, connects
-// to, or embeds — audited directly against the code, not guessed:
+// to, or embeds. First pass here was wrong on two fronts, found only after
+// deploying and reading real browser console errors — see incident notes:
+//   1. Clerk DOES load an external script from its own Frontend API domain
+//      (clerk.astrokraft.online/npm/@clerk/clerk-js@6/... and .../ui@1/...)
+//      — it is not bundled into the app's own JS as first assumed. Missing
+//      that origin from script-src broke Clerk (and thus the whole app)
+//      entirely.
+//   2. Cloudflare injects its own Web Analytics beacon
+//      (static.cloudflareinsights.com) at the edge on every response for a
+//      Cloudflare-proxied domain — this isn't in the app's code at all, so
+//      static analysis of the repo alone can't find it.
+//   Also: Next.js's App Router itself emits inline <script> tags for RSC
+//   streaming/hydration on every page (self.__next_f.push(...)). A static
+//   (non-nonce) CSP has no way to selectively allow just those — Next's own
+//   docs' non-nonce example also uses 'unsafe-inline' in script-src for
+//   exactly this reason. The alternative (a per-request nonce via
+//   middleware) requires converting every page to fully dynamic rendering
+//   — no ISR/static generation, no CDN caching — which this app currently
+//   relies on for its homepage/category pages; not something to switch to
+//   as an incident fix without a deliberate decision.
+//
 //   - checkout.razorpay.com: the Razorpay checkout.js widget
-//     (src/lib/load-razorpay-script.ts). Its modal injects inline styles,
-//     hence 'unsafe-inline' in style-src — script-src stays strict (no
-//     inline scripts anywhere in the app; the JSON-LD block in layout.tsx
-//     is type="application/ld+json", which script-src doesn't govern).
-//     api.razorpay.com/lumberjack.razorpay.com are Razorpay's own
-//     documented CSP requirements for checkout.js's XHR calls and its 3DS/
-//     OTP iframe, not directly visible in this repo.
+//     (src/lib/load-razorpay-script.ts). api.razorpay.com/
+//     lumberjack.razorpay.com are Razorpay's own documented CSP
+//     requirements for checkout.js's XHR calls and its 3DS/OTP iframe, not
+//     directly visible in this repo.
 //   - *.clerk.accounts.dev / clerk.astrokraft.online: Clerk's Frontend API
 //     — dev instance uses the former, the production instance (decoded
 //     from its pk_live_ key) uses the latter custom domain. img.clerk.com
@@ -24,9 +41,10 @@ const r2PublicHostname = process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN
 //     (purohit-booking-form.tsx); media.astrokraft.online / pub-*.r2.dev
 //     are where uploaded images are actually served from (next.config's
 //     own images.remotePatterns below).
+const isDev = process.env.NODE_ENV === "development";
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' https://checkout.razorpay.com",
+  `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://clerk.astrokraft.online https://*.clerk.accounts.dev https://static.cloudflareinsights.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https://media.astrokraft.online https://pub-*.r2.dev https://*.razorpay.com https://img.clerk.com",
   "font-src 'self'",
