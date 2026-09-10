@@ -59,18 +59,33 @@ const r2PublicHostname = process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN
 //     createClerkSupabaseClient/createSupabaseClient.
 //   - *.r2.cloudflarestorage.com: the browser PUTs directly to a presigned
 //     R2 URL when uploading a purohit-booking attachment
-//     (purohit-booking-form.tsx); media.astrokraft.online / pub-*.r2.dev
-//     are where uploaded images are actually served from (next.config's
-//     own images.remotePatterns below).
+//     (purohit-booking-form.tsx); media.astrokraft.online / *.r2.dev are
+//     where uploaded images are actually served from (next.config's own
+//     images.remotePatterns below uses "pub-*.r2.dev", a glob pattern
+//     Next's own image loader supports — but the CSP spec only allows "*"
+//     as a whole host label, e.g. "*.r2.dev", never a partial-label
+//     prefix like "pub-*". The browser silently DROPS a source it can't
+//     parse rather than erroring, so "https://pub-*.r2.dev" here was
+//     invisibly not allowing anything at all — caught from a real
+//     "invalid source, it will be ignored" console warning, not by
+//     re-reading this file.
+//   - worker-src 'self' blob:: Clerk's browser SDK creates a Web Worker
+//     from a blob: URL (presumably for background token refresh). With no
+//     worker-src directive, CSP falls back to script-src for workers too
+//     — and blob: was never in script-src (nor would 'unsafe-inline'
+//     cover it; that only applies to actual inline <script> tags/
+//     handlers). Also only found from a real browser console error, not
+//     something inferable from Clerk's docs alone.
 const isDev = process.env.NODE_ENV === "development";
 const CSP_DIRECTIVES = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://clerk.astrokraft.online https://*.clerk.accounts.dev https://static.cloudflareinsights.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https://media.astrokraft.online https://pub-*.r2.dev https://*.razorpay.com https://img.clerk.com",
+  "img-src 'self' data: https://media.astrokraft.online https://*.r2.dev https://*.razorpay.com https://img.clerk.com",
   "font-src 'self'",
   "connect-src 'self' https://svfhlhmrnoywfqmkcgue.supabase.co https://*.r2.cloudflarestorage.com https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com https://*.clerk.accounts.dev https://clerk.astrokraft.online",
   "frame-src https://checkout.razorpay.com https://api.razorpay.com",
+  "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
