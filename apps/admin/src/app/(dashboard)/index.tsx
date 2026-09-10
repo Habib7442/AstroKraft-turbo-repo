@@ -1,9 +1,11 @@
 import React from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useUser, useClerk } from "@clerk/expo";
-import { Button, Screen } from "@/components/ui";
+import { Button, RefreshableScrollView, Screen } from "@/components/ui";
 import { NotificationBell } from "@/components/notification-bell";
+import { useNotificationCount } from "@/hooks/use-notification-count";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 
 const WORKING_SCREENS = [
   {
@@ -69,6 +71,8 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useUser();
   const { signOut } = useClerk();
+  const { count: notificationCount, refresh: refreshNotifications } = useNotificationCount();
+  const { refreshing, onRefresh } = usePullToRefresh(refreshNotifications);
 
   const handleSignOut = async () => {
     await signOut();
@@ -86,12 +90,12 @@ export default function DashboardScreen() {
           <Text className="text-lg font-rubik-bold text-white tracking-tight">AstroKraft</Text>
         </View>
         <View className="flex-row items-center gap-1">
-          <NotificationBell />
+          <NotificationBell count={notificationCount} refresh={refreshNotifications} />
           <Button label="Sign Out" variant="secondary" compact onPress={handleSignOut} />
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }}>
+      <RefreshableScrollView refreshing={refreshing} onRefresh={onRefresh} contentContainerStyle={{ padding: 20, gap: 18 }}>
         <View className="bg-surface-card border border-surface-border rounded-2xl p-4 shadow-sm flex-row items-center gap-3">
           <View className="w-12 h-12 rounded-full bg-primary items-center justify-center">
             <Text className="text-lg font-rubik-bold text-white">{initial}</Text>
@@ -160,7 +164,7 @@ export default function DashboardScreen() {
             ))}
           </View>
         </View>
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

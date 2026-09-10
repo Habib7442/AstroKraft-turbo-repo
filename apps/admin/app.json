@@ -15,7 +15,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "monochromeImage": "./assets/adaptive-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -58,6 +62,13 @@
         "projectId": "b8986f5e-f137-4c7a-89cc-2ea0af0e111b"
       }
     },
-    "owner": "astrokraft"
+    "owner": "astrokraft",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b8986f5e-f137-4c7a-89cc-2ea0af0e111b"
+    },
+    "ios": {}
   }
 }

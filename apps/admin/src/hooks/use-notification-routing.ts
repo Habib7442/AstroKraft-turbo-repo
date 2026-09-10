@@ -25,9 +25,18 @@ export function useNotificationRouting() {
     async function setup() {
       const Notifications = await import("expo-notifications");
 
-      const navigate = (data: Record<string, unknown> | undefined | null) => {
+      const navigate = (data: unknown) => {
         const route = getNotificationRoute(data);
-        if (route) router.push(route);
+        if (route) {
+          router.push(route);
+        } else {
+          // Falling through to expo-router's default (the dashboard home)
+          // is an acceptable fallback here — unlike the bell, tapping the
+          // OS notification already opens the app either way. Still log it:
+          // this only happens if the data shape didn't match what
+          // getNotificationRoute expects, which is worth knowing about.
+          console.error("Could not resolve a route for notification data:", data);
+        }
       };
 
       // Covers the app being cold-started by tapping a notification (the

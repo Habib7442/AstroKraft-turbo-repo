@@ -1,52 +1,28 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Alert, AppState, Text, TouchableOpacity, View } from "react-native";
+import React from "react";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { getNotificationRoute } from "@/lib/notification-routing";
 
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+interface NotificationBellProps {
+  // Owned by the parent screen (useNotificationCount) rather than this
+  // component, so the dashboard's pull-to-refresh and this badge share one
+  // count instead of drifting out of sync as two independent hook
+  // instances each polling the OS tray on their own.
+  count: number;
+  refresh: () => void;
+}
 
 // "Unread" here means "still sitting in the OS notification tray,
 // un-dismissed" (Notifications.getPresentedNotificationsAsync) rather than
 // app-tracked read/unread state — the tray already IS a reliable, OS-backed
 // record of "arrived but not yet opened" that survives the app being
 // killed, so there's no need to duplicate it with our own storage.
-export function NotificationBell() {
+export function NotificationBell({ count, refresh }: NotificationBellProps) {
   const router = useRouter();
-  const [count, setCount] = useState(0);
-
-  const refreshCount = useCallback(async () => {
-    if (isExpoGo) return;
-    try {
-      const Notifications = await import("expo-notifications");
-      const presented = await Notifications.getPresentedNotificationsAsync();
-      setCount(presented.length);
-    } catch (err) {
-      console.error("Failed to read presented notifications:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    refreshCount();
-    // Covers the common case: a notification arrives while the app is
-    // backgrounded/killed, and the admin opens the app from the home
-    // screen icon rather than by tapping the notification itself.
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") refreshCount();
-    });
-    return () => subscription.remove();
-  }, [refreshCount]);
-
-  // Covers returning to the home tab after clearing/opening notifications
-  // from the /notifications list screen — that screen dismisses items
-  // itself, so this tab's badge would otherwise stay stale until the app
-  // was next backgrounded and foregrounded.
-  useFocusEffect(
-    useCallback(() => {
-      refreshCount();
-    }, [refreshCount])
-  );
 
   const handlePress = async () => {
     if (isExpoGo) return;
@@ -68,11 +44,22 @@ export function NotificationBell() {
       }
 
       const [only] = presented;
-      const route = getNotificationRoute(only.request.content.data as Record<string, unknown>);
+      const route = getNotificationRoute(only.request.content.data);
       await Notifications.dismissNotificationAsync(only.request.identifier);
-      setCount(0);
+      // Re-check rather than assume 0 — this reflects whatever the tray
+      // actually holds now, not just what this one dismiss should imply.
+      refresh();
 
-      if (route) router.push(route);
+      if (route) {
+        router.push(route);
+      } else {
+        // Couldn't tell which screen this belongs to — never leave the tap
+        // doing nothing visible. The list screen at least shows the
+        // notification's title/body, and reads the same data this just
+        // failed to parse, which helps spot what's actually wrong.
+        console.error("Could not resolve a route for notification data:", only.request.content.data);
+        router.push("/notifications");
+      }
     } catch (err) {
       console.error("Failed to open notification:", err);
     }
