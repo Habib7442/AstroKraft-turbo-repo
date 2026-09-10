@@ -36,11 +36,11 @@ export function GemstoneCard({ product, locale, className = "" }: GemstoneCardPr
       } ${className}`}
     >
       {isHot ? (
-        <span className="absolute right-2.5 top-2.5 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-saffron px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+        <span className="absolute right-2.5 top-2.5 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-saffron px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-foreground shadow-sm">
           🔥 Hot Pick
         </span>
       ) : product.is_featured ? (
-        <span className="absolute right-2.5 top-2.5 z-10 whitespace-nowrap rounded-full bg-saffron px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+        <span className="absolute right-2.5 top-2.5 z-10 whitespace-nowrap rounded-full bg-saffron px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-foreground shadow-sm">
           Bestseller
         </span>
       ) : null}

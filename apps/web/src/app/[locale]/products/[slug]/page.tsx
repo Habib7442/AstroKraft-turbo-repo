@@ -132,7 +132,7 @@ export default async function ProductDetailPage({
               <div className="flex h-full w-full items-center justify-center text-5xl">💎</div>
             )}
             {typedProduct.is_featured ? (
-              <span className="absolute right-3 top-3 rounded-full bg-saffron px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm">
+              <span className="absolute right-3 top-3 rounded-full bg-saffron px-3 py-1 text-xs font-bold uppercase tracking-wide text-foreground shadow-sm">
                 Bestseller
               </span>
             ) : null}

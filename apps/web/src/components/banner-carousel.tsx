@@ -104,16 +104,26 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
             </svg>
           </button>
 
-          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5">
+          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center">
             {banners.map((banner, idx) => (
+              // The visible dot stays slim by design (h-1.5 = 6px), but a
+              // 6px (or 20px active) x 6px button is far under WCAG's 24x24
+              // minimum touch-target size. p-2.5 pads the actual button out
+              // to >=26px in both dimensions without changing how the dot
+              // looks — the padding itself provides visual spacing between
+              // dots, so no extra gap is needed on the parent.
               <button
                 key={banner.id}
                 onClick={() => setCurrentSlide(idx)}
                 aria-label={`Go to slide ${idx + 1}`}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  currentSlide === idx ? "w-5 bg-gold" : "w-1.5 bg-white/50 hover:bg-white/80"
-                }`}
-              />
+                className="group p-2.5"
+              >
+                <span
+                  className={`block h-1.5 rounded-full transition-all duration-300 ${
+                    currentSlide === idx ? "w-5 bg-gold" : "w-1.5 bg-white/50 group-hover:bg-white/80"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </>

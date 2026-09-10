@@ -18,8 +18,13 @@ export const astroKraftTheme = {
       foreground: "#FFFFFF"
     },
     gold: {
-      DEFAULT: "#B8860B",
-      deep: "#B8860B",
+      // Darkened from #B8860B — that shade only gives ~3.3:1 contrast
+      // against white (both as text-gold on a card, and as bg-gold with
+      // white text), below WCAG AA's 4.5:1 minimum for normal-size text.
+      // #8B6508 gives ~5.3:1 either way (verified via the WCAG relative
+      // luminance formula), while staying recognizably the same gold hue.
+      DEFAULT: "#8B6508",
+      deep: "#8B6508",
       soft: "#C9A24B",
       line: "#ECE7F7"
     },
@@ -27,7 +32,12 @@ export const astroKraftTheme = {
     ink: {
       DEFAULT: "#221A3D",
       body: "#4A4566",
-      muted: "#6E698A"
+      // Darkened from #6E698A — passed against a plain white/background
+      // card (~5.2:1) but fell to ~4.36:1 (below WCAG AA's 4.5:1) against
+      // the primary/10 tint used behind a *selected* gemstone tier button,
+      // the tightest realistic background this color sits on. #635E7D
+      // clears that case at ~5.1:1 with margin.
+      muted: "#635E7D"
     },
     destructive: {
       DEFAULT: "#C0392B",
