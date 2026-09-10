@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { CartHydrator } from "@/components/cart-hydrator";
-import { constructMetadata, globalJsonLd, viewport } from "@/lib/seo";
+import { constructMetadata, globalJsonLd, toJsonLdString, viewport } from "@/lib/seo";
 import "./globals.css";
 
 export const metadata: Metadata = constructMetadata({ root: true });
@@ -17,7 +17,7 @@ export default function RootLayout({
       <body className="antialiased bg-[#F7F5FC] text-[#221A3D]" suppressHydrationWarning>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(globalJsonLd()) }}
+          dangerouslySetInnerHTML={{ __html: toJsonLdString(globalJsonLd()) }}
         />
         <ClerkProvider>
           <CartHydrator />

@@ -7,7 +7,7 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { isValidLocale } from "@/lib/locales";
 import { TierSelector } from "@/components/tier-selector";
 import { ProductReviews, type ReviewRow } from "@/components/product-reviews";
-import { constructMetadata, productSchema } from "@/lib/seo";
+import { constructMetadata, productSchema, toJsonLdString } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -108,7 +108,7 @@ export default async function ProductDetailPage({
 
   return (
     <main className="min-h-screen bg-background">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLdString(schema) }} />
 
       <div className="mx-auto w-full max-w-6xl px-6 pt-6">
         <Link href={`/${locale}`} className="text-xs font-semibold text-primary hover:underline">

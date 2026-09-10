@@ -24,6 +24,27 @@ const r2PublicHostname = process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN
 //   relies on for its homepage/category pages; not something to switch to
 //   as an incident fix without a deliberate decision.
 //
+//   SECURITY EXCEPTION — 'unsafe-inline' in script-src: this does mean CSP
+//   provides no defense-in-depth against an inline-script XSS specifically
+//   (it still restricts which *external* origins can load a script, and
+//   still blocks e.g. an injected <script src="https://evil.example">).
+//   Compensating controls for the inline-script case:
+//     - React/JSX escapes every interpolated value by default; nothing in
+//       this app renders raw, unescaped HTML from a template string.
+//     - The only dangerouslySetInnerHTML usages in the whole app are the
+//       three JSON-LD blocks (layout.tsx, products/[slug]/page.tsx) — all
+//       type="application/ld+json" (never executed as script even if the
+//       CSP allowed it), and now built via lib/seo.ts's toJsonLdString()
+//       instead of plain JSON.stringify(), which escapes "<"/">"/"&" so an
+//       embedded value (e.g. an admin-entered product description)
+//       containing a literal "</script>" can't prematurely close the tag
+//       and inject a real, executable <script> after it.
+//     - No other template/string-concatenation HTML construction exists in
+//       the codebase (verified by grep for dangerouslySetInnerHTML).
+//   Revisit if a nonce-based CSP (see above) is ever adopted, or if any
+//   future code adds a new dangerouslySetInnerHTML / raw HTML string sink
+//   — that would need the same toJsonLdString-style escaping at minimum.
+//
 //   - checkout.razorpay.com: the Razorpay checkout.js widget
 //     (src/lib/load-razorpay-script.ts). api.razorpay.com/
 //     lumberjack.razorpay.com are Razorpay's own documented CSP

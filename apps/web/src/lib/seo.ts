@@ -204,8 +204,18 @@ export const viewport: Viewport = {
 /* ============================================================================
  * 4. JSON-LD STRUCTURED DATA BUILDERS
  *    Render via: <script type="application/ld+json"
- *      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+ *      dangerouslySetInnerHTML={{ __html: toJsonLdString(schema) }} />
  * ==========================================================================*/
+
+// Plain JSON.stringify does not escape "<" — a schema value containing a
+// literal "</script>" (e.g. an admin-entered product description) would
+// close this script tag early and let whatever follows in the HTML run as
+// a real, executable inline script. Escaping "<"/">"/"&" as JS unicode
+// escapes neutralizes that without changing the JSON value once parsed
+// (these are the same characters JSON.stringify would happily leave raw).
+export function toJsonLdString(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+}
 
 const ORG_ID = `${SITE.url}/#organization`;
 const WEBSITE_ID = `${SITE.url}/#website`;
