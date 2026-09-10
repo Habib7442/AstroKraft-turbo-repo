@@ -1,6 +1,6 @@
 import { S3Client, GetObjectCommand } from "npm:@aws-sdk/client-s3@3";
 import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@3";
-import { jwtVerify, createRemoteJWKSet } from "npm:jose@5";
+import { verifyClerkToken } from "../_shared/clerk-auth.ts";
 
 // Mints short-lived GET URLs for objects that must NOT be reachable through
 // the public R2 custom domain (customer-submitted purohit booking
@@ -11,14 +11,11 @@ const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID")!;
 const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID")!;
 const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY")!;
 const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME")!;
-const CLERK_JWKS_URL = Deno.env.get("CLERK_JWKS_URL")!;
 
 // Every caller of this function so far only ever needs purohit booking
 // attachments. Restricting to this prefix keeps the function from becoming
 // a general "read any object in the bucket" oracle for an admin token.
 const ALLOWED_KEY_PREFIX = "purohit-uploads/";
-
-const clerkJwks = createRemoteJWKSet(new URL(CLERK_JWKS_URL));
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -52,12 +49,12 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Missing authorization" }, 401);
   }
 
-  let role: unknown;
+  let role: string | undefined;
   try {
-    const { payload } = await jwtVerify(token, clerkJwks);
-    role = (payload.metadata as { role?: string } | undefined)?.role;
+    ({ role } = await verifyClerkToken(token));
   } catch (err) {
-    return jsonResponse({ error: `Invalid token: ${err instanceof Error ? err.message : "verification failed"}` }, 401);
+    console.error("r2-presign-download token verification error:", err);
+    return jsonResponse({ error: "Invalid or expired token" }, 401);
   }
 
   if (role !== "admin") {

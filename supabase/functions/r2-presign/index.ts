@@ -1,15 +1,12 @@
 import { S3Client, PutObjectCommand } from "npm:@aws-sdk/client-s3@3";
 import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@3";
-import { jwtVerify, createRemoteJWKSet } from "npm:jose@5";
+import { verifyClerkToken } from "../_shared/clerk-auth.ts";
 
 const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID")!;
 const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID")!;
 const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY")!;
 const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME")!;
 const R2_PUBLIC_DOMAIN = Deno.env.get("R2_PUBLIC_DOMAIN") ?? "https://media.astrokraft.online";
-const CLERK_JWKS_URL = Deno.env.get("CLERK_JWKS_URL")!;
-
-const clerkJwks = createRemoteJWKSet(new URL(CLERK_JWKS_URL));
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -43,10 +40,9 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Missing authorization" }, 401);
   }
 
-  let role: unknown;
+  let role: string | undefined;
   try {
-    const { payload } = await jwtVerify(token, clerkJwks);
-    role = (payload.metadata as { role?: string } | undefined)?.role;
+    ({ role } = await verifyClerkToken(token));
   } catch (err) {
     console.error("r2-presign token verification error:", err);
     return jsonResponse({ error: "Invalid or expired token" }, 401);

@@ -1,13 +1,10 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { jwtVerify, createRemoteJWKSet } from "npm:jose@5";
+import { verifyClerkToken } from "../_shared/clerk-auth.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID")!;
 const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET")!;
-const CLERK_JWKS_URL = Deno.env.get("CLERK_JWKS_URL")!;
-
-const clerkJwks = createRemoteJWKSet(new URL(CLERK_JWKS_URL));
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -38,10 +35,9 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Missing authorization" }, 401);
   }
 
-  let role: unknown;
+  let role: string | undefined;
   try {
-    const { payload } = await jwtVerify(token, clerkJwks);
-    role = (payload.metadata as { role?: string } | undefined)?.role;
+    ({ role } = await verifyClerkToken(token));
   } catch (err) {
     console.error("razorpay-refund token verification error:", err);
     return jsonResponse({ error: "Invalid or expired token" }, 401);

@@ -50,7 +50,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             .select("*, categories!inner(name), product_variants(id, quality, price)")
             .eq("is_active", true)
             .eq("categories.slug", category.slug)
-            .order("badge", { ascending: false, nullsFirst: false })
             .order("sort_order", { ascending: true })
             .limit(8);
           return { category, products: products ?? [] };
