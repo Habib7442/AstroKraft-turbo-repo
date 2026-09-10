@@ -117,7 +117,19 @@ const nextConfig = {
     // fixed thumbnail (48-240px) or caps out at desktop widths (~1920px),
     // never 2K/4K. Fewer buckets = fewer Image Optimization transformations
     // counted against the Vercel Hobby plan's monthly quota.
-    deviceSizes: [640, 750, 1080, 1200, 1920],
+    //
+    // 384/480 fill a real gap this trimming left: next/image's own
+    // candidate-selection algorithm (getWidths in
+    // shared/lib/get-img-props.js) picks the smallest configured size that's
+    // >= the image's actual displayed width. With nothing between imageSizes'
+    // max (256) and deviceSizes' min (640), every product/astrologer/category
+    // card in the ~260-630px range — most of the site's grid images — fell
+    // through to the 640px bucket regardless of being displayed at e.g.
+    // 382px, wasting ~60% of the download per image (confirmed via a
+    // PageSpeed "Improve image delivery" audit: ~698 KiB of avoidable
+    // transfer on the homepage alone). 384 and 480 close that gap for both
+    // the vw-based grid `sizes` values and the fixed "96px"/"240px" ones.
+    deviceSizes: [384, 480, 640, 750, 1080, 1200, 1920],
     imageSizes: [48, 64, 96, 128, 256],
     remotePatterns: [
       {

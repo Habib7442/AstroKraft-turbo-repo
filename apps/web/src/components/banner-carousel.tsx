@@ -48,6 +48,15 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
                 sizes="(max-width: 768px) 100vw, 1200px"
                 className="object-contain"
                 priority={index === 0}
+                // priority alone stops lazy-loading and emits the preload
+                // <link>, but does NOT set fetchPriority — that's a
+                // separate prop next/image doesn't derive automatically,
+                // confirmed against this project's installed Next.js
+                // version (15.5.25): without this, both the preload link
+                // and the <img> tag were missing fetchpriority="high"
+                // entirely, which is what Lighthouse's LCP request
+                // discovery audit flagged.
+                fetchPriority={index === 0 ? "high" : undefined}
               />
               {banner.title || banner.subtitle ? (
                 <div className="absolute inset-0 hidden flex-col justify-end bg-gradient-to-t from-foreground/75 via-foreground/10 to-transparent p-5 sm:flex sm:p-8">
