@@ -35,7 +35,7 @@ export function useNotificationRouting() {
           // OS notification already opens the app either way. Still log it:
           // this only happens if the data shape didn't match what
           // getNotificationRoute expects, which is worth knowing about.
-          console.error("Could not resolve a route for notification data:", data);
+          console.error("Could not resolve a route for notification data");
         }
       };
 
