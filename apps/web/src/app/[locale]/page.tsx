@@ -47,7 +47,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         categories.map(async (category) => {
           const { data: products } = await supabase
             .from("products")
-            .select("*, categories!inner(name), product_variants(id, quality, price)")
+            .select("*, categories!inner(name), product_variants(id, quality, price, original_price)")
             .eq("is_active", true)
             .eq("categories.slug", category.slug)
             .order("sort_order", { ascending: true })

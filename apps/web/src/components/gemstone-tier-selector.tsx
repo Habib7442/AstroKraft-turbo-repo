@@ -50,6 +50,9 @@ export function GemstoneTierSelector({ product, tiers, categoryName }: GemstoneT
               <span className="block text-[8px] font-bold uppercase tracking-wide text-ink-muted">
                 {TIER_LABELS[tier.quality as string] ?? tier.quality}
               </span>
+              {tier.original_price && tier.original_price > tier.price ? (
+                <span className="block text-[8px] text-ink-muted line-through">{formatPrice(tier.original_price)}</span>
+              ) : null}
               <span className="block text-[10.5px] font-bold text-gold">{formatPrice(tier.price)}</span>
             </button>
           );
@@ -66,6 +69,7 @@ export function GemstoneTierSelector({ product, tiers, categoryName }: GemstoneT
             title: product.title,
             subtitle: product.subtitle,
             price: selected.price,
+            originalPrice: selected.original_price ?? undefined,
             imageUrl: product.images?.[0],
             category: inferCartCategory(categoryName)
           }}

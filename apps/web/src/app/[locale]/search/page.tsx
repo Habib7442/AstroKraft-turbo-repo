@@ -70,7 +70,7 @@ export default async function SearchPage({
     const [{ data: productData }, { data: astrologerData }, { data: categoryData }] = await Promise.all([
       supabase
         .from("products")
-        .select("*, categories(name), product_variants(id, quality, price)")
+        .select("*, categories(name), product_variants(id, quality, price, original_price)")
         .eq("is_active", true)
         .or(productFilter)
         .order("sort_order", { ascending: true }),

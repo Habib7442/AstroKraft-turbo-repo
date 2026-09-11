@@ -7,6 +7,7 @@ export interface ProductVariantRow {
   id: string;
   quality: string | null;
   price: number;
+  original_price?: number | null;
 }
 
 export interface ProductWithRelations extends Product {

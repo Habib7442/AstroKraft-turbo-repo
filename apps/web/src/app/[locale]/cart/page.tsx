@@ -77,7 +77,12 @@ export default function CartPage() {
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-foreground">{item.title}</p>
                     {item.subtitle ? <p className="text-xs text-ink-muted">{item.subtitle}</p> : null}
-                    <p className="mt-1 text-sm font-bold text-gold">{formatPrice(item.price)}</p>
+                    <p className="mt-1 flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-gold">{formatPrice(item.price)}</span>
+                      {item.originalPrice && item.originalPrice > item.price ? (
+                        <span className="text-xs text-ink-muted line-through">{formatPrice(item.originalPrice)}</span>
+                      ) : null}
+                    </p>
                   </div>
 
                   <div className="flex items-center rounded-lg border border-surface-border">

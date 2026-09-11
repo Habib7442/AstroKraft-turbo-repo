@@ -60,7 +60,7 @@ export default async function CategoryPage({
   const supabase = getSupabaseClient();
   const { data: products } = await supabase
     .from("products")
-    .select("*, categories!inner(name), product_variants(id, quality, price)")
+    .select("*, categories!inner(name), product_variants(id, quality, price, original_price)")
     .eq("is_active", true)
     .eq("categories.slug", slug)
     .order("sort_order", { ascending: true });
