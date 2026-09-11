@@ -23,6 +23,10 @@ interface ProductVariantRow {
   id: string;
   quality: ProductQuality | null;
   price: number;
+  original_price: number | null;
+  sku: string | null;
+  carat_weight: number | null;
+  origin: string | null;
 }
 
 interface ProductWithRelations extends Product {
@@ -142,10 +146,13 @@ export default function CatalogScreen() {
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [sku, setSku] = useState("");
   const [caratWeight, setCaratWeight] = useState("");
-  const [origin, setOrigin] = useState("Ceylon (Sri Lanka)");
+  const [origin, setOrigin] = useState("");
   const [basicPrice, setBasicPrice] = useState("");
   const [semiPremPrice, setSemiPremPrice] = useState("");
   const [premiumPrice, setPremiumPrice] = useState("");
+  const [basicOriginalPrice, setBasicOriginalPrice] = useState("");
+  const [semiPremOriginalPrice, setSemiPremOriginalPrice] = useState("");
+  const [premiumOriginalPrice, setPremiumOriginalPrice] = useState("");
   const [emiAvailable, setEmiAvailable] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isActive, setIsActive] = useState(true);
@@ -156,7 +163,7 @@ export default function CatalogScreen() {
   const loadProducts = async () => {
     const { data, error } = await supabase
       .from("products")
-      .select("*, categories(name), product_variants(id, quality, price)")
+      .select("*, categories(name), product_variants(id, quality, price, original_price, sku, carat_weight, origin)")
       .order("sort_order", { ascending: true });
     if (error) throw error;
     setProducts((data as ProductWithRelations[]) || []);
@@ -277,10 +284,13 @@ export default function CatalogScreen() {
     setCategoryId(null);
     setSku("");
     setCaratWeight("");
-    setOrigin("Ceylon (Sri Lanka)");
+    setOrigin("");
     setBasicPrice("");
     setSemiPremPrice("");
     setPremiumPrice("");
+    setBasicOriginalPrice("");
+    setSemiPremOriginalPrice("");
+    setPremiumOriginalPrice("");
     setEmiAvailable(false);
     setIsFeatured(false);
     setIsActive(true);
@@ -298,21 +308,34 @@ export default function CatalogScreen() {
     setTitle(product.title);
     setSubtitle(product.subtitle ?? "");
     setCategoryId(product.category_id ?? null);
-    setSku("");
-    setCaratWeight("");
-    setOrigin("Ceylon (Sri Lanka)");
+    // Sku/carat/origin are per-tier in the DB but this form has one shared
+    // field for all tiers (same as the insert path below) — seed them from
+    // an existing tier so saving without touching these fields round-trips
+    // the real values instead of overwriting every tier with blank/default
+    // placeholders (see: existing-tier update branch further down).
+    const seedVariant = product.product_variants.find((v) => v.quality) ?? product.product_variants[0];
+    setSku(seedVariant?.sku ? seedVariant.sku.replace(/-(basic|semi_prem|premium)$/, "") : "");
+    setCaratWeight(seedVariant?.carat_weight != null ? String(seedVariant.carat_weight) : "");
+    setOrigin(seedVariant?.origin ?? "");
     setEmiAvailable(product.emi_available);
     setIsFeatured(product.is_featured);
     setIsActive(product.is_active);
     setImageUrl(product.images?.[0] ?? "");
     setImagePreviewFailed(false);
 
-    const tierPriceByQuality = new Map(
-      product.product_variants.filter((v) => v.quality).map((v) => [v.quality as ProductQuality, v.price])
+    const tierByQuality = new Map(
+      product.product_variants.filter((v) => v.quality).map((v) => [v.quality as ProductQuality, v])
     );
-    setBasicPrice(tierPriceByQuality.has("basic") ? String(tierPriceByQuality.get("basic")) : "");
-    setSemiPremPrice(tierPriceByQuality.has("semi_prem") ? String(tierPriceByQuality.get("semi_prem")) : "");
-    setPremiumPrice(tierPriceByQuality.has("premium") ? String(tierPriceByQuality.get("premium")) : "");
+    setBasicPrice(tierByQuality.has("basic") ? String(tierByQuality.get("basic")!.price) : "");
+    setSemiPremPrice(tierByQuality.has("semi_prem") ? String(tierByQuality.get("semi_prem")!.price) : "");
+    setPremiumPrice(tierByQuality.has("premium") ? String(tierByQuality.get("premium")!.price) : "");
+    setBasicOriginalPrice(tierByQuality.get("basic")?.original_price != null ? String(tierByQuality.get("basic")!.original_price) : "");
+    setSemiPremOriginalPrice(
+      tierByQuality.get("semi_prem")?.original_price != null ? String(tierByQuality.get("semi_prem")!.original_price) : ""
+    );
+    setPremiumOriginalPrice(
+      tierByQuality.get("premium")?.original_price != null ? String(tierByQuality.get("premium")!.original_price) : ""
+    );
 
     setIsModalOpen(true);
   };
@@ -335,11 +358,27 @@ export default function CatalogScreen() {
       semi_prem: semiPremPrice,
       premium: premiumPrice
     };
+    const tierOriginalPrices: Record<ProductQuality, string> = {
+      basic: basicOriginalPrice,
+      semi_prem: semiPremOriginalPrice,
+      premium: premiumOriginalPrice
+    };
     const filledTiers = TIERS.filter((tier) => tierPrices[tier.quality].trim() !== "");
 
     if (!title.trim() || filledTiers.length === 0) {
       Alert.alert("Error", "Please provide a title and at least one tier price (Basic, Semi-Premium, or Premium).");
       return;
+    }
+
+    for (const tier of filledTiers) {
+      const originalText = tierOriginalPrices[tier.quality].trim();
+      if (originalText !== "" && parseFloat(originalText) <= parseFloat(tierPrices[tier.quality])) {
+        Alert.alert(
+          "Error",
+          `${tier.label} original price must be higher than its offer price, or leave it blank if there's no discount.`
+        );
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -377,10 +416,19 @@ export default function CatalogScreen() {
             continue;
           }
 
+          const originalPriceText = tierOriginalPrices[tier.quality].trim();
+          const originalPrice = originalPriceText ? parseFloat(originalPriceText) : null;
+
           if (existing) {
             const { error } = await supabase
               .from("product_variants")
-              .update({ price: parseFloat(priceText) })
+              .update({
+                price: parseFloat(priceText),
+                original_price: originalPrice,
+                sku: sku.trim() ? `${sku.trim()}-${tier.quality}` : existing.sku,
+                carat_weight: numCarat,
+                origin: origin || null
+              })
               .eq("id", existing.id);
             if (error) throw error;
           } else {
@@ -392,6 +440,7 @@ export default function CatalogScreen() {
               carat_weight: numCarat,
               origin: origin || undefined,
               price: parseFloat(priceText),
+              original_price: originalPrice,
               stock: 1
             });
             if (error) throw error;
@@ -423,16 +472,20 @@ export default function CatalogScreen() {
 
         if (productError) throw productError;
 
-        const variantRows = filledTiers.map((tier) => ({
-          product_id: newProduct.id,
-          title: `${tier.label}${caratWeight ? ` · ${caratWeight} Ratti` : ""}`,
-          sku: sku.trim() ? `${sku.trim()}-${tier.quality}` : `${productSlug}-${tier.quality}`,
-          quality: tier.quality,
-          carat_weight: numCarat,
-          origin: origin || undefined,
-          price: parseFloat(tierPrices[tier.quality]),
-          stock: 1
-        }));
+        const variantRows = filledTiers.map((tier) => {
+          const originalPriceText = tierOriginalPrices[tier.quality].trim();
+          return {
+            product_id: newProduct.id,
+            title: `${tier.label}${caratWeight ? ` · ${caratWeight} Ratti` : ""}`,
+            sku: sku.trim() ? `${sku.trim()}-${tier.quality}` : `${productSlug}-${tier.quality}`,
+            quality: tier.quality,
+            carat_weight: numCarat,
+            origin: origin || undefined,
+            price: parseFloat(tierPrices[tier.quality]),
+            original_price: originalPriceText ? parseFloat(originalPriceText) : null,
+            stock: 1
+          };
+        });
 
         const { error: variantError } = await supabase.from("product_variants").insert(variantRows);
         if (variantError) throw variantError;
@@ -537,7 +590,14 @@ export default function CatalogScreen() {
                           <Text className="text-[9px] font-rubik-bold text-ink-muted uppercase">
                             {TIERS.find((t) => t.quality === variant.quality)?.label ?? variant.quality}
                           </Text>
-                          <Text className="text-[11px] font-rubik-bold text-primary">{formatTierPrice(variant.price)}</Text>
+                          <View className="flex-row items-center gap-1">
+                            <Text className="text-[11px] font-rubik-bold text-primary">{formatTierPrice(variant.price)}</Text>
+                            {variant.original_price && variant.original_price > variant.price ? (
+                              <Text className="text-[9px] font-rubik text-ink-muted line-through">
+                                {formatTierPrice(variant.original_price)}
+                              </Text>
+                            ) : null}
+                          </View>
                         </View>
                       ))}
                   </View>
@@ -649,10 +709,10 @@ export default function CatalogScreen() {
           keyboardType="numeric"
           onChangeText={setCaratWeight}
         />
-        <TextField label="Origin" placeholder="e.g. Ceylon (Sri Lanka)" value={origin} onChangeText={setOrigin} />
+        <TextField label="Origin (optional)" placeholder="e.g. Ceylon (Sri Lanka)" value={origin} onChangeText={setOrigin} />
         {editingProduct ? (
           <Text className="text-[11px] text-ink-muted -mt-2">
-            SKU, Carat/Ratti & Origin above apply only to new tiers you add during this edit — existing tier prices update in place.
+            SKU, Carat/Ratti & Origin above apply to all tiers of this product — saving updates existing tiers and uses these values for any new tier you add.
           </Text>
         ) : null}
 
@@ -660,27 +720,76 @@ export default function CatalogScreen() {
           <Text className="text-xs font-rubik-semibold text-ink-body">
             Quality Tier Pricing (fill in at least one)
           </Text>
-          <TextField
-            label="Basic Price (INR)"
-            placeholder="e.g. 12000"
-            value={basicPrice}
-            keyboardType="numeric"
-            onChangeText={setBasicPrice}
-          />
-          <TextField
-            label="Semi-Premium Price (INR)"
-            placeholder="e.g. 25000"
-            value={semiPremPrice}
-            keyboardType="numeric"
-            onChangeText={setSemiPremPrice}
-          />
-          <TextField
-            label="Premium Price (INR)"
-            placeholder="e.g. 45000"
-            value={premiumPrice}
-            keyboardType="numeric"
-            onChangeText={setPremiumPrice}
-          />
+          <Text className="text-[11px] text-ink-muted -mt-1">
+            Original Price is optional — set it to show a discount (struck-through original, offer price below it). Leave
+            blank for no discount.
+          </Text>
+
+          <Text className="text-[11px] font-rubik-semibold text-ink-body mt-1">Basic</Text>
+          <View className="flex-row gap-2">
+            <View className="flex-1">
+              <TextField
+                label="Offer Price (INR)"
+                placeholder="e.g. 12000"
+                value={basicPrice}
+                keyboardType="numeric"
+                onChangeText={setBasicPrice}
+              />
+            </View>
+            <View className="flex-1">
+              <TextField
+                label="Original Price (optional)"
+                placeholder="e.g. 15000"
+                value={basicOriginalPrice}
+                keyboardType="numeric"
+                onChangeText={setBasicOriginalPrice}
+              />
+            </View>
+          </View>
+
+          <Text className="text-[11px] font-rubik-semibold text-ink-body mt-1">Semi-Premium</Text>
+          <View className="flex-row gap-2">
+            <View className="flex-1">
+              <TextField
+                label="Offer Price (INR)"
+                placeholder="e.g. 25000"
+                value={semiPremPrice}
+                keyboardType="numeric"
+                onChangeText={setSemiPremPrice}
+              />
+            </View>
+            <View className="flex-1">
+              <TextField
+                label="Original Price (optional)"
+                placeholder="e.g. 30000"
+                value={semiPremOriginalPrice}
+                keyboardType="numeric"
+                onChangeText={setSemiPremOriginalPrice}
+              />
+            </View>
+          </View>
+
+          <Text className="text-[11px] font-rubik-semibold text-ink-body mt-1">Premium</Text>
+          <View className="flex-row gap-2">
+            <View className="flex-1">
+              <TextField
+                label="Offer Price (INR)"
+                placeholder="e.g. 45000"
+                value={premiumPrice}
+                keyboardType="numeric"
+                onChangeText={setPremiumPrice}
+              />
+            </View>
+            <View className="flex-1">
+              <TextField
+                label="Original Price (optional)"
+                placeholder="e.g. 52000"
+                value={premiumOriginalPrice}
+                keyboardType="numeric"
+                onChangeText={setPremiumOriginalPrice}
+              />
+            </View>
+          </View>
         </View>
 
         <View className="flex-row justify-between items-center bg-background border border-surface-border rounded-xl px-4 py-3">
