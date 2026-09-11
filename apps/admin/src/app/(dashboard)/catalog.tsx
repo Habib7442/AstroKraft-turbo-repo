@@ -372,10 +372,17 @@ export default function CatalogScreen() {
 
     for (const tier of filledTiers) {
       const originalText = tierOriginalPrices[tier.quality].trim();
-      if (originalText !== "" && parseFloat(originalText) <= parseFloat(tierPrices[tier.quality])) {
+      const offerPrice = Number(tierPrices[tier.quality]);
+      const originalPrice = originalText === "" ? null : Number(originalText);
+
+      if (!Number.isFinite(offerPrice)) {
+        Alert.alert("Error", `${tier.label} price must be a valid number.`);
+        return;
+      }
+      if (originalPrice !== null && (!Number.isFinite(originalPrice) || originalPrice <= offerPrice)) {
         Alert.alert(
           "Error",
-          `${tier.label} original price must be higher than its offer price, or leave it blank if there's no discount.`
+          `${tier.label} original price must be a valid number higher than its offer price, or leave it blank if there's no discount.`
         );
         return;
       }
