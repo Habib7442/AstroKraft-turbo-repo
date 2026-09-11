@@ -370,9 +370,10 @@ export default function CatalogScreen() {
       return;
     }
 
+    const parsedTierPrices = new Map<ProductQuality, { offerPrice: number; originalPrice: number | null }>();
     for (const tier of filledTiers) {
       const originalText = tierOriginalPrices[tier.quality].trim();
-      const offerPrice = Number(tierPrices[tier.quality]);
+      const offerPrice = Number(tierPrices[tier.quality].trim());
       const originalPrice = originalText === "" ? null : Number(originalText);
 
       if (!Number.isFinite(offerPrice)) {
@@ -386,6 +387,7 @@ export default function CatalogScreen() {
         );
         return;
       }
+      parsedTierPrices.set(tier.quality, { offerPrice, originalPrice });
     }
 
     setSubmitting(true);
@@ -423,14 +425,13 @@ export default function CatalogScreen() {
             continue;
           }
 
-          const originalPriceText = tierOriginalPrices[tier.quality].trim();
-          const originalPrice = originalPriceText ? parseFloat(originalPriceText) : null;
+          const { offerPrice, originalPrice } = parsedTierPrices.get(tier.quality)!;
 
           if (existing) {
             const { error } = await supabase
               .from("product_variants")
               .update({
-                price: parseFloat(priceText),
+                price: offerPrice,
                 original_price: originalPrice,
                 sku: sku.trim() ? `${sku.trim()}-${tier.quality}` : `${editingProduct.slug}-${tier.quality}`,
                 carat_weight: numCarat,
@@ -446,7 +447,7 @@ export default function CatalogScreen() {
               quality: tier.quality,
               carat_weight: numCarat,
               origin: origin || undefined,
-              price: parseFloat(priceText),
+              price: offerPrice,
               original_price: originalPrice,
               stock: 1
             });
@@ -480,7 +481,7 @@ export default function CatalogScreen() {
         if (productError) throw productError;
 
         const variantRows = filledTiers.map((tier) => {
-          const originalPriceText = tierOriginalPrices[tier.quality].trim();
+          const { offerPrice, originalPrice } = parsedTierPrices.get(tier.quality)!;
           return {
             product_id: newProduct.id,
             title: `${tier.label}${caratWeight ? ` · ${caratWeight} Ratti` : ""}`,
@@ -488,8 +489,8 @@ export default function CatalogScreen() {
             quality: tier.quality,
             carat_weight: numCarat,
             origin: origin || undefined,
-            price: parseFloat(tierPrices[tier.quality]),
-            original_price: originalPriceText ? parseFloat(originalPriceText) : null,
+            price: offerPrice,
+            original_price: originalPrice,
             stock: 1
           };
         });
