@@ -425,7 +425,7 @@ export default function CatalogScreen() {
               .update({
                 price: parseFloat(priceText),
                 original_price: originalPrice,
-                sku: sku.trim() ? `${sku.trim()}-${tier.quality}` : existing.sku,
+                sku: sku.trim() ? `${sku.trim()}-${tier.quality}` : `${editingProduct.slug}-${tier.quality}`,
                 carat_weight: numCarat,
                 origin: origin || null
               })
