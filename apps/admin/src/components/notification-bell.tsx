@@ -45,19 +45,22 @@ export function NotificationBell({ count, refresh }: NotificationBellProps) {
 
       const [only] = presented;
       const route = getNotificationRoute(only.request.content.data);
-      await Notifications.dismissNotificationAsync(only.request.identifier);
-      // Re-check rather than assume 0 — this reflects whatever the tray
-      // actually holds now, not just what this one dismiss should imply.
-      refresh();
 
       if (route) {
+        await Notifications.dismissNotificationAsync(only.request.identifier);
+        // Re-check rather than assume 0 — this reflects whatever the tray
+        // actually holds now, not just what this one dismiss should imply.
+        refresh();
         router.push(route);
       } else {
         // Couldn't tell which screen this belongs to — never leave the tap
         // doing nothing visible. The list screen at least shows the
         // notification's title/body, and reads the same data this just
-        // failed to parse, which helps spot what's actually wrong.
-        console.error("Could not resolve a route for notification data:", only.request.content.data);
+        // failed to parse, which helps spot what's actually wrong. Leave it
+        // un-dismissed: NotificationsScreen reads from the same OS tray
+        // (getPresentedNotificationsAsync), so dismissing here first would
+        // make it vanish before that screen ever gets a chance to show it.
+        console.error("Could not resolve a route for notification data");
         router.push("/notifications");
       }
     } catch (err) {
