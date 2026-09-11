@@ -1,6 +1,24 @@
 import { getSupabaseClient } from "@/lib/supabase";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { LOCALES } from "@/lib/locales";
+
+// LOCALES is small and effectively static (en, bn) - enumerating it here and
+// rejecting anything else lets Next.js's router 404 an invalid locale
+// (e.g. a stray inbound link to /fr/whatever) before any nested
+// page/Suspense boundary ever runs, instead of relying on every leaf page's
+// own `if (!isValidLocale(locale)) notFound()` check. That check happens
+// deep inside a streamed response - once the outer shell (including any
+// loading.tsx fallback) has already sent a 200, Next can't retroactively
+// turn it into a real 404, so every one of those pages was serving
+// "Not Found" content under an HTTP 200. This sidesteps the problem
+// entirely for the locale segment, with no effect on any page's own
+// loading.tsx skeleton.
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return LOCALES.map((locale) => ({ locale }));
+}
 
 export default async function LocaleLayout({
   children,
