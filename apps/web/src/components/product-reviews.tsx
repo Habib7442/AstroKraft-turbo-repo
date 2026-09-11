@@ -95,20 +95,32 @@ export function ProductReviews({ productId, reviews, averageRating, reviewCount 
           {reviews.length === 0 ? (
             <p className="text-sm text-ink-muted">No approved reviews yet for this product.</p>
           ) : (
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               {reviews.map((r) => (
-                <div key={r.id} className="rounded-lg border border-surface-border bg-surface-card p-4">
-                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                    <Stars rating={r.rating} />
-                    <span className="text-sm font-semibold text-foreground">{r.reviewerName}</span>
-                    {r.is_verified_buyer ? (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
-                        Verified Buyer
-                      </span>
-                    ) : null}
-                    <span className="ml-auto text-xs text-ink-muted">{formatDate(r.created_at)}</span>
+                <div
+                  key={r.id}
+                  className="rounded-xl border border-surface-border bg-surface-card p-5 shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      {r.reviewerName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="text-sm font-semibold text-foreground">{r.reviewerName}</span>
+                        {r.is_verified_buyer ? (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                            Verified Buyer
+                          </span>
+                        ) : null}
+                        <span className="ml-auto text-xs text-ink-muted">{formatDate(r.created_at)}</span>
+                      </div>
+                      <div className="mt-1">
+                        <Stars rating={r.rating} />
+                      </div>
+                      <p className="mt-2 text-sm leading-relaxed text-ink-body">{r.comment}</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-ink-body">{r.comment}</p>
                 </div>
               ))}
             </div>

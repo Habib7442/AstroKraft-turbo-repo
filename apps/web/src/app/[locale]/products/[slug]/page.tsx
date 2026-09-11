@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { Product, ProductVariant } from "@astrokraft/db";
-import { getSupabaseClient } from "@/lib/supabase";
+import { getSupabaseClient, getSupabaseAdminClient } from "@/lib/supabase";
 import { isValidLocale } from "@/lib/locales";
 import { TierSelector } from "@/components/tier-selector";
 import { ProductReviews, type ReviewRow } from "@/components/product-reviews";
@@ -28,26 +28,38 @@ async function getProduct(slug: string): Promise<ProductDetail | null> {
   return data as ProductDetail | null;
 }
 
-// Reviewer names aren't shown: `profiles` RLS only lets a user (or an admin)
-// read their own row, so an anonymous/other-visitor page read can never see
-// another customer's full_name — the "Verified Buyer" badge does the
-// trust-signaling work instead, without leaking who wrote what.
+// `profiles` RLS only lets a user (or an admin) read their own row, so an
+// anonymous/other-visitor page read via the anon-key client can never see
+// another customer's full_name. Reviewer display names are still public,
+// product-page-facing content (same as any storefront's review list), so
+// this uses the service-role client server-side to read them — never
+// exposed to the browser — and truncates to "First L." rather than the
+// full legal name, which is what's actually shown.
+function toDisplayName(fullName: string | null | undefined): string {
+  const trimmed = fullName?.trim();
+  if (!trimmed) return "AstroKraft Customer";
+  const parts = trimmed.split(/\s+/);
+  const first = parts[0];
+  const lastInitial = parts.length > 1 ? ` ${parts[parts.length - 1][0].toUpperCase()}.` : "";
+  return `${first}${lastInitial}`;
+}
+
 async function getApprovedReviews(productId: string): Promise<ReviewRow[]> {
-  const supabase = getSupabaseClient();
+  const supabase = getSupabaseAdminClient();
   const { data } = await supabase
     .from("reviews")
-    .select("id, rating, comment, is_verified_buyer, created_at")
+    .select("id, rating, comment, is_verified_buyer, created_at, profiles(full_name)")
     .eq("product_id", productId)
     .eq("status", "approved")
     .order("created_at", { ascending: false });
 
-  return (data ?? []).map((r) => ({
+  return (data ?? []).map((r: any) => ({
     id: r.id,
     rating: r.rating,
     comment: r.comment,
     is_verified_buyer: r.is_verified_buyer,
     created_at: r.created_at,
-    reviewerName: "AstroKraft Customer"
+    reviewerName: toDisplayName(r.profiles?.full_name)
   }));
 }
 
