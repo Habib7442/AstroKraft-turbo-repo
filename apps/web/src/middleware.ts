@@ -6,6 +6,11 @@ import { LOCALES } from "@/lib/locales";
 // get an /en prefix.
 const LOCALE_EXEMPT_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt"]);
 
+// First path segments reserved for internal routing, matched as a whole
+// segment (not a prefix) - "/api" must not also swallow "/apiary" and send
+// a real page path down the wrong branch.
+const LOCALE_EXEMPT_FIRST_SEGMENTS = new Set(["_next", "api", "trpc", "__clerk"]);
+
 // GSC's Coverage report flagged the bare domain root as "Page with
 // redirect" - it was relying on a page-level `redirect("/en")` in
 // app/page.tsx, which Next.js renders as a client-side
@@ -22,19 +27,15 @@ function localePrefixRedirect(request: Request): Response | undefined {
   const url = new URL(request.url);
   const { pathname } = url;
 
-  if (
-    LOCALE_EXEMPT_PATHS.has(pathname) ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/trpc") ||
-    pathname.startsWith("/__clerk") ||
-    /\.[a-zA-Z0-9]+$/.test(pathname)
-  ) {
+  if (LOCALE_EXEMPT_PATHS.has(pathname) || /\.[a-zA-Z0-9]+$/.test(pathname)) {
     return undefined;
   }
 
   const firstSegment = pathname.split("/")[1] ?? "";
-  if ((LOCALES as readonly string[]).includes(firstSegment)) {
+  if (
+    (LOCALES as readonly string[]).includes(firstSegment) ||
+    LOCALE_EXEMPT_FIRST_SEGMENTS.has(firstSegment)
+  ) {
     return undefined;
   }
 
