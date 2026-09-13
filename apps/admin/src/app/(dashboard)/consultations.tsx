@@ -219,21 +219,25 @@ export default function ConsultationsScreen() {
                   <Text className="text-[10px] font-rubik-bold uppercase text-gold">{item.consultation_categories.name}</Text>
                 ) : null}
 
-                <TouchableOpacity onPress={() => setAssigningId(assigningId === item.id ? null : item.id)}>
-                  <Text className="text-xs font-rubik-semibold text-primary">
-                    {assigningId === item.id ? "Cancel" : item.astrologer_name ? "Reassign Astrologer" : "Assign Astrologer"}
-                  </Text>
-                </TouchableOpacity>
+                {item.status === "booked" ? (
+                  <>
+                    <TouchableOpacity onPress={() => setAssigningId(assigningId === item.id ? null : item.id)}>
+                      <Text className="text-xs font-rubik-semibold text-primary">
+                        {assigningId === item.id ? "Cancel" : item.astrologer_name ? "Reassign Astrologer" : "Assign Astrologer"}
+                      </Text>
+                    </TouchableOpacity>
 
-                {assigningId === item.id ? (
-                  <View className="gap-2 rounded-lg bg-background border border-surface-border p-2">
-                    <CategoryPicker
-                      options={astrologerOptionsFor(item.category_id)}
-                      value={item.astrologer_id ?? null}
-                      onChange={(astrologerId) => handleAssignAstrologer(item, astrologerId)}
-                    />
-                    {assignLoading === item.id ? <Text className="text-[10px] text-ink-muted">Saving…</Text> : null}
-                  </View>
+                    {assigningId === item.id ? (
+                      <View className="gap-2 rounded-lg bg-background border border-surface-border p-2">
+                        <CategoryPicker
+                          options={astrologerOptionsFor(item.category_id)}
+                          value={item.astrologer_id ?? null}
+                          onChange={(astrologerId) => handleAssignAstrologer(item, astrologerId)}
+                        />
+                        {assignLoading === item.id ? <Text className="text-[10px] text-ink-muted">Saving…</Text> : null}
+                      </View>
+                    ) : null}
+                  </>
                 ) : null}
 
                 <View className="border-t border-surface-border pt-2 gap-1">
