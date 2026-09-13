@@ -6,7 +6,11 @@ import { isValidLocale } from "@/lib/locales";
 import { GemstoneCatalog } from "@/components/gemstone-catalog";
 import { constructMetadata } from "@/lib/seo";
 
-export const revalidate = 60;
+// 5 min rather than 1 min - see [locale]/page.tsx for the same reasoning
+// (repeated crawl/bot traffic every 60-90s was hitting this just past the
+// old 1-minute cache expiry almost every time, re-running the products
+// query on nearly every visit instead of serving from cache).
+export const revalidate = 300;
 
 async function getCategory(slug: string) {
   const supabase = getSupabaseClient();

@@ -5,7 +5,11 @@ import { isValidLocale } from "@/lib/locales";
 import { constructMetadata } from "@/lib/seo";
 import { ConsultationBookingFlow } from "@/components/consultation-booking-flow";
 
-export const revalidate = 60;
+// 5 min rather than 1 min - see [locale]/page.tsx for the same reasoning
+// (repeated crawl/bot traffic every 60-90s was hitting this just past the
+// old 1-minute cache expiry almost every time, re-running the categories
+// query on nearly every visit instead of serving from cache).
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;

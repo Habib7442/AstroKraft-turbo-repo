@@ -12,7 +12,13 @@ import { PurohitBookingCta } from "@/components/purohit-booking-cta";
 import { LOCALES, isValidLocale } from "@/lib/locales";
 import { constructMetadata } from "@/lib/seo";
 
-export const revalidate = 60;
+// 5 min rather than 1 min: this page re-runs several parallel Supabase
+// queries (banners, categories, astrologers, consultation categories, plus
+// a per-category products query) on every regeneration - a 1-minute window
+// meant near-constant re-renders under any regular crawl/bot traffic hitting
+// it every 60-90s, since almost every hit landed just past the previous
+// cache expiry. Catalog/pricing changes still show up within 5 minutes.
+export const revalidate = 300;
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));

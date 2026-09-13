@@ -9,7 +9,11 @@ import { TierSelector } from "@/components/tier-selector";
 import { ProductReviews, type ReviewRow } from "@/components/product-reviews";
 import { constructMetadata, productSchema, toJsonLdString } from "@/lib/seo";
 
-export const revalidate = 60;
+// 5 min rather than 1 min - see [locale]/page.tsx for the same reasoning
+// (repeated crawl/bot traffic every 60-90s was hitting this just past the
+// old 1-minute cache expiry almost every time, re-running the product +
+// reviews queries on nearly every visit instead of serving from cache).
+export const revalidate = 300;
 
 interface ProductDetail extends Product {
   categories: { name: string; slug: string } | null;
