@@ -115,7 +115,12 @@ export default async function SearchPage({
                     // Booking no longer lets the customer pick a specific
                     // astrologer (an admin assigns one afterward) - this
                     // deep-links to that astrologer's category instead.
-                    const firstCategoryId = astrologer.astrologer_categories[0]?.category_id;
+                    // categoryNameById only has active categories, so an
+                    // astrologer's first-listed category could be inactive -
+                    // find the first one that's actually bookable.
+                    const firstCategoryId = astrologer.astrologer_categories.find(({ category_id }) =>
+                      categoryNameById.has(category_id)
+                    )?.category_id;
                     return (
                       <Link
                         key={astrologer.id}

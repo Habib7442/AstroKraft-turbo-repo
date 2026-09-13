@@ -30,23 +30,27 @@ export function AstrologerShowcase({ astrologers, categoryNameById, locale, bgCl
         </div>
 
         <div className="scrollbar-hide flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 sm:gap-6">
-          {astrologers.map((astrologer) => (
-            <div key={astrologer.id} className="w-[240px] shrink-0 snap-start sm:w-[260px]">
-              <AstrologerCard
-                astrologer={astrologer}
-                categoryNameById={categoryNameById}
-                // Booking no longer lets the customer pick a specific
-                // astrologer (an admin assigns one afterward) - this deep-
-                // links to that astrologer's category instead, so "Book Now"
-                // still jumps straight past the category-picking step.
-                bookHref={
-                  astrologer.astrologer_categories[0]
-                    ? `/${locale}/consultation?category=${astrologer.astrologer_categories[0].category_id}`
-                    : `/${locale}/consultation`
-                }
-              />
-            </div>
-          ))}
+          {astrologers.map((astrologer) => {
+            // Booking no longer lets the customer pick a specific astrologer
+            // (an admin assigns one afterward) - this deep-links to that
+            // astrologer's category instead, so "Book Now" still jumps
+            // straight past the category-picking step. categoryNameById only
+            // has active categories, so an astrologer's first-listed
+            // category could be inactive - find the first one that's
+            // actually bookable.
+            const firstCategoryId = astrologer.astrologer_categories.find(({ category_id }) =>
+              categoryNameById.has(category_id)
+            )?.category_id;
+            return (
+              <div key={astrologer.id} className="w-[240px] shrink-0 snap-start sm:w-[260px]">
+                <AstrologerCard
+                  astrologer={astrologer}
+                  categoryNameById={categoryNameById}
+                  bookHref={firstCategoryId ? `/${locale}/consultation?category=${firstCategoryId}` : `/${locale}/consultation`}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
