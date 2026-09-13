@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
       console.error("razorpay verify-consultation-payment: push notification failed:", pushError);
     }
 
-    return NextResponse.json({ success: true, categoryName: category?.name ?? null });
+    return NextResponse.json({ success: true, categoryName });
   } catch (err: any) {
     console.error("razorpay verify-consultation-payment error:", err);
     return NextResponse.json({ error: "Failed to verify payment." }, { status: 500 });

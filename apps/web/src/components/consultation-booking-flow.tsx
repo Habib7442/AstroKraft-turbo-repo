@@ -151,8 +151,8 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl">✅</div>
         <h2 className="font-serif text-xl font-bold text-green-800">Consultation Booked!</h2>
         <p className="mt-2 text-sm text-green-700">
-          Your {success} consultation is confirmed. We&rsquo;ll assign one of our 100+ verified astrologers and reach
-          out shortly to schedule your session.
+          Your {success} booking is confirmed. We&rsquo;ll assign one of our 100+ verified astrologers and reach out
+          shortly to schedule your session.
         </p>
       </div>
     );
