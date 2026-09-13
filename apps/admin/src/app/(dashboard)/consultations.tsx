@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { Consultation } from "@astrokraft/db";
 import { formatINR, CONSULTATION_TRANSITIONS, type ConsultationStatus } from "@astrokraft/core";
 import { useSupabase } from "@/lib/supabase";
@@ -7,6 +7,7 @@ import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import {
   Button,
   Card,
+  CategoryPicker,
   EmptyState,
   FilterPills,
   LoadingState,
@@ -50,6 +51,12 @@ interface ConsultationWithJoins extends Consultation {
   consultation_categories: { name: string } | null;
 }
 
+interface AstrologerOption {
+  id: string;
+  name: string;
+  astrologer_categories: { category_id: string }[];
+}
+
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
@@ -61,9 +68,15 @@ function formatStatusLabel(status: string) {
 export default function ConsultationsScreen() {
   const supabase = useSupabase();
   const [consultations, setConsultations] = useState<ConsultationWithJoins[]>([]);
+  const [astrologers, setAstrologers] = useState<AstrologerOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<ConsultationFilter>("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  // Which consultation's astrologer picker is currently expanded — customers
+  // no longer choose an astrologer at booking time, so this is where that
+  // choice actually gets made now.
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [assignLoading, setAssignLoading] = useState<string | null>(null);
 
   const loadConsultations = async () => {
     let query = supabase
@@ -79,10 +92,20 @@ export default function ConsultationsScreen() {
     setConsultations((data as ConsultationWithJoins[]) || []);
   };
 
+  const loadAstrologers = async () => {
+    const { data, error } = await supabase
+      .from("astrologers")
+      .select("id, name, astrologer_categories(category_id)")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    if (error) throw error;
+    setAstrologers((data as AstrologerOption[]) || []);
+  };
+
   const fetchConsultations = async () => {
     setLoading(true);
     try {
-      await loadConsultations();
+      await Promise.all([loadConsultations(), loadAstrologers()]);
     } catch (err) {
       console.error("Error fetching consultations:", err);
     } finally {
@@ -96,11 +119,42 @@ export default function ConsultationsScreen() {
 
   const { refreshing, onRefresh } = usePullToRefresh(async () => {
     try {
-      await loadConsultations();
+      await Promise.all([loadConsultations(), loadAstrologers()]);
     } catch (err) {
       console.error("Error refreshing consultations:", err);
     }
   });
+
+  const astrologerOptionsFor = (categoryId: string | undefined) => {
+    // Astrologers who cover this consultation's category are listed first
+    // (the common case), with everyone else still available below in case
+    // an admin needs to assign outside the usual category match.
+    const inCategory = categoryId
+      ? astrologers.filter((a) => a.astrologer_categories.some((c) => c.category_id === categoryId))
+      : [];
+    const rest = astrologers.filter((a) => !inCategory.includes(a));
+    return [...inCategory, ...rest].map((a) => ({ id: a.id, label: a.name }));
+  };
+
+  const handleAssignAstrologer = async (consultation: ConsultationWithJoins, astrologerId: string) => {
+    const astrologer = astrologers.find((a) => a.id === astrologerId);
+    if (!astrologer) return;
+
+    setAssignLoading(consultation.id);
+    try {
+      const { error } = await supabase
+        .from("consultations")
+        .update({ astrologer_id: astrologer.id, astrologer_name: astrologer.name })
+        .eq("id", consultation.id);
+      if (error) throw error;
+      setAssigningId(null);
+      await loadConsultations();
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to assign astrologer.");
+    } finally {
+      setAssignLoading(null);
+    }
+  };
 
   const runTransition = async (consultation: ConsultationWithJoins, nextStatus: ConsultationStatus) => {
     const allowedNext = CONSULTATION_TRANSITIONS[consultation.status as ConsultationStatus];
@@ -152,14 +206,34 @@ export default function ConsultationsScreen() {
             return (
               <Card key={item.id} className="gap-2">
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-sm font-rubik-bold text-foreground flex-1" numberOfLines={1}>
-                    {item.astrologer_name}
+                  <Text
+                    className={`text-sm font-rubik-bold flex-1 ${item.astrologer_name ? "text-foreground" : "text-destructive"}`}
+                    numberOfLines={1}
+                  >
+                    {item.astrologer_name || "Not yet assigned"}
                   </Text>
                   <StatusBadge label={formatStatusLabel(item.status)} tone={STATUS_TONE[item.status as ConsultationStatus] ?? "neutral"} />
                 </View>
 
                 {item.consultation_categories?.name ? (
                   <Text className="text-[10px] font-rubik-bold uppercase text-gold">{item.consultation_categories.name}</Text>
+                ) : null}
+
+                <TouchableOpacity onPress={() => setAssigningId(assigningId === item.id ? null : item.id)}>
+                  <Text className="text-xs font-rubik-semibold text-primary">
+                    {assigningId === item.id ? "Cancel" : item.astrologer_name ? "Reassign Astrologer" : "Assign Astrologer"}
+                  </Text>
+                </TouchableOpacity>
+
+                {assigningId === item.id ? (
+                  <View className="gap-2 rounded-lg bg-background border border-surface-border p-2">
+                    <CategoryPicker
+                      options={astrologerOptionsFor(item.category_id)}
+                      value={item.astrologer_id ?? null}
+                      onChange={(astrologerId) => handleAssignAstrologer(item, astrologerId)}
+                    />
+                    {assignLoading === item.id ? <Text className="text-[10px] text-ink-muted">Saving…</Text> : null}
+                  </View>
                 ) : null}
 
                 <View className="border-t border-surface-border pt-2 gap-1">

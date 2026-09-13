@@ -11,18 +11,16 @@ export default function robots(): MetadataRoute.Robots {
         // keep them out of the crawl budget entirely rather than relying on
         // noindex meta tags alone.
         //
-        // /*/consultation?astrologer=*: every astrologer card links here
-        // (search results, homepage showcase) to deep-link straight into
-        // that astrologer's booking flow — real, useful for a human visitor,
-        // but each one is a distinct crawlable URL whose own canonical tag
-        // already points back to the bare /consultation page. Google was
-        // dutifully crawling every single one anyway (GSC: "Crawled -
-        // currently not indexed", climbing as astrologers get added) before
-        // respecting that canonical and discarding it — pure wasted crawl
-        // budget with zero indexing upside. Blocking the crawl outright
-        // (rather than just relying on the canonical) stops that at the
-        // source.
-        disallow: ["/api/", "/*/cart", "/*/orders", "/*/search", "/*/consultation?astrologer=*"]
+        // /*/consultation?category=*: every category/astrologer card links
+        // here (homepage, search results) to deep-link straight into that
+        // category's booking flow — real, useful for a human visitor, but
+        // each one is a distinct crawlable URL whose own canonical tag
+        // already points back to the bare /consultation page. Blocking the
+        // crawl outright (rather than just relying on the canonical) stops
+        // wasted crawl budget at the source — same reasoning that applied to
+        // the old ?astrologer= links this replaced (GSC previously flagged
+        // those as "Crawled - currently not indexed").
+        disallow: ["/api/", "/*/cart", "/*/orders", "/*/search", "/*/consultation?category=*"]
       }
     ],
     sitemap: `${SITE.url}/sitemap.xml`,

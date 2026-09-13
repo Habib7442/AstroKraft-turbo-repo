@@ -111,11 +111,20 @@ export default async function SearchPage({
                   <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">Astrologers</h2>
                 </div>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
-                  {astrologers.map((astrologer) => (
-                    <Link key={astrologer.id} href={`/${locale}/consultation?astrologer=${astrologer.id}`}>
-                      <AstrologerCard astrologer={astrologer} categoryNameById={categoryNameById} />
-                    </Link>
-                  ))}
+                  {astrologers.map((astrologer) => {
+                    // Booking no longer lets the customer pick a specific
+                    // astrologer (an admin assigns one afterward) - this
+                    // deep-links to that astrologer's category instead.
+                    const firstCategoryId = astrologer.astrologer_categories[0]?.category_id;
+                    return (
+                      <Link
+                        key={astrologer.id}
+                        href={firstCategoryId ? `/${locale}/consultation?category=${firstCategoryId}` : `/${locale}/consultation`}
+                      >
+                        <AstrologerCard astrologer={astrologer} categoryNameById={categoryNameById} />
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             ) : null}

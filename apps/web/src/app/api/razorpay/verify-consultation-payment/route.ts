@@ -48,24 +48,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Booking not found for this payment." }, { status: 400 });
     }
 
+    // No astrologer is assigned yet at this point (an admin does that
+    // afterward) — every customer/admin-facing message below names the
+    // category instead, the only thing actually known right now.
+    const { data: category } = data.category_id
+      ? await supabase.from("consultation_categories").select("name").eq("id", data.category_id).maybeSingle()
+      : { data: null };
+    const categoryName = category?.name ?? "Consultation";
+
     // Email the invoice to the customer (BCC the owner) — best effort. The
     // payment already succeeded and is recorded; a failed email should never
     // turn a successful booking into an error response.
     try {
-      const [{ data: profile }, { data: category }] = await Promise.all([
-        supabase.from("profiles").select("full_name, email").eq("id", data.user_id).maybeSingle(),
-        data.category_id
-          ? supabase.from("consultation_categories").select("name").eq("id", data.category_id).maybeSingle()
-          : Promise.resolve({ data: null })
-      ]);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", data.user_id)
+        .maybeSingle();
 
       const customerEmail = profile?.email;
 
       if (customerEmail) {
         await sendInvoiceEmail({
           to: customerEmail,
-          subject: `Your AstroKraft invoice — Consultation with ${data.astrologer_name}`,
-          html: `<p>Thank you for booking a consultation with <strong>${data.astrologer_name}</strong>. Your invoice is attached. We&rsquo;ll reach out shortly to schedule your session.</p>`,
+          subject: `Your AstroKraft invoice — ${categoryName} Consultation`,
+          html: `<p>Thank you for booking a <strong>${categoryName}</strong> consultation. Your invoice is attached. We&rsquo;ll assign one of our verified astrologers and reach out shortly to schedule your session.</p>`,
           filenamePrefix: "AstroKraft-Invoice",
           order: {
             id: data.id,
@@ -77,8 +84,8 @@ export async function POST(req: NextRequest) {
             created_at: data.created_at,
             items: [
               {
-                title: `Consultation with ${data.astrologer_name}`,
-                subtitle: category?.name ?? null,
+                title: `${categoryName} Consultation`,
+                subtitle: "Astrologer to be assigned by our team",
                 price: data.amount,
                 quantity: 1
               }
@@ -92,18 +99,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Push a WhatsApp-style alert (banner + sound) to every admin device —
-    // best effort, same reasoning as the invoice email above.
+    // best effort, same reasoning as the invoice email above. This is also
+    // the admin's cue to assign an astrologer to this booking.
     try {
       await sendPushNotificationToAdmins({
         title: "New Consultation Booked 🔮",
-        body: `${data.astrologer_name} — ₹${data.amount.toLocaleString("en-IN")} (${data.customer_name || "Guest"})`,
+        body: `${categoryName} — ₹${data.amount.toLocaleString("en-IN")} (${data.customer_name || "Guest"}) — needs an astrologer assigned`,
         data: { type: "consultation", consultationId: data.id }
       });
     } catch (pushError) {
       console.error("razorpay verify-consultation-payment: push notification failed:", pushError);
     }
 
-    return NextResponse.json({ success: true, astrologerName: data.astrologer_name });
+    return NextResponse.json({ success: true, categoryName: category?.name ?? null });
   } catch (err: any) {
     console.error("razorpay verify-consultation-payment error:", err);
     return NextResponse.json({ error: "Failed to verify payment." }, { status: 500 });

@@ -35,7 +35,15 @@ export function AstrologerShowcase({ astrologers, categoryNameById, locale, bgCl
               <AstrologerCard
                 astrologer={astrologer}
                 categoryNameById={categoryNameById}
-                bookHref={`/${locale}/consultation?astrologer=${astrologer.id}`}
+                // Booking no longer lets the customer pick a specific
+                // astrologer (an admin assigns one afterward) - this deep-
+                // links to that astrologer's category instead, so "Book Now"
+                // still jumps straight past the category-picking step.
+                bookHref={
+                  astrologer.astrologer_categories[0]
+                    ? `/${locale}/consultation?category=${astrologer.astrologer_categories[0].category_id}`
+                    : `/${locale}/consultation`
+                }
               />
             </div>
           ))}

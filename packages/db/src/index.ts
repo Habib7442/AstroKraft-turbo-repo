@@ -109,7 +109,7 @@ export interface Consultation {
   user_id?: string;
   astrologer_id?: string;
   category_id?: string;
-  astrologer_name: string;
+  astrologer_name?: string;
   customer_name?: string;
   customer_phone?: string;
   slot_timestamp: string;
@@ -162,6 +162,10 @@ export interface ConsultationCategory {
   slug: string;
   icon?: string;
   color?: string;
+  // Booking no longer lets the customer pick a specific astrologer (an
+  // admin assigns one afterward), so price is set per category rather than
+  // read off any one astrologer's own rate.
+  price?: number;
   sort_order: number;
   is_active: boolean;
   created_at: string;
@@ -233,4 +237,4 @@ export function createClerkSupabaseClient(
   });
 }
 
-export const DB_SCHEMA_VERSION = "2.2.0";
+export const DB_SCHEMA_VERSION = "2.3.0";

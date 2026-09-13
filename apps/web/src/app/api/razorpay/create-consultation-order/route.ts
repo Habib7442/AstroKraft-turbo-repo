@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
     await ensureProfile(userId);
 
     const body = await req.json().catch(() => null);
-    const astrologerId = body?.astrologerId;
     const categoryId = body?.categoryId;
     const customerName = body?.customerName;
     const customerPhone = body?.customerPhone;
@@ -24,7 +23,7 @@ export async function POST(req: NextRequest) {
     const timeOfBirth = body?.timeOfBirth;
     const placeOfBirth = body?.placeOfBirth;
 
-    if (!astrologerId || !categoryId || !customerName?.trim() || !customerPhone?.trim()) {
+    if (!categoryId || !customerName?.trim() || !customerPhone?.trim()) {
       return NextResponse.json({ error: "Missing required booking details." }, { status: 400 });
     }
 
@@ -34,21 +33,25 @@ export async function POST(req: NextRequest) {
 
     const supabase = getSupabaseAdminClient();
 
-    const { data: astrologer, error: astrologerError } = await supabase
-      .from("astrologers")
+    // No specific astrologer is chosen by the customer anymore - an admin
+    // assigns one afterward from the Consultations screen, based on
+    // category and availability. Price is set per category rather than
+    // read off any one astrologer's own rate.
+    const { data: category, error: categoryError } = await supabase
+      .from("consultation_categories")
       .select("id, name, price, is_active")
-      .eq("id", astrologerId)
+      .eq("id", categoryId)
       .maybeSingle();
 
-    if (astrologerError) throw astrologerError;
-    if (!astrologer || !astrologer.is_active) {
-      return NextResponse.json({ error: "This astrologer is no longer available." }, { status: 400 });
+    if (categoryError) throw categoryError;
+    if (!category || !category.is_active) {
+      return NextResponse.json({ error: "This consultation category is no longer available." }, { status: 400 });
     }
-    if (!astrologer.price || astrologer.price <= 0) {
-      return NextResponse.json({ error: "This astrologer has no consultation price set yet." }, { status: 400 });
+    if (!category.price || category.price <= 0) {
+      return NextResponse.json({ error: "This consultation category has no price set yet." }, { status: 400 });
     }
 
-    const amountInPaise = Math.round(astrologer.price * 100);
+    const amountInPaise = Math.round(category.price * 100);
     if (amountInPaise < 100) {
       return NextResponse.json({ error: "Consultation price must be at least ₹1." }, { status: 400 });
     }
@@ -57,14 +60,12 @@ export async function POST(req: NextRequest) {
       .from("consultations")
       .insert({
         user_id: userId,
-        astrologer_id: astrologerId,
         category_id: categoryId,
-        astrologer_name: astrologer.name,
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
         kundli_details: { dob: dob || null, time_of_birth: timeOfBirth || null, place_of_birth: placeOfBirth || null },
         status: "payment_pending",
-        amount: astrologer.price
+        amount: category.price
       })
       .select()
       .single();
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      astrologerName: astrologer.name
+      categoryName: category.name
     });
   } catch (err: any) {
     console.error("razorpay create-consultation-order error:", err);

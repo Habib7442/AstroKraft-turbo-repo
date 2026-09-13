@@ -141,7 +141,7 @@ async function OrdersContent({ userId, locale }: { userId: string; locale: strin
                   {consultation.astrologers?.photo_url ? (
                     <Image
                       src={consultation.astrologers.photo_url}
-                      alt={consultation.astrologer_name}
+                      alt={consultation.astrologer_name ?? "Astrologer"}
                       fill
                       sizes="56px"
                       className="object-cover"
@@ -153,11 +153,13 @@ async function OrdersContent({ userId, locale }: { userId: string; locale: strin
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-foreground">{consultation.astrologer_name}</p>
+                    <p className="text-sm font-bold text-foreground">
+                      {consultation.consultation_categories?.name ?? "Consultation"}
+                    </p>
                     <StatusBadge status={consultation.status} />
                   </div>
                   <p className="mt-0.5 text-xs text-ink-muted">
-                    {consultation.consultation_categories?.name ? `${consultation.consultation_categories.name} · ` : ""}
+                    {consultation.astrologer_name ? `${consultation.astrologer_name} · ` : "Astrologer to be assigned · "}
                     {formatDate(consultation.created_at)}
                   </p>
                 </div>

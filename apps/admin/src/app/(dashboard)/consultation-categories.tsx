@@ -38,6 +38,7 @@ export default function ConsultationCategoriesScreen() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [icon, setIcon] = useState("");
   const [color, setColor] = useState(COLOR_SWATCHES[0]);
+  const [price, setPrice] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -80,6 +81,7 @@ export default function ConsultationCategoriesScreen() {
     setSlugTouched(false);
     setIcon("");
     setColor(COLOR_SWATCHES[0]);
+    setPrice("");
     setIsActive(true);
   };
 
@@ -95,6 +97,7 @@ export default function ConsultationCategoriesScreen() {
     setSlugTouched(true);
     setIcon(category.icon ?? "");
     setColor(category.color ?? COLOR_SWATCHES[0]);
+    setPrice(category.price != null ? String(category.price) : "");
     setIsActive(category.is_active);
     setIsModalOpen(true);
   };
@@ -113,6 +116,13 @@ export default function ConsultationCategoriesScreen() {
       return;
     }
 
+    const trimmedPrice = price.trim();
+    const parsedPrice = trimmedPrice ? Number(trimmedPrice) : null;
+    if (parsedPrice !== null && (!Number.isFinite(parsedPrice) || parsedPrice <= 0)) {
+      Alert.alert("Error", "Price must be a valid number greater than 0, or leave it blank if not set yet.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
@@ -120,6 +130,7 @@ export default function ConsultationCategoriesScreen() {
         slug: cleanSlug,
         icon: icon.trim() || null,
         color,
+        price: parsedPrice,
         is_active: isActive
       };
 
@@ -226,6 +237,9 @@ export default function ConsultationCategoriesScreen() {
                     <StatusBadge label={item.is_active ? "Active" : "Hidden"} tone={item.is_active ? "success" : "neutral"} />
                   </View>
                   <Text className="text-xs text-primary font-rubik-semibold">/{item.slug}</Text>
+                  <Text className={`text-xs font-rubik-bold ${item.price ? "text-gold" : "text-destructive"}`}>
+                    {item.price ? `₹${item.price.toLocaleString("en-IN")}` : "No price set"}
+                  </Text>
                 </View>
 
                 <View className="justify-center gap-1 pr-2">
@@ -292,6 +306,17 @@ export default function ConsultationCategoriesScreen() {
           }}
         />
         <TextField label="Icon (emoji)" placeholder="e.g. 💼" value={icon} onChangeText={setIcon} />
+        <TextField
+          label="Consultation Price (INR)"
+          placeholder="e.g. 999"
+          value={price}
+          keyboardType="numeric"
+          onChangeText={setPrice}
+        />
+        <Text className="text-[11px] text-ink-muted -mt-2">
+          Customers are charged this category price directly — they no longer pick a specific astrologer, so price
+          can't come from any one astrologer's own rate. Assign the astrologer afterward from Consultations.
+        </Text>
 
         <View className="gap-2">
           <Text className="text-xs font-rubik-semibold text-ink-body">Card Color</Text>

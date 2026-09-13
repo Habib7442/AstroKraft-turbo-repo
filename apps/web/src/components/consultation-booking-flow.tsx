@@ -1,19 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import type { ConsultationCategory } from "@astrokraft/db";
 import { loadRazorpayScript } from "@/lib/load-razorpay-script";
-import { AstrologerCard, type AstrologerCardData } from "@/components/astrologer-card";
 import { TermsCheckbox } from "@/components/terms-checkbox";
-
-export type AstrologerWithCategories = AstrologerCardData;
 
 interface ConsultationBookingFlowProps {
   categories: ConsultationCategory[];
-  astrologers: AstrologerWithCategories[];
-  initialAstrologerId?: string;
+  initialCategoryId?: string;
   locale: string;
 }
 
@@ -21,15 +16,19 @@ function formatPrice(price: number) {
   return `₹${price.toLocaleString("en-IN")}`;
 }
 
-export function ConsultationBookingFlow({ categories, astrologers, initialAstrologerId, locale }: ConsultationBookingFlowProps) {
-  const { isSignedIn } = useAuth();
+// The customer picks a category only - which specific astrologer handles the
+// session is an internal call an admin makes afterward (from the admin app's
+// Consultations screen), based on category and real-time availability across
+// our network of 100+ astrologers. That's why there's no "choose your
+// astrologer" step here anymore: picking a category goes straight to the
+// booking form.
+export function ConsultationBookingFlow({ categories, initialCategoryId, locale }: ConsultationBookingFlowProps) {
+  const { isLoaded, isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
 
-  const initialAstrologer = initialAstrologerId ? astrologers.find((a) => a.id === initialAstrologerId) ?? null : null;
+  const initialCategory = initialCategoryId ? categories.find((c) => c.id === initialCategoryId) ?? null : null;
 
-  const [skipToForm, setSkipToForm] = useState(Boolean(initialAstrologer));
-  const [categoryId, setCategoryId] = useState<string | null>(initialAstrologer?.astrologer_categories[0]?.category_id ?? null);
-  const [astrologerId, setAstrologerId] = useState<string | null>(initialAstrologer?.id ?? null);
+  const [categoryId, setCategoryId] = useState<string | null>(initialCategory?.id ?? null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [dob, setDob] = useState("");
@@ -40,25 +39,29 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const astrologersInCategory = useMemo(() => {
-    if (!categoryId) return [];
-    return astrologers.filter((a) => a.astrologer_categories.some((c) => c.category_id === categoryId));
-  }, [astrologers, categoryId]);
+  const selectedCategory = categories.find((c) => c.id === categoryId) ?? null;
+  const canBook = Boolean(categoryId && name.trim().length > 0 && phone.trim().length >= 10 && termsAccepted);
 
-  const selectedAstrologer = astrologers.find((a) => a.id === astrologerId) ?? null;
-  const canBook = Boolean(
-    categoryId && astrologerId && name.trim().length > 0 && phone.trim().length >= 10 && termsAccepted
-  );
+  // Picking a category asks the visitor to sign in up front, before the form
+  // even appears, rather than letting them fill in birth details first and
+  // only discover the sign-in gate at the final "Book" click. isLoaded gates
+  // this so a signed-in user whose auth state just hasn't resolved yet on
+  // this render doesn't get a spurious sign-in prompt flashed at them.
+  useEffect(() => {
+    if (categoryId && isLoaded && !isSignedIn) {
+      openSignIn({});
+    }
+  }, [categoryId, isLoaded, isSignedIn, openSignIn]);
 
-  const categoryNameById = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
-
-  const handleSelectCategory = (id: string) => {
-    setCategoryId(id);
-    setAstrologerId(null);
-  };
+  // Clerk's auth state isn't known during SSR/first paint (isLoaded is
+  // false), so this shows a neutral placeholder rather than the form itself
+  // - otherwise a signed-out visitor would see the form flash for a moment
+  // before the sign-in gate below replaces it.
+  const showAuthLoadingPlaceholder = Boolean(categoryId) && !isLoaded;
+  const showSignInGate = Boolean(categoryId) && isLoaded && !isSignedIn;
 
   const handleBook = async () => {
-    if (!canBook || !categoryId || !astrologerId) return;
+    if (!canBook || !categoryId) return;
 
     if (!isSignedIn) {
       openSignIn({});
@@ -78,7 +81,6 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          astrologerId,
           categoryId,
           customerName: name.trim(),
           customerPhone: phone.trim(),
@@ -99,7 +101,7 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
         amount: createData.amount,
         currency: createData.currency,
         name: "AstroKraft",
-        description: `Consultation with ${createData.astrologerName}`,
+        description: `${createData.categoryName} Consultation`,
         order_id: createData.razorpayOrderId,
         handler: async (response: any) => {
           try {
@@ -119,7 +121,7 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
               throw new Error(verifyData.error || "Payment verification failed.");
             }
 
-            setSuccess(verifyData.astrologerName || "your astrologer");
+            setSuccess(verifyData.categoryName || "your");
           } catch (err: any) {
             setError(err.message || "Payment succeeded but verification failed. Please contact support.");
           }
@@ -149,7 +151,8 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl">✅</div>
         <h2 className="font-serif text-xl font-bold text-green-800">Consultation Booked!</h2>
         <p className="mt-2 text-sm text-green-700">
-          Your consultation with {success} is confirmed. We&rsquo;ll reach out shortly to schedule your session.
+          Your {success} consultation is confirmed. We&rsquo;ll assign one of our 100+ verified astrologers and reach
+          out shortly to schedule your session.
         </p>
       </div>
     );
@@ -157,96 +160,82 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
 
   return (
     <div className="flex flex-col gap-8">
-      {!skipToForm ? (
+      {!categoryId ? (
         <div>
           <div className="mb-4 flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-gold" />
             <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">Select Consultation Category</h2>
           </div>
+          <p className="mb-4 text-xs text-ink-body">
+            We&rsquo;ll match you with the right expert from our network of 100+ verified Vedic astrologers.
+          </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {categories.map((category) => {
-              const selected = category.id === categoryId;
-              return (
-                <button
-                  key={category.id}
-                  type="button"
-                  onClick={() => handleSelectCategory(category.id)}
-                  style={{ backgroundColor: category.color ?? "#F1ECFA" }}
-                  className={`flex flex-col items-center gap-2 rounded-2xl p-4 text-center transition-transform hover:-translate-y-0.5 ${
-                    selected ? "ring-2 ring-primary ring-offset-2" : ""
-                  }`}
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow-sm">
-                    {category.icon || "✨"}
-                  </div>
-                  <span className="text-xs font-bold uppercase text-foreground">{category.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      {!skipToForm && categoryId ? (
-        <div>
-          <div className="mb-4 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-            <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">Choose Your Astrologer</h2>
-          </div>
-          {astrologersInCategory.length === 0 ? (
-            <p className="text-sm text-ink-body">No astrologers are available in this category yet.</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {astrologersInCategory.map((astrologer) => {
-                const selected = astrologer.id === astrologerId;
-                return (
-                  <button key={astrologer.id} type="button" onClick={() => setAstrologerId(astrologer.id)} className="text-left">
-                    <AstrologerCard astrologer={astrologer} categoryNameById={categoryNameById} selected={selected} />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      ) : null}
-
-      {astrologerId ? (
-        <div className="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-sm">
-          {skipToForm && selectedAstrologer ? (
-            <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface-tint/40 p-3">
-              <div className="flex items-center gap-3">
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-surface-tint">
-                  {selectedAstrologer.photo_url ? (
-                    <Image src={selectedAstrologer.photo_url} alt={selectedAstrologer.name} fill sizes="48px" className="object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xl">🔮</div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground">{selectedAstrologer.name}</p>
-                  {selectedAstrologer.price ? (
-                    <p className="text-xs text-gold font-semibold">{formatPrice(selectedAstrologer.price)}</p>
-                  ) : null}
-                </div>
-              </div>
+            {categories.map((category) => (
               <button
+                key={category.id}
                 type="button"
-                onClick={() => {
-                  setSkipToForm(false);
-                  setAstrologerId(null);
-                  setCategoryId(null);
-                }}
-                className="whitespace-nowrap text-xs font-semibold text-primary hover:underline"
+                onClick={() => setCategoryId(category.id)}
+                style={{ backgroundColor: category.color ?? "#F1ECFA" }}
+                className="flex flex-col items-center gap-2 rounded-2xl p-4 text-center transition-transform hover:-translate-y-0.5"
               >
-                Change
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow-sm">
+                  {category.icon || "✨"}
+                </div>
+                <span className="text-xs font-bold uppercase text-foreground">{category.name}</span>
               </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {categoryId && showAuthLoadingPlaceholder ? (
+        <div className="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-sm">
+          <div className="h-24 animate-pulse rounded-xl bg-surface-tint" />
+        </div>
+      ) : null}
+
+      {categoryId && showSignInGate ? (
+        // The effect above already opened Clerk's modal automatically; this
+        // stays visible as a fallback in case they closed it without signing
+        // in.
+        <div className="rounded-2xl border border-surface-border bg-surface-card p-8 text-center shadow-sm">
+          <p className="text-sm font-semibold text-foreground">Sign in to continue booking your consultation.</p>
+          <p className="mt-1 text-xs text-ink-body">We&rsquo;ll bring you right back here once you&rsquo;re signed in.</p>
+          <button
+            type="button"
+            onClick={() => openSignIn({})}
+            className="mt-4 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary/90"
+          >
+            Sign In
+          </button>
+        </div>
+      ) : null}
+
+      {categoryId && selectedCategory && !showAuthLoadingPlaceholder && !showSignInGate ? (
+        <div className="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface-tint/40 p-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl"
+                style={{ backgroundColor: selectedCategory.color ?? "#F1ECFA" }}
+              >
+                {selectedCategory.icon || "✨"}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">{selectedCategory.name}</p>
+                {selectedCategory.price ? (
+                  <p className="text-xs text-gold font-semibold">{formatPrice(selectedCategory.price)}</p>
+                ) : null}
+              </div>
             </div>
-          ) : (
-            <div className="mb-4 flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-              <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">Enter Your Birth Details</h2>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => setCategoryId(null)}
+              className="whitespace-nowrap text-xs font-semibold text-primary hover:underline"
+            >
+              Change
+            </button>
+          </div>
 
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -276,21 +265,20 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Date of Birth</label>
                 <input
-                  type="text"
+                  type="date"
                   value={dob}
                   onChange={(e) => setDob(e.target.value)}
-                  placeholder="DD/MM/YYYY"
-                  className="w-full rounded-lg border border-surface-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  max={new Date().toISOString().split("T")[0]}
+                  className="w-full rounded-lg border border-surface-border bg-background px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Time of Birth</label>
                 <input
-                  type="text"
+                  type="time"
                   value={timeOfBirth}
                   onChange={(e) => setTimeOfBirth(e.target.value)}
-                  placeholder="HH:MM AM/PM"
-                  className="w-full rounded-lg border border-surface-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full rounded-lg border border-surface-border bg-background px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
             </div>
@@ -318,8 +306,8 @@ export function ConsultationBookingFlow({ categories, astrologers, initialAstrol
                 ? "Starting checkout…"
                 : !isSignedIn
                   ? "Sign In to Book"
-                  : selectedAstrologer?.price
-                    ? `Pay ${formatPrice(selectedAstrologer.price)} & Book`
+                  : selectedCategory.price
+                    ? `Pay ${formatPrice(selectedCategory.price)} & Book`
                     : "Book Consultation"}
             </button>
             {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
