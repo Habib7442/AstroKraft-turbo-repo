@@ -88,12 +88,24 @@ export function VastuNavDropdown({ categories, locale }: VastuNavDropdownProps) 
               ref={panelRef}
               style={{ top: position.top, left: position.left }}
               className="fixed z-[100] w-64 overflow-hidden rounded-lg border border-surface-border bg-white py-1.5 shadow-lg"
+              onKeyDown={(e) => {
+                // The panel is portaled to document.body, well outside the
+                // trigger button in tab order — a keyboard user tabbing
+                // through would otherwise pass through unrelated header/page
+                // controls before ever reaching it, and there was no way to
+                // close it without a mouse.
+                if (e.key === "Escape") {
+                  setOpen(false);
+                  buttonRef.current?.focus();
+                }
+              }}
             >
-              {categories.map((category) => (
+              {categories.map((category, index) => (
                 <Link
                   key={category.id}
                   href={`/${locale}/${category.slug}`}
                   onClick={() => setOpen(false)}
+                  autoFocus={index === 0}
                   className="block px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-tint hover:text-primary"
                 >
                   {LABEL_OVERRIDES[category.slug] ?? category.name}
