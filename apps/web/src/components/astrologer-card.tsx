@@ -45,7 +45,7 @@ export function AstrologerCard({ astrologer, categoryNameById, selected, classNa
         <h3 className="line-clamp-1 text-sm font-bold text-foreground sm:text-base">{astrologer.name}</h3>
 
         <span className="flex items-center gap-1 text-xs text-ink-muted">
-          <span className="text-gold" aria-label={`${astrologer.rating} out of 5 stars`}>
+          <span className="text-gold" aria-label={`${filledStars} out of 5 stars`}>
             {"★".repeat(filledStars)}
             <span className="text-surface-border">{"★".repeat(5 - filledStars)}</span>
           </span>
