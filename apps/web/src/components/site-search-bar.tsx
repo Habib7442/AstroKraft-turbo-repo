@@ -41,7 +41,7 @@ export function SiteSearchBar() {
   );
 
   return (
-    <div className="flex min-w-0 flex-1 items-center justify-end sm:justify-start">
+    <div className="flex min-w-0 shrink-0 items-center sm:flex-1 sm:justify-start">
       <div className="hidden w-full max-w-xs sm:flex md:max-w-sm lg:max-w-none">{searchForm}</div>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

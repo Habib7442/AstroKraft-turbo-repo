@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
+import { SignInButton, Show, UserButton } from "@clerk/nextjs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHasMounted } from "@/hooks/use-has-mounted";
 
@@ -23,23 +23,18 @@ export function AuthHeaderControls({ locale }: AuthHeaderControlsProps) {
   const mounted = useHasMounted();
 
   if (!mounted) {
-    return <Skeleton className="h-8 w-20 sm:h-9 sm:w-24 rounded-lg bg-white/10 shrink-0" />;
+    return <Skeleton className="h-8 w-14 sm:h-9 sm:w-16 rounded-lg bg-white/10 shrink-0" />;
   }
 
   return (
     <>
       <Show when="signed-out">
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex items-center shrink-0">
           <SignInButton mode="modal">
             <button className="whitespace-nowrap px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-white/90 hover:text-[#E2C27A] transition-colors">
               Sign In
             </button>
           </SignInButton>
-          <SignUpButton mode="modal">
-            <button className="whitespace-nowrap px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium bg-[#5B21B6] text-white rounded-lg hover:bg-[#6D28D9] transition-colors shadow-sm">
-              Sign Up
-            </button>
-          </SignUpButton>
         </div>
       </Show>
       <Show when="signed-in">

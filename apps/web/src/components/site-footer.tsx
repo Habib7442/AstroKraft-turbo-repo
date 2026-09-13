@@ -33,7 +33,9 @@ export function SiteFooter({ categories, locale }: SiteFooterProps) {
           <div className="col-span-2 lg:col-span-4">
             <Link href={`/${locale}`} className="flex items-center gap-2">
               <Image src="/logo.png" alt="AstroKraft Logo" width={32} height={32} className="h-8 w-8 object-contain" />
-              <span className="text-lg font-bold tracking-tight text-white">AstroKraft</span>
+              <span className="text-lg font-bold tracking-tight text-white">
+                AstroKraft<sup className="ml-0.5 text-[10px] font-semibold">™</sup>
+              </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/60">
               Authentic Vedic astrology consultations and lab-certified gemstones, Rudraksha & Vastu solutions —

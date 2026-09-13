@@ -5,6 +5,7 @@ import type { Category } from "@astrokraft/db";
 import { AuthHeaderControls } from "@/components/auth-header-controls";
 import { CartLink } from "@/components/cart-link";
 import { SiteSearchBar } from "@/components/site-search-bar";
+import { VastuNavDropdown } from "@/components/vastu-nav-dropdown";
 
 interface SiteHeaderProps {
   categories: Category[];
@@ -12,6 +13,12 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ categories, locale }: SiteHeaderProps) {
+  // The three Vastu categories are grouped into a single "Vastu ▾" dropdown
+  // (see VastuNavDropdown) instead of taking up three separate top-level nav
+  // slots — everything else stays a plain top-level link.
+  const primaryCategories = categories.filter((category) => !category.slug.startsWith("vastu-"));
+  const vastuCategories = categories.filter((category) => category.slug.startsWith("vastu-"));
+
   return (
     <header className="sticky top-0 z-50 w-full">
       <div className="w-full bg-[#1B1030]">
@@ -24,12 +31,14 @@ export function SiteHeader({ categories, locale }: SiteHeaderProps) {
               height={32}
               className="h-7 w-7 object-contain sm:h-8 sm:w-8"
             />
-            <span className="text-base font-bold tracking-tight text-white sm:text-lg">AstroKraft</span>
+            <span className="text-base font-bold tracking-tight text-white sm:text-lg">
+              AstroKraft<sup className="ml-0.5 text-[8px] font-semibold sm:text-[10px]">™</sup>
+            </span>
           </Link>
 
           <SiteSearchBar />
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-4">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:ml-0 sm:gap-4">
             <Link
               href={`/${locale}/orders`}
               aria-label="My orders"
@@ -46,7 +55,7 @@ export function SiteHeader({ categories, locale }: SiteHeaderProps) {
 
       <div className="w-full bg-[#2A1A5E]">
         <div className="scrollbar-hide mx-auto flex w-full max-w-7xl items-center gap-5 overflow-x-auto px-3 py-2 sm:px-6">
-          {categories.map((category) => (
+          {primaryCategories.map((category) => (
             <Link
               key={category.id}
               href={`/${locale}/${category.slug}`}
@@ -55,15 +64,10 @@ export function SiteHeader({ categories, locale }: SiteHeaderProps) {
               {category.name}
             </Link>
           ))}
-          <Link
-            href={`/${locale}/purohit-booking`}
-            className="whitespace-nowrap rounded-full bg-saffron px-3 py-1 text-xs font-bold uppercase tracking-wide text-foreground shadow-sm transition-transform hover:-translate-y-0.5 sm:text-sm"
-          >
-            Book a Purohit
-          </Link>
+          <VastuNavDropdown categories={vastuCategories} locale={locale} />
           <Link
             href={`/${locale}/consultation`}
-            className="whitespace-nowrap rounded-full bg-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-transform hover:-translate-y-0.5 sm:text-sm"
+            className="ml-auto whitespace-nowrap rounded-full bg-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-transform hover:-translate-y-0.5 sm:text-sm"
           >
             Book Consultation
           </Link>

@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Image from "next/image";
 import { getSupabaseClient } from "@/lib/supabase";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CategoryStories } from "@/components/category-stories";
+import { ConsultationCategoryShowcase } from "@/components/consultation-category-showcase";
+import { HeroSection } from "@/components/hero-section";
 import { ProductShowcase } from "@/components/product-showcase";
 import { AstrologerShowcase } from "@/components/astrologer-showcase";
 import { PurohitBookingCta } from "@/components/purohit-booking-cta";
@@ -37,7 +40,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
       .limit(8),
-    supabase.from("consultation_categories").select("id, name").eq("is_active", true)
+    supabase.from("consultation_categories").select("*").eq("is_active", true).order("sort_order", { ascending: true })
   ]);
 
   const categoryNameById = new Map((consultationCategories ?? []).map((c) => [c.id, c.name]));
@@ -60,17 +63,41 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <main className="min-h-screen flex flex-col items-center bg-[#F7F5FC]">
       <div
-        className="w-full flex flex-col items-center"
+        className="relative w-full flex flex-col items-center overflow-hidden"
         style={{ background: "linear-gradient(135deg, #0B1026 0%, #2A1A5E 50%, #4C1D95 100%)" }}
       >
-        {banners && banners.length > 0 ? (
-          <div className="w-full max-w-7xl mx-auto px-6 pt-8 pb-2">
-            <BannerCarousel banners={banners} />
-          </div>
-        ) : null}
+        {/* Cosmic overlay texture spans this whole block (hero text +
+            "Shop by Category" below it), not just the hero's own box — one
+            continuous background, not a seam partway down. Sits on top of
+            the purple gradient above (kept exactly as-is), at the lower end
+            of the requested 0.5-0.7 opacity range since the image's own
+            colors (teal/green/gold) are quite different from the site's
+            purple and would otherwise compete with it as the dominant
+            color instead of reading as texture. */}
+        <Image src="/hero-section-overlay.png" alt="" fill priority className="object-cover opacity-50" />
+        {/* Scrim for guaranteed text contrast over the image - also mutes
+            the image's non-purple colors back toward the brand purple. */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(rgba(42,30,92,0.55), rgba(20,15,40,0.65))" }}
+        />
 
-        {categories && categories.length > 0 ? <CategoryStories categories={categories} locale={locale} /> : null}
+        <div className="relative z-10 w-full flex flex-col items-center">
+          <HeroSection locale={locale} />
+
+          {categories && categories.length > 0 ? <CategoryStories categories={categories} locale={locale} /> : null}
+        </div>
       </div>
+
+      {consultationCategories && consultationCategories.length > 0 ? (
+        <ConsultationCategoryShowcase categories={consultationCategories} locale={locale} />
+      ) : null}
+
+      {banners && banners.length > 0 ? (
+        <div className="w-full max-w-7xl mx-auto px-6 pt-8">
+          <BannerCarousel banners={banners} />
+        </div>
+      ) : null}
 
       {categoryShowcases.slice(0, 1).map(({ category, products }) =>
         products.length > 0 ? (
