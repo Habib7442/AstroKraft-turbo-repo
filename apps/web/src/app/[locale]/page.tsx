@@ -40,7 +40,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
       .limit(8),
-    supabase.from("consultation_categories").select("*").eq("is_active", true).order("sort_order", { ascending: true })
+    // A category with no price set yet can't actually be booked -
+    // create-consultation-order rejects it once the customer reaches
+    // checkout - so it's excluded here (both from the clickable category
+    // grid below, and from categoryNameById, which also gates which
+    // category an astrologer's "Book Now" link can deep-link to).
+    supabase.from("consultation_categories").select("*").eq("is_active", true).gt("price", 0).order("sort_order", { ascending: true })
   ]);
 
   const categoryNameById = new Map((consultationCategories ?? []).map((c) => [c.id, c.name]));

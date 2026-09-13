@@ -75,7 +75,11 @@ export default async function SearchPage({
         .or(productFilter)
         .order("sort_order", { ascending: true }),
       astrologerQuery,
-      supabase.from("consultation_categories").select("id, name").eq("is_active", true)
+      // gt("price", 0): categoryNameById also gates which category an
+      // astrologer's "Book Now" link can deep-link to - a category with no
+      // price set yet can't actually be booked (create-consultation-order
+      // rejects it at checkout), so it's excluded here too.
+      supabase.from("consultation_categories").select("id, name").eq("is_active", true).gt("price", 0)
     ]);
     products = (productData as ProductWithRelations[]) ?? [];
     astrologers = (astrologerData as AstrologerCardData[]) ?? [];

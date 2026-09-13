@@ -32,10 +32,14 @@ export default async function ConsultationPage({ params, searchParams }: Consult
   }
 
   const supabase = getSupabaseClient();
+  // A category with no price set yet can't actually be booked -
+  // create-consultation-order rejects it once the customer reaches checkout
+  // - so it's excluded here rather than shown as a dead end.
   const { data: categories } = await supabase
     .from("consultation_categories")
     .select("*")
     .eq("is_active", true)
+    .gt("price", 0)
     .order("sort_order", { ascending: true });
 
   return (
