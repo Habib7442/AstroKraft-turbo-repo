@@ -20,6 +20,7 @@ function formatPrice(price: number) {
 
 export function AstrologerCard({ astrologer, categoryNameById, selected, className = "", bookHref }: AstrologerCardProps) {
   const categories = astrologer.astrologer_categories.slice(0, 3);
+  const filledStars = Math.max(0, Math.min(5, Math.round(astrologer.rating)));
 
   return (
     <div
@@ -44,7 +45,16 @@ export function AstrologerCard({ astrologer, categoryNameById, selected, classNa
         <h3 className="line-clamp-1 text-sm font-bold text-foreground sm:text-base">{astrologer.name}</h3>
 
         <span className="flex items-center gap-1 text-xs text-ink-muted">
-          <span className="text-gold">★</span> {astrologer.rating} ({astrologer.review_count})
+          <span className="text-gold" aria-label={`${astrologer.rating} out of 5 stars`}>
+            {"★".repeat(filledStars)}
+            <span className="text-surface-border">{"★".repeat(5 - filledStars)}</span>
+          </span>
+          {/* A brand-new astrologer defaults to a 5-star rating with zero
+              reviews yet - showing "(0)" next to that reads as a red flag
+              ("nobody trusts this 5-star claim") rather than what it
+              actually is (no reviews yet). Just the stars, no count, until
+              there's at least one real review to back it. */}
+          {astrologer.review_count > 0 ? ` (${astrologer.review_count})` : null}
         </span>
 
         {astrologer.bio ? <p className="line-clamp-2 text-xs text-ink-body">{astrologer.bio}</p> : null}
