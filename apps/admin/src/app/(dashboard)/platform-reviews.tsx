@@ -133,8 +133,16 @@ export default function PlatformReviewsScreen() {
     setActionLoading(review.id);
 
     try {
-      const { error } = await supabase.from("platform_reviews").update({ status: nextStatus }).eq("id", review.id);
+      const { data, error } = await supabase
+        .from("platform_reviews")
+        .update({ status: nextStatus })
+        .eq("id", review.id)
+        .eq("status", review.status)
+        .select("id");
       if (error) throw error;
+      if (!data?.length) {
+        throw new Error("This testimonial was updated by another admin. Pull to refresh.");
+      }
     } catch (err: any) {
       transitioningReviewIds.current.delete(review.id);
       setActionLoading(null);
