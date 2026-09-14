@@ -19,7 +19,7 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
   if (!isValidLocale(locale)) notFound();
 
   return (
-    <PolicyPage title="Privacy Policy" updatedAt="September 2, 2026">
+    <PolicyPage title="Privacy Policy" updatedAt="September 14, 2026">
       <p>
         This Privacy Policy explains how AstroKraft (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;)
         collects, uses, and protects your personal information when you use our website and services.
@@ -49,6 +49,26 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
         <p>
           All payments are processed securely by Razorpay. We do not store your card, UPI, or netbanking
           credentials on our servers.
+        </p>
+      </div>
+
+      <div>
+        <h2>Cookies We Use</h2>
+        <p>We use a small number of strictly necessary cookies to operate the site — we do not use advertising or analytics cookies, and nothing is placed on your device to track you across other websites.</p>
+        <ul>
+          <li>
+            <strong>Sign-in session (Clerk):</strong> keeps you signed in and identifies your account. Required for
+            sign-in, order history, and consultation bookings to work.
+          </li>
+          <li>
+            <strong>Checkout (Razorpay):</strong> loaded only when you start a payment, to process that payment and
+            protect against fraud. Not loaded anywhere else on the site.
+          </li>
+        </ul>
+        <p>
+          Because these cookies are strictly necessary to provide the service you&rsquo;ve asked for, we don&rsquo;t
+          show a cookie consent banner. If we ever add analytics or advertising cookies in the future, we&rsquo;ll
+          update this policy and ask for your consent first.
         </p>
       </div>
 
