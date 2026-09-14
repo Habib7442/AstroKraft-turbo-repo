@@ -36,11 +36,15 @@ export default async function TestimonialsPage({ params }: { params: Promise<{ l
   if (!isValidLocale(locale)) notFound();
 
   const supabase = getSupabaseClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("platform_reviews")
     .select("id, name, rating, comment, created_at")
     .eq("status", "approved")
     .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading platform reviews:", error);
+  }
 
   const reviews = (data as Pick<PlatformReview, "id" | "name" | "rating" | "comment" | "created_at">[]) ?? [];
   const averageRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
@@ -64,7 +68,9 @@ export default async function TestimonialsPage({ params }: { params: Promise<{ l
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            {reviews.length === 0 ? (
+            {error ? (
+              <p className="text-sm text-destructive">Couldn&rsquo;t load testimonials right now — please try again shortly.</p>
+            ) : reviews.length === 0 ? (
               <p className="text-sm text-ink-muted">No testimonials yet — be the first to share your experience.</p>
             ) : (
               <div className="flex flex-col gap-4">
