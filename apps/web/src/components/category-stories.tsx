@@ -12,7 +12,9 @@ export function CategoryStories({ categories, locale }: CategoryStoriesProps) {
 
   return (
     <section className="w-full max-w-7xl mx-auto px-6 pt-3 pb-10">
-      <h2 className="text-2xl sm:text-3xl font-bold text-white text-left sm:text-center mb-6">Shop by Category</h2>
+      <h2 className="font-serif italic text-2xl sm:text-3xl font-bold tracking-wide text-white underline decoration-gold decoration-2 underline-offset-8 text-left sm:text-center mb-6">
+        Shop by Category
+      </h2>
 
       <div className="scrollbar-hide flex [justify-content:safe_center] gap-5 overflow-x-auto px-1 pb-2 snap-x snap-mandatory">
         {categories.map((category) => (

@@ -66,6 +66,12 @@ export function SiteHeader({ categories, locale }: SiteHeaderProps) {
           ))}
           <VastuNavDropdown categories={vastuCategories} locale={locale} />
           <Link
+            href={`/${locale}/testimonials`}
+            className="whitespace-nowrap text-xs font-medium text-white/85 transition-colors hover:text-gold sm:text-sm"
+          >
+            Reviews
+          </Link>
+          <Link
             href={`/${locale}/consultation`}
             className="ml-auto whitespace-nowrap rounded-full bg-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-transform hover:-translate-y-0.5 sm:text-sm"
           >

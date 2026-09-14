@@ -48,7 +48,7 @@ export function TestimonialForm() {
       <div className="rounded-lg border border-surface-border bg-surface-card p-5 text-center">
         <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-xl">✅</div>
         <h3 className="font-semibold text-foreground">Thanks for your feedback!</h3>
-        <p className="mt-1 text-xs text-ink-muted">It&rsquo;ll appear here once our team approves it.</p>
+        <p className="mt-1 text-xs text-ink-muted">It&rsquo;ll appear on our homepage once our team approves it.</p>
       </div>
     );
   }

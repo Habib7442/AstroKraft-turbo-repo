@@ -78,7 +78,9 @@ export function ProductReviews({ productId, reviews, averageRating, reviewCount 
   return (
     <section className="mx-auto w-full max-w-6xl px-6 py-10">
       <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-surface-border pb-6">
-        <h2 className="font-serif text-2xl font-bold text-foreground">Customer Reviews</h2>
+        <h2 className="font-serif italic text-2xl font-bold text-foreground underline decoration-gold decoration-2 underline-offset-4">
+          Customer Reviews
+        </h2>
         {reviewCount > 0 ? (
           <span className="flex items-center gap-1.5 text-sm text-ink-muted">
             <Stars rating={Math.round(averageRating)} />

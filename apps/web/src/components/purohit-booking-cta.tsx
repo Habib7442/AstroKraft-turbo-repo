@@ -11,7 +11,9 @@ export function PurohitBookingCta({ locale }: PurohitBookingCtaProps) {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-4xl shadow-lg ring-4 ring-white/30">
           🪔
         </div>
-        <h2 className="font-serif text-3xl font-extrabold text-white drop-shadow-sm sm:text-4xl">Book a Purohit for Your Puja</h2>
+        <h2 className="font-serif italic text-3xl font-extrabold text-white underline decoration-gold decoration-2 underline-offset-4 drop-shadow-sm sm:text-4xl">
+          Book a Purohit for Your Puja
+        </h2>
         <p className="max-w-xl text-sm font-medium text-white/95 sm:text-base">
           Griha Pravesh, Satyanarayan Puja, weddings, and more — tell us what you need and our team will call you
           back to confirm the priest, materials, and price. No payment required now.

@@ -16,7 +16,9 @@ export function AstrologerShowcase({ astrologers, categoryNameById, locale, bgCl
       <div className="mx-auto w-full max-w-7xl px-6 py-16 sm:py-20">
         <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="font-serif text-2xl font-bold text-foreground sm:text-3xl">Talk to Our Astrologers</h2>
+            <h2 className="font-serif italic text-2xl font-bold text-foreground underline decoration-gold decoration-2 underline-offset-4 sm:text-3xl">
+              Talk to Our Astrologers
+            </h2>
             <p className="mt-2 max-w-xl text-sm text-ink-body sm:text-base">
               Book a personal consultation with a verified expert for career, love, finance, health, and more.
             </p>

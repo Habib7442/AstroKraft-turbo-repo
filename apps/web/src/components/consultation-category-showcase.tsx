@@ -19,7 +19,9 @@ export function ConsultationCategoryShowcase({ categories, locale }: Consultatio
   return (
     <section className="w-full max-w-7xl mx-auto px-6 py-10 sm:py-14">
       <div className="mb-6 text-left sm:mb-8">
-        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-foreground">Book a Consultation</h2>
+        <h2 className="font-serif italic text-2xl sm:text-3xl font-bold text-foreground underline decoration-gold decoration-2 underline-offset-4">
+          Book a Consultation
+        </h2>
         <p className="mt-2 text-sm text-ink-body sm:text-base">
           Get personalized guidance from our verified Vedic astrologers.
         </p>
