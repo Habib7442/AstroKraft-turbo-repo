@@ -29,9 +29,9 @@ export type ReviewInput = z.infer<typeof reviewSchema>;
 // free text (there's no signed-in user to attribute it to), so it needs its
 // own minimum-length check the way a Clerk-verified name wouldn't.
 export const platformReviewSchema = z.object({
-  name: z.string().trim().min(2, "Name is required"),
+  name: z.string().trim().min(2, "Name is required").max(100, "Name is too long"),
   rating: z.number().int().min(1).max(5),
-  comment: z.string().trim().min(10, "Review must be at least 10 characters"),
+  comment: z.string().trim().min(10, "Review must be at least 10 characters").max(2000, "Review is too long"),
   // Hidden honeypot field: a real visitor never fills this in. A bot that
   // does gets a normal-looking success response but no row is written.
   website: z.string().optional()
