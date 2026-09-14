@@ -8,6 +8,7 @@ import { ConsultationCategoryShowcase } from "@/components/consultation-category
 import { HeroSection } from "@/components/hero-section";
 import { ProductShowcase } from "@/components/product-showcase";
 import { AstrologerShowcase } from "@/components/astrologer-showcase";
+import { TestimonialsShowcase } from "@/components/testimonials-showcase";
 import { PurohitBookingCta } from "@/components/purohit-booking-cta";
 import { LOCALES, isValidLocale } from "@/lib/locales";
 import { constructMetadata } from "@/lib/seo";
@@ -37,7 +38,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   }
 
   const supabase = getSupabaseClient();
-  const [{ data: banners }, { data: categories }, { data: astrologers }, { data: consultationCategories }] = await Promise.all([
+  const [
+    { data: banners },
+    { data: categories },
+    { data: astrologers },
+    { data: consultationCategories },
+    { data: platformReviews }
+  ] = await Promise.all([
     supabase.from("promo_banners").select("*").eq("is_active", true).order("position", { ascending: true }),
     supabase.from("categories").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
     supabase
@@ -51,7 +58,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     // checkout - so it's excluded here (both from the clickable category
     // grid below, and from categoryNameById, which also gates which
     // category an astrologer's "Book Now" link can deep-link to).
-    supabase.from("consultation_categories").select("*").eq("is_active", true).gt("price", 0).order("sort_order", { ascending: true })
+    supabase.from("consultation_categories").select("*").eq("is_active", true).gt("price", 0).order("sort_order", { ascending: true }),
+    supabase
+      .from("platform_reviews")
+      .select("id, name, rating, comment")
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .limit(10)
   ]);
 
   const categoryNameById = new Map((consultationCategories ?? []).map((c) => [c.id, c.name]));
@@ -150,6 +163,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           />
         ) : null
       )}
+
+      {platformReviews && platformReviews.length > 0 ? (
+        <TestimonialsShowcase reviews={platformReviews} locale={locale} bgClassName="bg-white" />
+      ) : null}
     </main>
   );
 }

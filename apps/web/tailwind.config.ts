@@ -17,7 +17,19 @@ const config: Config = {
         destructive: astroKraftTheme.colors.destructive
       },
       fontFamily: astroKraftTheme.typography.fontFamily,
-      borderRadius: astroKraftTheme.borderRadius
+      borderRadius: astroKraftTheme.borderRadius,
+      keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" }
+        }
+      },
+      animation: {
+        // The track's content is duplicated once in TestimonialsShowcase, so
+        // -50% is exactly one full copy — the loop point is seamless instead
+        // of snapping back to the start.
+        marquee: "marquee 40s linear infinite"
+      }
     }
   },
   plugins: [tailwindcssAnimate]
