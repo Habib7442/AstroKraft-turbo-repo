@@ -66,11 +66,24 @@ export default function PlatformReviewsScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const transitioningReviewIds = useRef(new Set<string>());
   const requestIdRef = useRef(0);
+  // runTransition's post-update reload runs asynchronously, well after the
+  // button tap that started it — if the admin switches filter tabs while
+  // that update is in flight, runTransition's own closure still has the
+  // OLD filter, and the requestId counter alone doesn't know that: it would
+  // happily overwrite the newer, correctly-filtered list with results for a
+  // filter the admin isn't even looking at anymore. Reading the filter from
+  // a ref instead of the closed-over state value means every call to
+  // loadReviews - no matter which render's closure invoked it - always
+  // queries whatever filter is actually on screen right now.
+  const filterRef = useRef(filter);
+  useEffect(() => {
+    filterRef.current = filter;
+  }, [filter]);
 
   const loadReviews = async (requestId: number) => {
     let query = supabase.from("platform_reviews").select("*").order("created_at", { ascending: false });
-    if (filter !== "all") {
-      query = query.eq("status", filter);
+    if (filterRef.current !== "all") {
+      query = query.eq("status", filterRef.current);
     }
 
     const { data, error } = await query;
@@ -189,7 +202,10 @@ export default function PlatformReviewsScreen() {
                   <View className="border-t border-surface-border pt-2 gap-1">
                     <Stars rating={item.rating} />
                     <Text className="text-xs text-ink-body">{item.comment}</Text>
-                    <Text className="text-xs text-ink-muted">{formatDate(item.created_at)}</Text>
+                    <Text className="text-xs text-ink-muted">
+                      {formatDate(item.created_at)}
+                      {item.submitter_ip ? ` · ${item.submitter_ip}` : ""}
+                    </Text>
                   </View>
 
                   {actions.length > 0 ? (

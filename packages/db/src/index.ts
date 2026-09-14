@@ -113,6 +113,11 @@ export interface PlatformReview {
   rating: number;
   comment: string;
   status: "pending" | "approved" | "rejected";
+  // Not shown publicly - used server-side to rate-limit submissions (there's
+  // no signed-in user or phone/email to key on), and surfaced to admins for
+  // moderation context (spotting several "different" names spamming from
+  // the same IP).
+  submitter_ip?: string | null;
   created_at: string;
 }
 
