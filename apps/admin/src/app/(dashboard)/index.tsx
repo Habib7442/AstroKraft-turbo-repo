@@ -37,6 +37,12 @@ const WORKING_SCREENS = [
     emoji: "⭐",
     title: "Reviews",
     description: "Approve or reject customer reviews"
+  },
+  {
+    href: "/platform-reviews",
+    emoji: "💬",
+    title: "Testimonials",
+    description: "Public reviews of AstroKraft itself"
   }
 ] as const;
 

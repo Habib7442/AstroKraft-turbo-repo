@@ -25,6 +25,20 @@ export const reviewSchema = z.object({
 
 export type ReviewInput = z.infer<typeof reviewSchema>;
 
+// A general platform testimonial, submittable without an account - name is
+// free text (there's no signed-in user to attribute it to), so it needs its
+// own minimum-length check the way a Clerk-verified name wouldn't.
+export const platformReviewSchema = z.object({
+  name: z.string().trim().min(2, "Name is required"),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().trim().min(10, "Review must be at least 10 characters"),
+  // Hidden honeypot field: a real visitor never fills this in. A bot that
+  // does gets a normal-looking success response but no row is written.
+  website: z.string().optional()
+});
+
+export type PlatformReviewInput = z.infer<typeof platformReviewSchema>;
+
 export const addressSchema = z.object({
   fullName: z.string().trim().min(2, "Full name is required"),
   phone: z.string().trim().min(10, "Valid phone number required"),

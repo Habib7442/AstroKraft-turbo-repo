@@ -104,6 +104,18 @@ export interface Review {
   created_at: string;
 }
 
+// A general "how was your experience with AstroKraft" testimonial, distinct
+// from Review (which is always a signed-in buyer reviewing one product) -
+// anyone can leave one without an account, moderated before going public.
+export interface PlatformReview {
+  id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+}
+
 export interface Consultation {
   id: string;
   user_id?: string;
@@ -237,4 +249,4 @@ export function createClerkSupabaseClient(
   });
 }
 
-export const DB_SCHEMA_VERSION = "2.3.0";
+export const DB_SCHEMA_VERSION = "2.4.0";
