@@ -36,6 +36,13 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
   const [placeOfBirth, setPlaceOfBirth] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Razorpay closes its own modal (firing ondismiss, which resets `loading`)
+  // the instant payment succeeds - well before our own server has finished
+  // verifying the signature, updating the booking, and sending the owner's
+  // notifications. Without a separate flag for that gap, the customer would
+  // briefly see the booking form again, fully editable, looking like nothing
+  // happened. This flag keeps a loader up for that whole window instead.
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -104,6 +111,11 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
         description: `${createData.categoryName} Consultation`,
         order_id: createData.razorpayOrderId,
         handler: async (response: any) => {
+          // Razorpay's checkout modal is already closing itself at this
+          // point (payment succeeded on their end) - keep the loader up
+          // until our own server confirms the booking, instead of letting
+          // the form become interactive again in between.
+          setVerifying(true);
           try {
             const verifyRes = await fetch("/api/razorpay/verify-consultation-payment", {
               method: "POST",
@@ -122,8 +134,10 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
             }
 
             setSuccess(verifyData.categoryName || "your");
+            setVerifying(false);
           } catch (err: any) {
             setError(err.message || "Payment succeeded but verification failed. Please contact support.");
+            setVerifying(false);
           }
         },
         modal: {
@@ -145,6 +159,9 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
     }
   };
 
+  // success checked first (even though the code above always clears
+  // verifying alongside setSuccess) so this can never get stuck showing the
+  // loader forever if a future edit sets success without also clearing it.
   if (success) {
     return (
       <div className="mx-auto max-w-lg rounded-2xl border border-green-200 bg-green-50 p-8 text-center">
@@ -154,6 +171,16 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
           Your {success} booking is confirmed. We&rsquo;ll assign one of our 100+ verified astrologers and reach out
           shortly to schedule your session.
         </p>
+      </div>
+    );
+  }
+
+  if (verifying) {
+    return (
+      <div className="mx-auto max-w-lg rounded-2xl border border-surface-border bg-surface-card p-8 text-center">
+        <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+        <h2 className="font-serif text-lg font-bold text-foreground">Confirming your payment…</h2>
+        <p className="mt-2 text-sm text-ink-body">This only takes a few seconds. Please don&rsquo;t close this page.</p>
       </div>
     );
   }

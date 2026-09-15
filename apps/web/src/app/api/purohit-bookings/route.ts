@@ -5,7 +5,7 @@ import type { PurohitBooking } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendPurohitBookingEmail } from "@/lib/send-purohit-booking-email";
 import { sendPushNotificationToAdmins } from "@/lib/send-push-notification";
-import { sendTelegramNotification } from "@/lib/send-telegram-notification";
+import { sendTelegramNotification, escapeTelegramHtml } from "@/lib/send-telegram-notification";
 
 const RATE_LIMIT_MAX_PER_HOUR = 3;
 
@@ -92,7 +92,18 @@ export async function POST(req: NextRequest) {
 
     try {
       await sendTelegramNotification({
-        text: `🪔 <b>New Purohit Booking</b>\n${booking.name} — ${booking.ritual_type}`
+        text: [
+          "🪔 <b>New Purohit Booking</b>",
+          `${escapeTelegramHtml(booking.name)} — ${escapeTelegramHtml(booking.ritual_type)}`,
+          `Phone: ${escapeTelegramHtml(booking.phone)}`,
+          `Location: ${escapeTelegramHtml(booking.location)}`,
+          `Preferred: ${escapeTelegramHtml(booking.preferred_date)}${booking.preferred_time ? ` at ${escapeTelegramHtml(booking.preferred_time)}` : ""}`,
+          `Language: ${escapeTelegramHtml(booking.language_preference)}`,
+          `Materials: ${booking.materials_option === "purohit_and_samagri" ? "Purohit + Samagri" : "Purohit Only"}`,
+          booking.message ? `Message: ${escapeTelegramHtml(booking.message)}` : null
+        ]
+          .filter(Boolean)
+          .join("\n")
       });
     } catch (telegramError) {
       console.error("purohit booking telegram notification failed:", telegramError);

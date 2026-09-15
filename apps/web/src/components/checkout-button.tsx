@@ -20,6 +20,13 @@ export function CheckoutButton({ shippingAddress, termsAccepted }: CheckoutButto
   const { isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
   const [loading, setLoading] = useState(false);
+  // Razorpay closes its own modal (firing ondismiss, which resets `loading`)
+  // the instant payment succeeds - well before our own server has finished
+  // verifying the signature and updating the order. Without a separate flag
+  // for that gap, "Proceed to Pay" would briefly become clickable again,
+  // looking like nothing happened. This keeps the button locked for that
+  // whole window instead.
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -75,6 +82,11 @@ export function CheckoutButton({ shippingAddress, termsAccepted }: CheckoutButto
         description: "Vedic Gemstones & Ritual Items",
         order_id: createData.razorpayOrderId,
         handler: async (response: any) => {
+          // Razorpay's checkout modal is already closing itself at this
+          // point (payment succeeded on their end) - keep the button locked
+          // until our own server confirms the order, instead of letting it
+          // become clickable again in between.
+          setVerifying(true);
           try {
             const verifyRes = await fetch("/api/razorpay/verify-payment", {
               method: "POST",
@@ -94,8 +106,10 @@ export function CheckoutButton({ shippingAddress, termsAccepted }: CheckoutButto
 
             clearCart();
             setSuccess(verifyData.orderNumber || "your order");
+            setVerifying(false);
           } catch (err: any) {
             setError(err.message || "Payment succeeded but verification failed. Please contact support.");
+            setVerifying(false);
           }
         },
         modal: {
@@ -117,10 +131,22 @@ export function CheckoutButton({ shippingAddress, termsAccepted }: CheckoutButto
     }
   };
 
+  // success checked first (even though the code above always clears
+  // verifying alongside setSuccess) so this can never get stuck showing the
+  // loader forever if a future edit sets success without also clearing it.
   if (success) {
     return (
       <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-700">
         Payment successful! Order {success} has been placed.
+      </div>
+    );
+  }
+
+  if (verifying) {
+    return (
+      <div className="flex items-center justify-center gap-3 rounded-lg border border-surface-border bg-surface-card p-4">
+        <div className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+        <p className="text-sm font-semibold text-foreground">Confirming your payment…</p>
       </div>
     );
   }

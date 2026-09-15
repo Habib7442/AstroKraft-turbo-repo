@@ -3,7 +3,7 @@ import { verifyRazorpaySignature } from "@astrokraft/payments";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendInvoiceEmail } from "@/lib/send-invoice-email";
 import { sendPushNotificationToAdmins } from "@/lib/send-push-notification";
-import { sendTelegramNotification } from "@/lib/send-telegram-notification";
+import { sendTelegramNotification, escapeTelegramHtml } from "@/lib/send-telegram-notification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,15 +49,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Order not found for this payment." }, { status: 400 });
     }
 
+    // Fetched once and reused by both the invoice email and the Telegram
+    // alert below — best effort, same reasoning as those two: a failed read
+    // here should never turn an already-successful purchase into an error
+    // response, it just means the alerts below fall back to what's already
+    // on `data` alone.
+    let profile: { full_name: string | null; email: string | null } | null = null;
+    let items: { title: string; price: number; quantity: number }[] = [];
+    try {
+      const [profileResult, itemsResult] = await Promise.all([
+        supabase.from("profiles").select("full_name, email").eq("id", data.user_id).maybeSingle(),
+        supabase.from("order_items").select("title, price, quantity").eq("order_id", data.id)
+      ]);
+      profile = profileResult.data;
+      items = itemsResult.data ?? [];
+    } catch (lookupError) {
+      console.error("razorpay verify-payment: profile/items lookup failed:", lookupError);
+    }
+
     // Email the invoice to the customer (BCC the owner) — best effort. The
     // payment already succeeded and is recorded; a failed email should never
     // turn a successful purchase into an error response.
     try {
-      const [{ data: profile }, { data: items }] = await Promise.all([
-        supabase.from("profiles").select("full_name, email").eq("id", data.user_id).maybeSingle(),
-        supabase.from("order_items").select("title, price, quantity").eq("order_id", data.id)
-      ]);
-
       const customerEmail = profile?.email;
 
       if (customerEmail) {
@@ -96,8 +109,32 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+      const shippingAddress = data.shipping_address as
+        | { fullName?: string; phone?: string; line1?: string; line2?: string; city?: string; state?: string; pincode?: string }
+        | null;
+
+      const itemLines = items.map(
+        (item) => `• ${escapeTelegramHtml(item.title)} x${item.quantity} — ₹${item.price.toLocaleString("en-IN")}`
+      );
+
+      const addressLine = shippingAddress
+        ? [shippingAddress.line1, shippingAddress.line2, shippingAddress.city, shippingAddress.state, shippingAddress.pincode]
+            .filter(Boolean)
+            .map((part) => escapeTelegramHtml(String(part)))
+            .join(", ")
+        : null;
+
       await sendTelegramNotification({
-        text: `📦 <b>New Order</b>\n${data.order_number} — ₹${data.total_amount.toLocaleString("en-IN")}`
+        text: [
+          "📦 <b>New Order</b>",
+          `${escapeTelegramHtml(data.order_number)} — ₹${data.total_amount.toLocaleString("en-IN")}`,
+          `Customer: ${escapeTelegramHtml(shippingAddress?.fullName || profile?.full_name || "—")}${shippingAddress?.phone ? ` (${escapeTelegramHtml(shippingAddress.phone)})` : ""}`,
+          itemLines.length > 0 ? `Items:\n${itemLines.join("\n")}` : null,
+          addressLine ? `Ship to: ${addressLine}` : null,
+          `Payment ID: ${escapeTelegramHtml(razorpayPaymentId)}`
+        ]
+          .filter(Boolean)
+          .join("\n")
       });
     } catch (telegramError) {
       console.error("razorpay verify-payment: telegram notification failed:", telegramError);
