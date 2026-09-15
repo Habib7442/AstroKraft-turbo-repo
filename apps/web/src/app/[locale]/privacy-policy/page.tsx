@@ -79,6 +79,11 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
           — such as our payment processor (Razorpay) and cloud hosting/storage providers — solely to deliver our
           services.
         </p>
+        <p>
+          When you place an order or make a booking, a summary (your name, phone number, order/booking details, and
+          shipping address where relevant) is also sent via Telegram to our internal team, so we can act on it
+          promptly. This is a private, internal notification — not a public channel, and not used for marketing.
+        </p>
       </div>
 
       <div>
