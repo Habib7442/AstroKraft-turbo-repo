@@ -147,8 +147,8 @@ export default async function SearchPage({
                   </div>
                 ) : null}
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
-                  {products.map((product) => (
-                    <GemstoneCard key={product.id} product={product} locale={locale} />
+                  {products.map((product, index) => (
+                    <GemstoneCard key={product.id} product={product} locale={locale} priority={index < 4} />
                   ))}
                 </div>
               </div>

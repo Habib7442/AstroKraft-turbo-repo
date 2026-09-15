@@ -43,12 +43,13 @@ export function ProductShowcase({
         </div>
 
         <div className="scrollbar-hide flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 sm:gap-6">
-          {products.map((product) => (
+          {products.map((product, index) => (
             <GemstoneCard
               key={product.id}
               product={product}
               locale={locale}
               className="w-[220px] shrink-0 snap-start sm:w-[260px]"
+              priority={index < 2}
             />
           ))}
         </div>

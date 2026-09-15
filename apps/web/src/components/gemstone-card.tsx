@@ -21,9 +21,15 @@ interface GemstoneCardProps {
   product: ProductWithRelations;
   locale: string;
   className?: string;
+  // Set true only for the handful of cards actually visible above the fold
+  // on first paint (the RUM data showed this exact image as the page's LCP
+  // element, taking 4.7s+ because it wasn't discovered until Next.js's
+  // default lazy-loading let it scroll into view) - not on every card, or
+  // every image on the page would compete for eager-loading priority.
+  priority?: boolean;
 }
 
-export function GemstoneCard({ product, locale, className = "" }: GemstoneCardProps) {
+export function GemstoneCard({ product, locale, className = "", priority = false }: GemstoneCardProps) {
   const tiers = product.product_variants
     .filter((v) => v.quality && typeof v.price === "number")
     .sort((a, b) => TIER_ORDER.indexOf(a.quality as string) - TIER_ORDER.indexOf(b.quality as string));
@@ -53,6 +59,7 @@ export function GemstoneCard({ product, locale, className = "" }: GemstoneCardPr
             alt={product.title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            priority={priority}
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
