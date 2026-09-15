@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Package } from "lucide-react";
+import { Info, Receipt } from "lucide-react";
 import type { Category } from "@astrokraft/db";
 import { AuthHeaderControls } from "@/components/auth-header-controls";
 import { CartLink } from "@/components/cart-link";
@@ -40,12 +40,20 @@ export function SiteHeader({ categories, locale }: SiteHeaderProps) {
 
           <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:ml-0 sm:gap-4">
             <Link
+              href={`/${locale}/about`}
+              aria-label="About AstroKraft"
+              title="About Us"
+              className="hidden shrink-0 items-center justify-center rounded-full p-1.5 text-white/90 transition-colors hover:text-[#E2C27A] sm:flex sm:p-2"
+            >
+              <Info className="h-[22px] w-[22px]" strokeWidth={2} />
+            </Link>
+            <Link
               href={`/${locale}/orders`}
               aria-label="My orders"
               title="My Orders"
               className="flex shrink-0 items-center justify-center rounded-full p-1.5 text-white/90 transition-colors hover:text-[#E2C27A] sm:p-2"
             >
-              <Package className="h-[22px] w-[22px]" strokeWidth={2} />
+              <Receipt className="h-[22px] w-[22px]" strokeWidth={2} />
             </Link>
             <CartLink locale={locale} />
             <AuthHeaderControls locale={locale} />
