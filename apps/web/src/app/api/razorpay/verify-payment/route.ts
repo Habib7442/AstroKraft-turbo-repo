@@ -3,6 +3,7 @@ import { verifyRazorpaySignature } from "@astrokraft/payments";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendInvoiceEmail } from "@/lib/send-invoice-email";
 import { sendPushNotificationToAdmins } from "@/lib/send-push-notification";
+import { sendTelegramNotification } from "@/lib/send-telegram-notification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -92,6 +93,14 @@ export async function POST(req: NextRequest) {
       });
     } catch (pushError) {
       console.error("razorpay verify-payment: push notification failed:", pushError);
+    }
+
+    try {
+      await sendTelegramNotification({
+        text: `📦 <b>New Order</b>\n${data.order_number} — ₹${data.total_amount.toLocaleString("en-IN")}`
+      });
+    } catch (telegramError) {
+      console.error("razorpay verify-payment: telegram notification failed:", telegramError);
     }
 
     return NextResponse.json({ success: true, orderNumber: data.order_number });

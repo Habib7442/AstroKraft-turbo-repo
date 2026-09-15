@@ -5,6 +5,7 @@ import type { PurohitBooking } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendPurohitBookingEmail } from "@/lib/send-purohit-booking-email";
 import { sendPushNotificationToAdmins } from "@/lib/send-push-notification";
+import { sendTelegramNotification } from "@/lib/send-telegram-notification";
 
 const RATE_LIMIT_MAX_PER_HOUR = 3;
 
@@ -87,6 +88,14 @@ export async function POST(req: NextRequest) {
       });
     } catch (pushError) {
       console.error("purohit booking push notification failed:", pushError);
+    }
+
+    try {
+      await sendTelegramNotification({
+        text: `🪔 <b>New Purohit Booking</b>\n${booking.name} — ${booking.ritual_type}`
+      });
+    } catch (telegramError) {
+      console.error("purohit booking telegram notification failed:", telegramError);
     }
 
     return NextResponse.json({ bookingId: booking.id, status: booking.status });
