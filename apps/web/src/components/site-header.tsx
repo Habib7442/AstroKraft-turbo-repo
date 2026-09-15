@@ -79,6 +79,18 @@ export function SiteHeader({ categories, locale }: SiteHeaderProps) {
           >
             Reviews
           </Link>
+          {/* The header's icon row hides the About icon below sm: (there's no
+              room for a 3rd icon there on mobile without recrowding it), so
+              this scrollable row - which already has room - is the only
+              place a small-screen visitor can reach it without going to the
+              footer. Hidden on sm+ since the icon above already covers it
+              there. */}
+          <Link
+            href={`/${locale}/about`}
+            className="whitespace-nowrap text-xs font-medium text-white/85 transition-colors hover:text-gold sm:hidden"
+          >
+            About
+          </Link>
           <Link
             href={`/${locale}/consultation`}
             className="ml-auto whitespace-nowrap rounded-full bg-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-transform hover:-translate-y-0.5 sm:text-sm"
