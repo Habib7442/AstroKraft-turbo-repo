@@ -20,7 +20,11 @@ export default function robots(): MetadataRoute.Robots {
         // wasted crawl budget at the source — same reasoning that applied to
         // the old ?astrologer= links this replaced (GSC previously flagged
         // those as "Crawled - currently not indexed").
-        disallow: ["/api/", "/*/cart", "/*/orders", "/*/search", "/*/consultation?category=*"]
+        //
+        // /bn: serves the same English copy as /en (no translation yet), so
+        // crawling it only spends budget on ~70 exact duplicates. Remove this
+        // (and add "bn" to INDEXABLE_LOCALES in lib/seo.ts) once it's real.
+        disallow: ["/api/", "/*/cart", "/*/orders", "/*/search", "/*/consultation?category=*", "/bn/", "/bn"]
       }
     ],
     sitemap: `${SITE.url}/sitemap.xml`,

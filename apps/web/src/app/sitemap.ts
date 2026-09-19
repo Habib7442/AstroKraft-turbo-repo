@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseClient } from "@/lib/supabase";
-import { localizedUrl, DEFAULT_LOCALE } from "@/lib/seo";
-import { LOCALES } from "@/lib/locales";
+import { localizedUrl, hreflangAlternates, INDEXABLE_LOCALES } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -17,21 +16,14 @@ const STATIC_PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[numbe
   { path: "/refund-policy", changeFrequency: "yearly", priority: 0.3 }
 ];
 
-function languageAlternates(path: string): Record<string, string> {
-  const languages: Record<string, string> = {};
-  for (const locale of LOCALES) languages[locale] = localizedUrl(path, locale);
-  languages["x-default"] = localizedUrl(path, DEFAULT_LOCALE);
-  return languages;
-}
-
 function entriesForPath(
   path: string,
   lastModified: Date,
   changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"],
   priority: number
 ): MetadataRoute.Sitemap {
-  const alternates = { languages: languageAlternates(path) };
-  return LOCALES.map((locale) => ({
+  const alternates = { languages: hreflangAlternates(path) };
+  return INDEXABLE_LOCALES.map((locale) => ({
     url: localizedUrl(path, locale),
     lastModified,
     changeFrequency,

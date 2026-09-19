@@ -8,7 +8,7 @@
  */
 
 import type { Metadata, Viewport } from "next";
-import { LOCALES, type Locale } from "@/lib/locales";
+import type { Locale } from "@/lib/locales";
 
 /* ============================================================================
  * 1. CORE SITE CONSTANTS
@@ -55,6 +55,15 @@ export const SITE = {
 
 export const DEFAULT_LOCALE: Locale = "en";
 
+// Locales search engines are told about (sitemap, hreflang, canonical). /bn/*
+// currently serves the exact same English copy as /en/* (same <html lang>,
+// title and headings - only the URL differs), so advertising it as a separate
+// Bengali version made every page look like a duplicate and roughly doubled
+// the URLs Google had to "discover", diluting crawl priority for this whole
+// new domain (137 URLs sat in "Discovered - currently not indexed"). Add
+// "bn" back here once /bn actually has translated content.
+export const INDEXABLE_LOCALES: readonly Locale[] = ["en"];
+
 const OG_LOCALE: Record<Locale, string> = {
   en: "en_IN",
   bn: "bn_IN"
@@ -73,7 +82,7 @@ export function localizedUrl(path = "/", locale: Locale = DEFAULT_LOCALE): strin
 /** languages map for Next.js `alternates.languages` (+ x-default). */
 export function hreflangAlternates(path = "/"): Record<string, string> {
   const langs: Record<string, string> = {};
-  for (const locale of LOCALES) langs[locale] = localizedUrl(path, locale);
+  for (const locale of INDEXABLE_LOCALES) langs[locale] = localizedUrl(path, locale);
   langs["x-default"] = localizedUrl(path, DEFAULT_LOCALE);
   return langs;
 }
@@ -127,7 +136,10 @@ export function constructMetadata(input: BuildMetaInput = {}): Metadata {
     root = false
   } = input;
 
-  const canonical = localizedUrl(path, locale);
+  // A non-indexable locale's page canonicalizes to its default-locale twin
+  // so any /bn URL that does get crawled consolidates onto /en instead of
+  // competing with it as a duplicate.
+  const canonical = localizedUrl(path, INDEXABLE_LOCALES.includes(locale) ? locale : DEFAULT_LOCALE);
   const ogImage = absoluteUrl(image);
   const fullTitle = title ? `${title} • ${SITE.name}` : SITE.title;
   const mergedKeywords = Array.from(new Set([...SITE.keywordsPrimary, ...keywords]));
@@ -158,7 +170,7 @@ export function constructMetadata(input: BuildMetaInput = {}): Metadata {
       description,
       url: canonical,
       locale: OG_LOCALE[locale],
-      alternateLocale: LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),
+      alternateLocale: INDEXABLE_LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),
       images: [{ url: ogImage, width: 1200, height: 630, alt: fullTitle }]
     },
     twitter: {
@@ -244,7 +256,7 @@ export function websiteSchema() {
     name: SITE.name,
     description: SITE.description,
     publisher: { "@id": ORG_ID },
-    inLanguage: LOCALES
+    inLanguage: INDEXABLE_LOCALES
   };
 }
 
