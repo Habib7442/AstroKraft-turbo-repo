@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { disableAnalytics, flushAnalyticsQueue } from "@astrokraft/analytics";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
@@ -19,10 +20,16 @@ const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 //     the strict CSP needs no new origins and ad-blockers don't drop events.
 //   - dynamic import + idle callback: posthog-js stays out of the initial
 //     bundle and out of the LCP window.
+// Funnel events fired before this finishes (an add-to-cart in the first few
+// seconds) are queued in memory by @astrokraft/analytics and replayed, with
+// their original timestamps, right after window.posthog is set below.
 // With no NEXT_PUBLIC_POSTHOG_KEY set this is a complete no-op.
 export function PostHogInit() {
   useEffect(() => {
-    if (!POSTHOG_KEY) return;
+    if (!POSTHOG_KEY) {
+      disableAnalytics();
+      return;
+    }
 
     let cancelled = false;
 
@@ -45,11 +52,18 @@ export function PostHogInit() {
 
       // logAnalyticsEvent() in @astrokraft/analytics reads this global.
       (window as unknown as { posthog?: unknown }).posthog = posthog;
+      flushAnalyticsQueue();
+    };
+
+    // A blocked or failed load means the queue would never drain - stop
+    // collecting instead of holding events for nothing.
+    const startSafely = () => {
+      start().catch(disableAnalytics);
     };
 
     const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number })
       .requestIdleCallback;
-    const handle = idle ? idle(() => void start(), { timeout: 4000 }) : window.setTimeout(() => void start(), 2000);
+    const handle = idle ? idle(startSafely, { timeout: 4000 }) : window.setTimeout(startSafely, 2000);
 
     return () => {
       cancelled = true;

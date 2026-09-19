@@ -11,14 +11,59 @@ export type AnalyticsEvent =
   | { name: "consultation_booked"; properties: { categoryId: string; fee: number } }
   | { name: "tool_used"; properties: { tool: "kundli" | "matching" | "panchang" } };
 
-type PostHogLike = { capture: (name: string, props?: Record<string, unknown>) => void };
+type PostHogLike = {
+  capture: (name: string, props?: Record<string, unknown>, options?: { timestamp?: Date }) => void;
+};
 
-// No-ops until the PostHog client has actually loaded (see
-// apps/web/src/components/posthog-init.tsx, which sets window.posthog) - so
-// callers can fire events unconditionally, before consent/idle-load/an unset
-// project key make PostHog available.
+interface QueuedEvent {
+  event: AnalyticsEvent;
+  at: Date;
+}
+
+// PostHog is loaded lazily (after idle, via a dynamic import - see
+// apps/web/src/components/posthog-init.tsx), so a visitor can add to cart or
+// start checkout before window.posthog exists. Those events are held here in
+// memory (never persisted anywhere) and replayed, with their original
+// timestamps, by flushAnalyticsQueue() once PostHog is ready. Capped so a
+// PostHog that never loads (blocked, offline) can't grow this without bound.
+const MAX_QUEUED_EVENTS = 50;
+let queue: QueuedEvent[] = [];
+let disabled = false;
+
+function getPostHog(): PostHogLike | undefined {
+  if (typeof window === "undefined") return undefined;
+  return (window as unknown as { posthog?: PostHogLike }).posthog;
+}
+
 export function logAnalyticsEvent(event: AnalyticsEvent): void {
-  if (typeof window === "undefined") return;
-  const posthog = (window as unknown as { posthog?: PostHogLike }).posthog;
-  posthog?.capture(event.name, event.properties);
+  if (disabled || typeof window === "undefined") return;
+
+  const posthog = getPostHog();
+  if (posthog) {
+    posthog.capture(event.name, event.properties);
+    return;
+  }
+
+  queue.push({ event, at: new Date() });
+  if (queue.length > MAX_QUEUED_EVENTS) queue.shift();
+}
+
+// Call once window.posthog has been assigned.
+export function flushAnalyticsQueue(): void {
+  const posthog = getPostHog();
+  if (!posthog) return;
+
+  const pending = queue;
+  queue = [];
+  for (const { event, at } of pending) {
+    posthog.capture(event.name, event.properties, { timestamp: at });
+  }
+}
+
+// Call when analytics will never load (no project key configured, or the
+// client failed to load): drops anything queued and makes later
+// logAnalyticsEvent() calls a no-op instead of queueing forever.
+export function disableAnalytics(): void {
+  disabled = true;
+  queue = [];
 }
