@@ -24,7 +24,7 @@ export default function robots(): MetadataRoute.Robots {
         // /bn: serves the same English copy as /en (no translation yet), so
         // crawling it only spends budget on ~70 exact duplicates. Remove this
         // (and add "bn" to INDEXABLE_LOCALES in lib/seo.ts) once it's real.
-        disallow: ["/api/", "/*/cart", "/*/orders", "/*/search", "/*/consultation?category=*", "/bn/", "/bn"]
+        disallow: ["/api/", "/ingest/", "/*/cart", "/*/orders", "/*/search", "/*/consultation?category=*", "/bn/", "/bn"]
       }
     ],
     sitemap: `${SITE.url}/sitemap.xml`,

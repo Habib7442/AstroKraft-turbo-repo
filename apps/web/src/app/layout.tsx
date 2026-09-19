@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { CartHydrator } from "@/components/cart-hydrator";
+import { PostHogInit } from "@/components/posthog-init";
 import { constructMetadata, globalJsonLd, toJsonLdString, viewport } from "@/lib/seo";
 import "./globals.css";
 
@@ -21,6 +22,7 @@ export default function RootLayout({
         />
         <ClerkProvider>
           <CartHydrator />
+          <PostHogInit />
           {children}
         </ClerkProvider>
       </body>

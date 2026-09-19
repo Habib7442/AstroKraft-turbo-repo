@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import type { ConsultationCategory } from "@astrokraft/db";
+import { logAnalyticsEvent } from "@astrokraft/analytics";
 import { loadRazorpayScript } from "@/lib/load-razorpay-script";
 import { TermsCheckbox } from "@/components/terms-checkbox";
 
@@ -133,6 +134,10 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
               throw new Error(verifyData.error || "Payment verification failed.");
             }
 
+            logAnalyticsEvent({
+              name: "consultation_booked",
+              properties: { categoryId: categoryId ?? "unknown", fee: createData.amount / 100 }
+            });
             setSuccess(verifyData.categoryName || "your");
             setVerifying(false);
           } catch (err: any) {
@@ -147,6 +152,10 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
       });
 
       razorpay.on("payment.failed", (response: any) => {
+        logAnalyticsEvent({
+          name: "payment_failed",
+          properties: { orderId: createData.consultationId, reason: response?.error?.description || "unknown" }
+        });
         setError(response?.error?.description || "Payment failed. Please try again.");
         setLoading(false);
       });

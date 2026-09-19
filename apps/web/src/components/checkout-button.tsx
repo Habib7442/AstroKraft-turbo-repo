@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { useCartStore } from "@astrokraft/core";
+import { logAnalyticsEvent } from "@astrokraft/analytics";
 import { loadRazorpayScript } from "@/lib/load-razorpay-script";
 import { useHasMounted } from "@/hooks/use-has-mounted";
 import { isShippingAddressComplete, type ShippingAddress } from "@/components/shipping-address-form";
@@ -49,6 +50,14 @@ export function CheckoutButton({ shippingAddress, termsAccepted }: CheckoutButto
       setError("Please accept the Terms & Conditions before checking out.");
       return;
     }
+
+    logAnalyticsEvent({
+      name: "checkout_started",
+      properties: {
+        cartTotal: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+        itemCount: items.reduce((sum, item) => sum + item.quantity, 0)
+      }
+    });
 
     setLoading(true);
     setError(null);
@@ -105,6 +114,10 @@ export function CheckoutButton({ shippingAddress, termsAccepted }: CheckoutButto
             }
 
             clearCart();
+            logAnalyticsEvent({
+              name: "payment_succeeded",
+              properties: { orderId: createData.orderId, amount: createData.amount / 100 }
+            });
             setSuccess(verifyData.orderNumber || "your order");
             setVerifying(false);
           } catch (err: any) {
@@ -119,6 +132,10 @@ export function CheckoutButton({ shippingAddress, termsAccepted }: CheckoutButto
       });
 
       razorpay.on("payment.failed", (response: any) => {
+        logAnalyticsEvent({
+          name: "payment_failed",
+          properties: { orderId: createData.orderId, reason: response?.error?.description || "unknown" }
+        });
         setError(response?.error?.description || "Payment failed. Please try again.");
         setLoading(false);
       });

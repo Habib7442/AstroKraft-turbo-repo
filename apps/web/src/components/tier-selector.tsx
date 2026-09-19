@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatINR, useCartStore } from "@astrokraft/core";
 import type { Product, ProductVariant } from "@astrokraft/db";
+import { logAnalyticsEvent } from "@astrokraft/analytics";
 import { inferCartCategory } from "@/lib/cart-category";
 
 const TIER_LABELS: Record<string, string> = {
@@ -41,6 +42,7 @@ export function TierSelector({ variants, product }: TierSelectorProps) {
       category: inferCartCategory(product.categories?.name),
       quantity
     });
+    logAnalyticsEvent({ name: "add_to_cart", properties: { productId: product.id, qty: quantity } });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };

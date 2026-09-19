@@ -19,7 +19,7 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
   if (!isValidLocale(locale)) notFound();
 
   return (
-    <PolicyPage title="Privacy Policy" updatedAt="September 14, 2026">
+    <PolicyPage title="Privacy Policy" updatedAt="September 19, 2026">
       <p>
         This Privacy Policy explains how AstroKraft (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;)
         collects, uses, and protects your personal information when you use our website and services.
@@ -54,7 +54,7 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
 
       <div>
         <h2>Cookies We Use</h2>
-        <p>We use a small number of strictly necessary cookies to operate the site — we do not use advertising or analytics cookies, and nothing is placed on your device to track you across other websites.</p>
+        <p>We use a small number of strictly necessary cookies to operate the site — we do not use advertising cookies, and nothing is placed on your device to track you across other websites.</p>
         <ul>
           <li>
             <strong>Sign-in session (Clerk):</strong> keeps you signed in and identifies your account. Required for
@@ -67,8 +67,20 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
         </ul>
         <p>
           Because these cookies are strictly necessary to provide the service you&rsquo;ve asked for, we don&rsquo;t
-          show a cookie consent banner. If we ever add analytics or advertising cookies in the future, we&rsquo;ll
-          update this policy and ask for your consent first.
+          show a cookie consent banner. Our analytics (described below) are cookieless — they store nothing on your
+          device. If we ever add advertising cookies or analytics that store data on your device, we&rsquo;ll update
+          this policy and ask for your consent first.
+        </p>
+      </div>
+
+      <div>
+        <h2>Website Analytics</h2>
+        <p>
+          To understand which pages and sections of the site are used most, we use PostHog analytics. It records
+          anonymous page views, clicks, and key steps such as adding to cart, starting checkout, or completing a
+          booking. It does not set cookies or store anything on your device, we do not link it to your name, email,
+          or phone number, and we do not record your screen or what you type into forms. Your browser&rsquo;s
+          &ldquo;Do Not Track&rdquo; setting is respected.
         </p>
       </div>
 
@@ -76,8 +88,8 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
         <h2>Data Sharing</h2>
         <p>
           We do not sell your personal information. We share data only with service providers who help us operate
-          — such as our payment processor (Razorpay) and cloud hosting/storage providers — solely to deliver our
-          services.
+          — such as our payment processor (Razorpay), our analytics provider (PostHog, anonymous usage data only),
+          and cloud hosting/storage providers — solely to deliver our services.
         </p>
         <p>
           When you place an order or make a booking, a summary (your name, phone number, order/booking details, and

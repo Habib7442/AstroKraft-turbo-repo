@@ -92,8 +92,25 @@ const CSP_DIRECTIVES = [
   "object-src 'none'"
 ].join("; ");
 
+// PostHog is reached through a same-origin /ingest proxy (see
+// components/posthog-init.tsx) rather than posthog.com directly: no new CSP
+// origins to allow, and ad-blockers don't recognise the path. Region-specific,
+// so it follows NEXT_PUBLIC_POSTHOG_HOST (US default) - the "-assets" host
+// serves the SDK's lazy-loaded static bundles.
+const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+const posthogAssetsHost = posthogHost.replace(".i.posthog.com", "-assets.i.posthog.com");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // PostHog's ingestion endpoints end in a trailing slash (e.g. /e/) - Next's
+  // default redirect to strip it would 308 every event instead of forwarding it.
+  skipTrailingSlashRedirect: true,
+  async rewrites() {
+    return [
+      { source: "/ingest/static/:path*", destination: `${posthogAssetsHost}/static/:path*` },
+      { source: "/ingest/:path*", destination: `${posthogHost}/:path*` }
+    ];
+  },
   async headers() {
     return [
       {

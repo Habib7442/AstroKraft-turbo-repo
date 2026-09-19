@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCartStore, type CartItem } from "@astrokraft/core";
+import { logAnalyticsEvent } from "@astrokraft/analytics";
 
 interface AddToCartButtonProps {
   item: Omit<CartItem, "quantity">;
@@ -17,6 +18,7 @@ export function AddToCartButton({ item, quantity = 1, compact }: AddToCartButton
     e?.preventDefault();
     e?.stopPropagation();
     addItem({ ...item, quantity });
+    logAnalyticsEvent({ name: "add_to_cart", properties: { productId: item.productId ?? item.id, qty: quantity } });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };

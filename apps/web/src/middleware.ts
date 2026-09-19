@@ -9,7 +9,7 @@ const LOCALE_EXEMPT_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt"]
 // First path segments reserved for internal routing, matched as a whole
 // segment (not a prefix) - "/api" must not also swallow "/apiary" and send
 // a real page path down the wrong branch.
-const LOCALE_EXEMPT_FIRST_SEGMENTS = new Set(["_next", "api", "trpc", "__clerk"]);
+const LOCALE_EXEMPT_FIRST_SEGMENTS = new Set(["_next", "api", "trpc", "__clerk", "ingest"]);
 
 // GSC's Coverage report flagged the bare domain root as "Page with
 // redirect" - it was relying on a page-level `redirect("/en")` in
@@ -50,7 +50,9 @@ export default clerkMiddleware((_auth, req) => {
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // "ingest/" is the PostHog analytics proxy - a beacon on every click, so
+    // it must skip Clerk's session handling entirely, not just the redirect.
+    "/((?!_next|ingest/|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
     // Clerk proxy matcher
