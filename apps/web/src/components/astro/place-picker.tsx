@@ -13,7 +13,8 @@ export interface PlaceValue {
 
 interface PlacePickerProps {
   value: PlaceValue | null;
-  onChange: (value: PlaceValue) => void;
+  onChange: (value: PlaceValue | null) => void;
+  id?: string;
 }
 
 let citiesPromise: Promise<CityRow[]> | null = null;
@@ -28,7 +29,7 @@ function loadCities(): Promise<CityRow[]> {
   return citiesPromise;
 }
 
-export function PlacePicker({ value, onChange }: PlacePickerProps) {
+export function PlacePicker({ value, onChange, id }: PlacePickerProps) {
   const [query, setQuery] = useState(value?.place ?? "");
   const [cities, setCities] = useState<CityRow[] | null>(null);
   const [open, setOpen] = useState(false);
@@ -48,6 +49,7 @@ export function PlacePicker({ value, onChange }: PlacePickerProps) {
   return (
     <div ref={containerRef} className="relative">
       <input
+        id={id}
         type="text"
         value={query}
         placeholder="City, e.g. Silchar"
@@ -58,6 +60,12 @@ export function PlacePicker({ value, onChange }: PlacePickerProps) {
         }}
         onChange={(e) => {
           setQuery(e.target.value);
+          // A previously selected city's coordinates must not silently keep
+          // backing a now-different-looking input - without this, editing
+          // the text after picking a city left the old lat/lon selected,
+          // so the form would submit (and compute a chart for) whatever
+          // city was last clicked, not whatever the input now shows.
+          onChange(null);
           setOpen(true);
         }}
         className="w-full rounded-lg border border-surface-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/30"

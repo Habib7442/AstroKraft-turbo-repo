@@ -30,8 +30,15 @@ interface KundliFormProps {
 }
 
 function degMinString(deg: number) {
-  const d = Math.floor(deg);
-  const m = Math.round((deg - d) * 60);
+  let d = Math.floor(deg);
+  let m = Math.round((deg - d) * 60);
+  // A fractional part of e.g. 29.5+ minutes rounds up to 60, not a valid
+  // minute value ("12°60'") - carry it into the degree instead of truncating
+  // away the rounding precision entirely.
+  if (m === 60) {
+    m = 0;
+    d += 1;
+  }
   return `${d}°${String(m).padStart(2, "0")}'`;
 }
 
@@ -196,10 +203,11 @@ export function KundliForm({ locale, gemstoneMap }: KundliFormProps) {
     <div className="mx-auto max-w-lg rounded-2xl border border-surface-border bg-surface-card p-6 shadow-sm">
       <div className="flex flex-col gap-4">
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">
+          <label htmlFor="kundli-name" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">
             Your Name (optional)
           </label>
           <input
+            id="kundli-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -209,8 +217,9 @@ export function KundliForm({ locale, gemstoneMap }: KundliFormProps) {
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Date of Birth</label>
+            <label htmlFor="kundli-dob" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Date of Birth</label>
             <input
+              id="kundli-dob"
               type="date"
               value={dob}
               onChange={(e) => setDob(e.target.value)}
@@ -219,8 +228,9 @@ export function KundliForm({ locale, gemstoneMap }: KundliFormProps) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Time of Birth</label>
+            <label htmlFor="kundli-time" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Time of Birth</label>
             <input
+              id="kundli-time"
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
@@ -229,8 +239,8 @@ export function KundliForm({ locale, gemstoneMap }: KundliFormProps) {
           </div>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Place of Birth</label>
-          <PlacePicker value={place} onChange={setPlace} />
+          <label htmlFor="kundli-place" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Place of Birth</label>
+          <PlacePicker id="kundli-place" value={place} onChange={setPlace} />
           <p className="mt-1 text-[11px] text-ink-muted">Currently supports Indian birthplaces only.</p>
         </div>
 

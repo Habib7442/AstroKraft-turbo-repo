@@ -116,8 +116,9 @@ export function GemstoneRecommendationForm({ locale, gemstoneMap }: GemstoneReco
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Date of Birth</label>
+            <label htmlFor="gemstone-dob" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Date of Birth</label>
             <input
+              id="gemstone-dob"
               type="date"
               value={dob}
               onChange={(e) => setDob(e.target.value)}
@@ -126,8 +127,9 @@ export function GemstoneRecommendationForm({ locale, gemstoneMap }: GemstoneReco
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Time of Birth</label>
+            <label htmlFor="gemstone-time" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Time of Birth</label>
             <input
+              id="gemstone-time"
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
@@ -136,8 +138,8 @@ export function GemstoneRecommendationForm({ locale, gemstoneMap }: GemstoneReco
           </div>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Place of Birth</label>
-          <PlacePicker value={place} onChange={setPlace} />
+          <label htmlFor="gemstone-place" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-body">Place of Birth</label>
+          <PlacePicker id="gemstone-place" value={place} onChange={setPlace} />
         </div>
         <button
           type="button"
