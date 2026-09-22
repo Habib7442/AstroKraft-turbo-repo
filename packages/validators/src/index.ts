@@ -8,7 +8,7 @@ import { z } from "zod";
 // out catches the mismatch: Date.UTC normalizes an out-of-range day/month
 // (Feb 30 becomes Mar 2) instead of throwing, so the round-trip comparison
 // is what actually detects it.
-function isValidCalendarDate(value: string): boolean {
+export function isValidCalendarDate(value: string): boolean {
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
@@ -89,3 +89,22 @@ export const purohitBookingSchema = z.object({
 });
 
 export type PurohitBookingInput = z.infer<typeof purohitBookingSchema>;
+
+// Bounding box for the bundled India city dataset (public/data/in-cities.json)
+// - the kundli/gemstone tools assume Asia/Kolkata (IST, UTC+5:30, no DST) for
+// every birthplace, which only holds for Indian coordinates. Generous margin
+// around India's actual extent (6.5-37.6N, 68.1-97.4E) rather than a tight
+// box, so a coastal/border town never gets wrongly rejected.
+export const kundliInputSchema = z.object({
+  name: z.string().trim().max(100).optional(),
+  dob: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date of birth")
+    .refine(isValidCalendarDate, "Enter a valid date of birth"),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a valid time (HH:MM)"),
+  place: z.string().trim().min(1, "Enter your place of birth").max(150),
+  latitude: z.number().min(6, "Only Indian birthplaces are currently supported").max(38),
+  longitude: z.number().min(68, "Only Indian birthplaces are currently supported").max(98)
+});
+
+export type KundliInput = z.infer<typeof kundliInputSchema>;

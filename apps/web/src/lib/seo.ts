@@ -295,6 +295,38 @@ export function productSchema(p: ProductSchemaInput) {
   };
 }
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+/** FAQPage schema - render inline on any page with a visible Q&A section. */
+export function faqSchema(items: FaqItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer }
+    }))
+  };
+}
+
+/** WebApplication schema for a free interactive tool (kundli, gemstone finder, etc). */
+export function webApplicationSchema(input: { name: string; description: string; path: string }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: input.name,
+    description: input.description,
+    url: localizedUrl(input.path),
+    applicationCategory: "LifestyleApplication",
+    operatingSystem: "Any",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "INR" }
+  };
+}
+
 /** Convenience: combine the global graph for the root layout. */
 export function globalJsonLd() {
   return [organizationSchema(), websiteSchema()];

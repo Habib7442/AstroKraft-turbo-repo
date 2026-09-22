@@ -6,6 +6,7 @@ import { AuthHeaderControls } from "@/components/auth-header-controls";
 import { CartLink } from "@/components/cart-link";
 import { SiteSearchBar } from "@/components/site-search-bar";
 import { VastuNavDropdown } from "@/components/vastu-nav-dropdown";
+import { FreeToolsNavDropdown } from "@/components/free-tools-nav-dropdown";
 
 interface SiteHeaderProps {
   categories: Category[];
@@ -73,6 +74,7 @@ export function SiteHeader({ categories, locale }: SiteHeaderProps) {
             </Link>
           ))}
           <VastuNavDropdown categories={vastuCategories} locale={locale} />
+          <FreeToolsNavDropdown locale={locale} />
           <Link
             href={`/${locale}/testimonials`}
             className="whitespace-nowrap text-xs font-medium text-white/85 transition-colors hover:text-gold sm:text-sm"

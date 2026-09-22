@@ -21,6 +21,7 @@
     "@clerk/nextjs": "^7.8.3",
     "@radix-ui/react-dialog": "^1.1.23",
     "@react-pdf/renderer": "^4.8.1",
+    "astronomy-engine": "^2.1.19",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.39.0",

@@ -16,6 +16,9 @@ export function SiteFooter({ categories, locale }: SiteFooterProps) {
     { label: "Contact Us", href: `/${locale}/contact` },
     { label: "Book a Consultation", href: `/${locale}/consultation` },
     { label: "Book a Purohit", href: `/${locale}/purohit-booking` },
+    { label: "Daily Horoscope", href: `/${locale}/horoscope` },
+    { label: "Free Kundli", href: `/${locale}/free-kundli` },
+    { label: "Gemstone Recommendation", href: `/${locale}/gemstone-recommendation` },
     { label: "Testimonials", href: `/${locale}/testimonials` },
     { label: "My Orders", href: `/${locale}/orders` }
   ];
