@@ -1,115 +1,194 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isValidLocale } from "@/lib/locales";
 import { constructMetadata } from "@/lib/seo";
 import { PolicyPage } from "@/components/policy-page";
+import { DATA_PROCESSORS } from "@/lib/data-processors";
+
+const CONTACT_EMAIL = "vastubipra@gmail.com";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   return constructMetadata({
     title: "Privacy Policy",
-    description: "How AstroKraft collects, uses, and protects your personal information.",
+    description: "How AstroKraft collects, uses, shares, retains and protects your personal data, and your rights.",
     path: "/privacy-policy",
     locale: isValidLocale(locale) ? locale : "en"
   });
 }
 
+// "Last updated" must match PRIVACY_NOTICE_VERSION in @astrokraft/validators.
 export default async function PrivacyPolicyPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!isValidLocale(locale)) notFound();
 
+  const mail = <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>;
+
   return (
-    <PolicyPage title="Privacy Policy" updatedAt="September 19, 2026">
+    <PolicyPage title="Privacy Policy" updatedAt="October 3, 2026">
       <p>
-        This Privacy Policy explains how AstroKraft (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;)
-        collects, uses, and protects your personal information when you use our website and services.
+        This notice explains what personal data AstroKraft (&ldquo;we&rdquo;, &ldquo;us&rdquo;) collects, why, who
+        we share it with, how long we keep it, and the rights you have under India&rsquo;s Digital Personal Data
+        Protection Act, 2023. AstroKraft, Rangirkhari, Silchar, Assam, India, is the Data Fiduciary for this data.
       </p>
 
       <div>
-        <h2>Information We Collect</h2>
-        <ul>
-          <li>Account details: name, email address, and phone number, via our sign-in provider.</li>
-          <li>Order details: shipping address, items purchased, and payment status.</li>
-          <li>Consultation details: birth date, time and place of birth, submitted when booking a consultation.</li>
-          <li>Usage data: pages visited and interactions, used to improve the site.</li>
-        </ul>
-      </div>
-
-      <div>
-        <h2>How We Use Your Information</h2>
-        <ul>
-          <li>To process and fulfil orders and consultation bookings.</li>
-          <li>To communicate order updates, booking confirmations, and support responses.</li>
-          <li>To improve our products, services, and website experience.</li>
-        </ul>
-      </div>
-
-      <div>
-        <h2>Payment Information</h2>
-        <p>
-          All payments are processed securely by Razorpay. We do not store your card, UPI, or netbanking
-          credentials on our servers.
-        </p>
-      </div>
-
-      <div>
-        <h2>Cookies We Use</h2>
-        <p>We use a small number of strictly necessary cookies to operate the site — we do not use advertising cookies, and nothing is placed on your device to track you across other websites.</p>
+        <h2>What We Collect and Why</h2>
         <ul>
           <li>
-            <strong>Sign-in session (Clerk):</strong> keeps you signed in and identifies your account. Required for
-            sign-in, order history, and consultation bookings to work.
+            <strong>Account:</strong> name, email address and phone number, through our sign-in provider, to give
+            you an account, order history and bookings.
           </li>
           <li>
-            <strong>Checkout (Razorpay):</strong> loaded only when you start a payment, to process that payment and
-            protect against fraud. Not loaded anywhere else on the site.
+            <strong>Orders:</strong> shipping name, phone number and address, items and payment status, to deliver
+            your order, send invoices and handle returns or refunds.
+          </li>
+          <li>
+            <strong>Consultations:</strong> name, phone number, and the date, time and place of birth you provide,
+            to prepare and deliver your astrology consultation.
+          </li>
+          <li>
+            <strong>Purohit bookings:</strong> name, phone number, puja location, preferred date and language, your
+            message and any file you attach, to call you back and arrange the puja.
+          </li>
+          <li>
+            <strong>Reviews and testimonials:</strong> your name, rating and comment, shown publicly once approved.
+            For testimonials we also briefly keep your IP address to stop spam.
+          </li>
+          <li>
+            <strong>Free tools (Kundli, gemstone recommendation):</strong> birth details are used only to compute
+            your chart on the spot. We do not store them.
+          </li>
+          <li>
+            <strong>Usage data:</strong> pages visited and clicks, to understand which parts of the site are
+            useful. See &ldquo;Cookies and Analytics&rdquo; below.
           </li>
         </ul>
         <p>
-          Because these cookies are strictly necessary to provide the service you&rsquo;ve asked for, we don&rsquo;t
-          show a cookie consent banner. Our analytics (described below) are cookieless — they store nothing on your
-          device. If we ever add advertising cookies or analytics that store data on your device, we&rsquo;ll update
-          this policy and ask for your consent first.
+          We process this data because you gave it to us for the stated purpose, or with your consent, which you
+          give through the checkbox on each form. We use it only for that purpose, and never for advertising or
+          sale.
         </p>
       </div>
 
       <div>
-        <h2>Website Analytics</h2>
+        <h2>Who We Share It With</h2>
         <p>
-          To understand which pages and sections of the site are used most, we use PostHog analytics. It records
-          anonymous page views, clicks, and key steps such as adding to cart, starting checkout, or completing a
-          booking. It does not set cookies or store anything on your device, we do not link it to your name, email,
-          or phone number, and we do not record your screen or what you type into forms. Your browser&rsquo;s
-          &ldquo;Do Not Track&rdquo; setting is respected.
+          We share personal data only with the service providers below, under contract, and only what each needs
+          to do its job. Some of them process data outside India (for example in the United States). Internally,
+          only our own staff see your details, through our admin app.
         </p>
+        <ul>
+          {DATA_PROCESSORS.map((p) => (
+            <li key={p.name}>
+              <strong>{p.name}</strong>: {p.purpose}. Data: {p.data}.
+            </li>
+          ))}
+        </ul>
+        <p>We may also disclose data where Indian law requires it, for example to a court or tax authority.</p>
       </div>
 
       <div>
-        <h2>Data Sharing</h2>
-        <p>
-          We do not sell your personal information. We share data only with service providers who help us operate
-          — such as our payment processor (Razorpay), our analytics provider (PostHog, anonymous usage data only),
-          and cloud hosting/storage providers — solely to deliver our services.
-        </p>
-        <p>
-          When you place an order or make a booking, a summary (your name, phone number, order/booking details, and
-          shipping address where relevant) is also sent via Telegram to our internal team, so we can act on it
-          promptly. This is a private, internal notification — not a public channel, and not used for marketing.
-        </p>
+        <h2>How Long We Keep It</h2>
+        <ul>
+          <li>Unpaid or abandoned orders and consultation bookings: 30 days.</li>
+          <li>Rejected reviews and testimonials: 30 days. Testimonial IP addresses: 30 days.</li>
+          <li>Purohit booking requests: 90 days after the preferred puja date. Attached files: up to 180 days after upload.</li>
+          <li>
+            Paid orders and consultations, including the invoice details: 8 years, as required by Indian tax and
+            company law, then deleted.
+          </li>
+          <li>Your account: until you delete it. Approved reviews: until you ask us to remove them.</li>
+        </ul>
+        <p>Deletion runs automatically every day.</p>
       </div>
 
       <div>
         <h2>Your Rights</h2>
+        <ul>
+          <li>
+            <strong>Access:</strong> get a summary of your data and who we have shared it with. Signed-in customers
+            can download it instantly from <Link href={`/${locale}/my-data`}>Your Data &amp; Privacy</Link>.
+          </li>
+          <li>
+            <strong>Correction:</strong> ask us to correct, complete or update your data.
+          </li>
+          <li>
+            <strong>Erasure and withdrawing consent:</strong> delete your account from{" "}
+            <Link href={`/${locale}/my-data`}>Your Data &amp; Privacy</Link>, or email us to withdraw consent for
+            a booking, review or testimonial. We then stop processing and erase the data, except records the law
+            requires us to keep. Withdrawing does not affect processing already done, or an order already paid
+            for.
+          </li>
+          <li>
+            <strong>Nomination:</strong> nominate another person to exercise these rights if you die or become
+            unable to.
+          </li>
+          <li>
+            <strong>Grievance redressal:</strong> complain to our Grievance Officer (below). If you are not
+            satisfied with our response, you may complain to the Data Protection Board of India.
+          </li>
+        </ul>
+        <p>For anything other than self-service download or account deletion, email {mail}.</p>
+      </div>
+
+      <div>
+        <h2>Grievance Officer</h2>
         <p>
-          You may request access to, correction of, or deletion of your personal data by contacting us at{" "}
-          <a href="mailto:vastubipra@gmail.com">vastubipra@gmail.com</a>.
+          Grievance Officer, AstroKraft, Rangirkhari, Silchar, Assam, India. Email: {mail}. We acknowledge
+          requests within 48 hours and resolve them within 30 days. We may ask you to verify your identity first.
         </p>
       </div>
 
-      <p className="text-xs text-ink-muted">
-        This policy may be updated from time to time. Continued use of the site after changes means you accept the
-        revised policy.
-      </p>
+      <div>
+        <h2>Children</h2>
+        <p>
+          Our services are for adults. You must be 18 or older to place an order, book a consultation or Purohit,
+          or submit a testimonial, and you confirm this on each form. If you believe a child has given us personal
+          data, email {mail} and we will delete it.
+        </p>
+      </div>
+
+      <div>
+        <h2>Security and Data Breaches</h2>
+        <p>
+          We protect your data with access controls that limit each record to you and our authorised staff,
+          encrypted connections, private storage for uploaded files, and payment handled entirely by Razorpay. We
+          do not store card, UPI or netbanking credentials. If a personal data breach occurs, we will inform you
+          and the Data Protection Board of India as the law requires, with what happened and what you can do.
+        </p>
+      </div>
+
+      <div>
+        <h2>Cookies and Analytics</h2>
+        <p>
+          We use only strictly necessary cookies: the sign-in session from Clerk, and Razorpay&rsquo;s checkout
+          cookies, loaded only when you start a payment. We use no advertising cookies.
+        </p>
+        <p>
+          Our PostHog analytics store nothing on your device and do not record your screen or what you type into
+          forms. We never link analytics to your name, email or phone number. As with any web request, your IP
+          address reaches the analytics service. Your browser&rsquo;s &ldquo;Do Not Track&rdquo; setting is
+          respected.
+        </p>
+      </div>
+
+      <div>
+        <h2>Language</h2>
+        <p>
+          On request, we will provide this notice in any language listed in the Eighth Schedule to the
+          Constitution of India, including Hindi, Bengali and Assamese. Email {mail}.
+        </p>
+      </div>
+
+      <div>
+        <h2>Changes to This Policy</h2>
+        <p>
+          If we change how we use your data, we will update this page and its date. Where the change needs your
+          consent, we will ask for it again before applying it to you.
+        </p>
+      </div>
     </PolicyPage>
   );
 }

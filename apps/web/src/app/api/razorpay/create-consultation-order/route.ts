@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createRazorpayOrder } from "@astrokraft/payments";
+import { PRIVACY_NOTICE_VERSION } from "@astrokraft/validators";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { ensureProfile } from "@/lib/ensure-profile";
 
@@ -65,7 +66,9 @@ export async function POST(req: NextRequest) {
         customer_phone: customerPhone.trim(),
         kundli_details: { dob: dob || null, time_of_birth: timeOfBirth || null, place_of_birth: placeOfBirth || null },
         status: "payment_pending",
-        amount: category.price
+        amount: category.price,
+        consent_notice_version: PRIVACY_NOTICE_VERSION,
+        consented_at: new Date().toISOString()
       })
       .select()
       .single();

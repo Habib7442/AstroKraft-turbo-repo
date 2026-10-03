@@ -14,6 +14,15 @@ export function isValidCalendarDate(value: string): boolean {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
+// Bump whenever the privacy policy's substance changes, and keep it in step
+// with the policy page's "Last updated" date. Stored on every row created
+// under consent, as proof of which notice the person accepted.
+export const PRIVACY_NOTICE_VERSION = "2026-10-03";
+
+const consentAccepted = z.literal(true, {
+  errorMap: () => ({ message: "Please confirm you are 18 or older and accept the Privacy Policy." })
+});
+
 export const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   // .trim() must run before .min() — otherwise a whitespace-only string
@@ -32,6 +41,7 @@ export const platformReviewSchema = z.object({
   name: z.string().trim().min(2, "Name is required").max(100, "Name is too long"),
   rating: z.number().int().min(1).max(5),
   comment: z.string().trim().min(10, "Review must be at least 10 characters").max(2000, "Review is too long"),
+  consent: consentAccepted,
   // Hidden honeypot field: a real visitor never fills this in. A bot that
   // does gets a normal-looking success response but no row is written.
   website: z.string().optional()
@@ -83,6 +93,7 @@ export const purohitBookingSchema = z.object({
     .max(500)
     .regex(/^purohit-uploads\//, "Invalid attachment reference")
     .optional(),
+  consent: consentAccepted,
   // Hidden honeypot field: a real visitor never fills this in. A bot that
   // does gets a normal-looking success response but no row is written.
   website: z.string().optional()

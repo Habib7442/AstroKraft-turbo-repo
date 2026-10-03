@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { PurohitConsentCheckbox } from "@/components/terms-checkbox";
 
 const RITUAL_TYPES = [
   "Griha Pravesh",
@@ -34,7 +35,7 @@ function todayISODate() {
   return new Date(now.getTime() - offset * 60 * 1000).toISOString().slice(0, 10);
 }
 
-export function PurohitBookingForm() {
+export function PurohitBookingForm({ locale }: { locale: string }) {
   const { isSignedIn } = useAuth();
 
   const [name, setName] = useState("");
@@ -50,6 +51,7 @@ export function PurohitBookingForm() {
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [website, setWebsite] = useState("");
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -66,7 +68,8 @@ export function PurohitBookingForm() {
       resolvedRitualType &&
       preferredDate &&
       resolvedLanguage &&
-      materialsOption
+      materialsOption &&
+      consent
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,6 +138,7 @@ export function PurohitBookingForm() {
           materialsOption,
           message: message.trim() || undefined,
           attachmentKey,
+          consent,
           website
         })
       });
@@ -355,6 +359,8 @@ export function PurohitBookingForm() {
           className="absolute h-0 w-0 opacity-0"
           aria-hidden="true"
         />
+
+        <PurohitConsentCheckbox checked={consent} onChange={setConsent} locale={locale} />
 
         <button
           type="button"

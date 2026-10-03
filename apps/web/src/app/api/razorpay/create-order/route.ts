@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createRazorpayOrder } from "@astrokraft/payments";
+import { PRIVACY_NOTICE_VERSION } from "@astrokraft/validators";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { ensureProfile } from "@/lib/ensure-profile";
 
@@ -119,7 +120,9 @@ export async function POST(req: NextRequest) {
         order_number: orderNumber,
         status: "payment_pending",
         total_amount: totalAmount,
-        shipping_address: shippingAddress
+        shipping_address: shippingAddress,
+        consent_notice_version: PRIVACY_NOTICE_VERSION,
+        consented_at: new Date().toISOString()
       })
       .select()
       .single();

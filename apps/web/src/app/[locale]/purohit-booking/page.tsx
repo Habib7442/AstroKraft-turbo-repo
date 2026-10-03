@@ -37,7 +37,7 @@ export default async function PurohitBookingPage({ params }: PurohitBookingPageP
           </p>
         </div>
 
-        <PurohitBookingForm />
+        <PurohitBookingForm locale={locale} />
       </div>
     </main>
   );

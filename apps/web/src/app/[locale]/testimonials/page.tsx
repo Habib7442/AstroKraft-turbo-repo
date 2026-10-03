@@ -32,7 +32,7 @@ export default async function TestimonialsPage({ params }: { params: Promise<{ l
           </p>
         </div>
 
-        <TestimonialForm />
+        <TestimonialForm locale={locale} />
       </div>
     </main>
   );

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export interface R2Config {
@@ -52,4 +52,20 @@ export function getR2PublicUrl(key: string, customDomain = "https://media.astrok
     return key;
   }
   return `${customDomain.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
+}
+
+export async function deleteR2Objects(params: { client: S3Client; bucket: string; keys: string[] }): Promise<void> {
+  // DeleteObjects accepts at most 1000 keys per request.
+  for (let i = 0; i < params.keys.length; i += 1000) {
+    const batch = params.keys.slice(i, i + 1000);
+    const result = await params.client.send(
+      new DeleteObjectsCommand({
+        Bucket: params.bucket,
+        Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true }
+      })
+    );
+    if (result.Errors?.length) {
+      throw new Error(`R2 delete failed for ${result.Errors.length} object(s): ${result.Errors[0]?.Message ?? "unknown"}`);
+    }
+  }
 }

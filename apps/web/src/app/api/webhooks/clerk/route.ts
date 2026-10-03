@@ -1,6 +1,7 @@
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { NextRequest } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase";
+import { eraseUserData } from "@/lib/erase-user-data";
 
 export async function POST(req: NextRequest) {
   let evt;
@@ -35,9 +36,10 @@ export async function POST(req: NextRequest) {
   if (evt.type === "user.deleted") {
     const { id } = evt.data;
     if (id) {
-      const { error } = await supabase.from("profiles").delete().eq("id", id);
-      if (error) {
-        console.error("Failed to delete profile:", error);
+      try {
+        await eraseUserData(id);
+      } catch (error) {
+        console.error("Failed to erase user data:", error);
         return new Response("Database error", { status: 500 });
       }
     }

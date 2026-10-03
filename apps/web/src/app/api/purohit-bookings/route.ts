@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { purohitBookingSchema } from "@astrokraft/validators";
+import { purohitBookingSchema, PRIVACY_NOTICE_VERSION } from "@astrokraft/validators";
 import type { PurohitBooking } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendPurohitBookingEmail } from "@/lib/send-purohit-booking-email";
 import { sendPushNotificationToAdmins } from "@/lib/send-push-notification";
-import { sendTelegramNotification, escapeTelegramHtml } from "@/lib/send-telegram-notification";
+import { sendTelegramNotification, escapeTelegramHtml, telegramFirstName } from "@/lib/send-telegram-notification";
 
 const RATE_LIMIT_MAX_PER_HOUR = 3;
 
@@ -72,6 +72,14 @@ export async function POST(req: NextRequest) {
       throw rpcError;
     }
 
+    // Separate from the RPC so its signature needn't change; a failure here
+    // must not fail a booking/review that was already written.
+    const { error: consentError } = await supabase
+      .from("purohit_bookings")
+      .update({ consent_notice_version: PRIVACY_NOTICE_VERSION, consented_at: new Date().toISOString() })
+      .eq("id", booking.id);
+    if (consentError) console.error("purohit booking consent record failed:", consentError);
+
     try {
       await sendPurohitBookingEmail(booking);
     } catch (emailError) {
@@ -83,7 +91,7 @@ export async function POST(req: NextRequest) {
     try {
       await sendPushNotificationToAdmins({
         title: "New Purohit Booking 🪔",
-        body: `${booking.name} — ${booking.ritual_type}`,
+        body: `${booking.name.trim().split(/\s+/)[0]} — ${booking.ritual_type}`,
         data: { type: "purohit_booking", bookingId: booking.id }
       });
     } catch (pushError) {
@@ -94,13 +102,12 @@ export async function POST(req: NextRequest) {
       await sendTelegramNotification({
         text: [
           "🪔 <b>New Purohit Booking</b>",
-          `${escapeTelegramHtml(booking.name)} — ${escapeTelegramHtml(booking.ritual_type)}`,
-          `Phone: ${escapeTelegramHtml(booking.phone)}`,
-          `Location: ${escapeTelegramHtml(booking.location)}`,
+          `${telegramFirstName(booking.name)} — ${escapeTelegramHtml(booking.ritual_type)}`,
           `Preferred: ${escapeTelegramHtml(booking.preferred_date)}${booking.preferred_time ? ` at ${escapeTelegramHtml(booking.preferred_time)}` : ""}`,
           `Language: ${escapeTelegramHtml(booking.language_preference)}`,
           `Materials: ${booking.materials_option === "purohit_and_samagri" ? "Purohit + Samagri" : "Purohit Only"}`,
-          booking.message ? `Message: ${escapeTelegramHtml(booking.message)}` : null
+          `Booking ID: ${escapeTelegramHtml(booking.id)}`,
+          "Contact details are in the admin app."
         ]
           .filter(Boolean)
           .join("\n")

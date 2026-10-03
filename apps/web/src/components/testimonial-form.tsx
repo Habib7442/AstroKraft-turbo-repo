@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { TestimonialConsentCheckbox } from "@/components/terms-checkbox";
 
-export function TestimonialForm() {
+export function TestimonialForm({ locale }: { locale: string }) {
   const [name, setName] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -11,11 +12,12 @@ export function TestimonialForm() {
   // (see the matching check in /api/platform-reviews). Named plainly so a
   // scripted bot filling every input on the page catches it.
   const [website, setWebsite] = useState("");
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const canSubmit = name.trim().length >= 2 && rating > 0 && comment.trim().length >= 10;
+  const canSubmit = name.trim().length >= 2 && rating > 0 && comment.trim().length >= 10 && consent;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -27,7 +29,7 @@ export function TestimonialForm() {
       const res = await fetch("/api/platform-reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), rating, comment: comment.trim(), website })
+        body: JSON.stringify({ name: name.trim(), rating, comment: comment.trim(), consent, website })
       });
 
       const data = await res.json();
@@ -101,6 +103,10 @@ export function TestimonialForm() {
         rows={4}
         className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
       />
+
+      <div className="mt-3">
+        <TestimonialConsentCheckbox checked={consent} onChange={setConsent} locale={locale} />
+      </div>
 
       <button
         type="button"

@@ -77,6 +77,8 @@ export interface Order {
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
   shipping_address: Record<string, unknown>;
+  consent_notice_version?: string | null;
+  consented_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -118,6 +120,8 @@ export interface PlatformReview {
   // moderation context (spotting several "different" names spamming from
   // the same IP).
   submitter_ip?: string | null;
+  consent_notice_version?: string | null;
+  consented_at?: string | null;
   created_at: string;
 }
 
@@ -136,6 +140,8 @@ export interface Consultation {
   amount: number;
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
+  consent_notice_version?: string | null;
+  consented_at?: string | null;
   created_at: string;
 }
 
@@ -156,6 +162,8 @@ export interface PurohitBooking {
   // r2-presign-download edge function, on demand.
   attachment_key?: string;
   status: "new" | "contacted" | "confirmed" | "completed" | "cancelled";
+  consent_notice_version?: string | null;
+  consented_at?: string | null;
   created_at: string;
   updated_at: string;
 }

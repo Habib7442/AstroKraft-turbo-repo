@@ -11,6 +11,14 @@ export function escapeTelegramHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// Telegram is a third-party processor outside our own systems, so alerts
+// carry only a first name plus IDs - phone numbers, addresses, birth
+// details and free-text messages stay in the admin app (DPDP data
+// minimisation). Look the full record up there.
+export function telegramFirstName(fullName: string | null | undefined): string {
+  return escapeTelegramHtml(fullName?.trim().split(/\s+/)[0] || "Customer");
+}
+
 // Best-effort, mirrors send-push-notification.ts — the admin app is run by
 // an assistant, not the owner, so this is the owner's own always-on channel
 // for "money just moved" alerts, independent of whether the app push

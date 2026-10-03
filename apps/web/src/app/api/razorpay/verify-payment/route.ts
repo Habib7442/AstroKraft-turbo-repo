@@ -3,7 +3,7 @@ import { verifyRazorpaySignature } from "@astrokraft/payments";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendInvoiceEmail } from "@/lib/send-invoice-email";
 import { sendPushNotificationToAdmins } from "@/lib/send-push-notification";
-import { sendTelegramNotification, escapeTelegramHtml } from "@/lib/send-telegram-notification";
+import { sendTelegramNotification, escapeTelegramHtml, telegramFirstName } from "@/lib/send-telegram-notification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -109,28 +109,19 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const shippingAddress = data.shipping_address as
-        | { fullName?: string; phone?: string; line1?: string; line2?: string; city?: string; state?: string; pincode?: string }
-        | null;
+      const shippingAddress = data.shipping_address as { fullName?: string; city?: string } | null;
 
       const itemLines = items.map(
         (item) => `• ${escapeTelegramHtml(item.title)} x${item.quantity} — ₹${item.price.toLocaleString("en-IN")}`
       );
 
-      const addressLine = shippingAddress
-        ? [shippingAddress.line1, shippingAddress.line2, shippingAddress.city, shippingAddress.state, shippingAddress.pincode]
-            .filter(Boolean)
-            .map((part) => escapeTelegramHtml(String(part)))
-            .join(", ")
-        : null;
-
       await sendTelegramNotification({
         text: [
           "📦 <b>New Order</b>",
           `${escapeTelegramHtml(data.order_number)} — ₹${data.total_amount.toLocaleString("en-IN")}`,
-          `Customer: ${escapeTelegramHtml(shippingAddress?.fullName || profile?.full_name || "—")}${shippingAddress?.phone ? ` (${escapeTelegramHtml(shippingAddress.phone)})` : ""}`,
+          `Customer: ${telegramFirstName(shippingAddress?.fullName || profile?.full_name)}`,
           itemLines.length > 0 ? `Items:\n${itemLines.join("\n")}` : null,
-          addressLine ? `Ship to: ${addressLine}` : null,
+          shippingAddress?.city ? `Ship to: ${escapeTelegramHtml(shippingAddress.city)}` : null,
           `Payment ID: ${escapeTelegramHtml(razorpayPaymentId)}`
         ]
           .filter(Boolean)

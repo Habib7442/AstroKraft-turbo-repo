@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { platformReviewSchema } from "@astrokraft/validators";
+import { platformReviewSchema, PRIVACY_NOTICE_VERSION } from "@astrokraft/validators";
 import type { PlatformReview } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
@@ -63,6 +63,14 @@ export async function POST(req: NextRequest) {
       }
       throw rpcError;
     }
+
+    // Separate from the RPC so its signature needn't change; a failure here
+    // must not fail a booking/review that was already written.
+    const { error: consentError } = await supabase
+      .from("platform_reviews")
+      .update({ consent_notice_version: PRIVACY_NOTICE_VERSION, consented_at: new Date().toISOString() })
+      .eq("id", review.id);
+    if (consentError) console.error("platform review consent record failed:", consentError);
 
     return NextResponse.json({ reviewId: review.id, status: review.status });
   } catch (err: any) {

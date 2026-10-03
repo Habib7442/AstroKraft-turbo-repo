@@ -3,7 +3,7 @@ import { verifyRazorpaySignature } from "@astrokraft/payments";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendInvoiceEmail } from "@/lib/send-invoice-email";
 import { sendPushNotificationToAdmins } from "@/lib/send-push-notification";
-import { sendTelegramNotification, escapeTelegramHtml } from "@/lib/send-telegram-notification";
+import { sendTelegramNotification, escapeTelegramHtml, telegramFirstName } from "@/lib/send-telegram-notification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,11 +48,6 @@ export async function POST(req: NextRequest) {
     if (!data) {
       return NextResponse.json({ error: "Booking not found for this payment." }, { status: 400 });
     }
-
-    const kundliDetails = (data.kundli_details ?? {}) as { dob?: string; time_of_birth?: string; place_of_birth?: string };
-    const kundliDob = kundliDetails.dob || null;
-    const kundliTimeOfBirth = kundliDetails.time_of_birth || null;
-    const kundliPlaceOfBirth = kundliDetails.place_of_birth || null;
 
     // No astrologer is assigned yet at this point (an admin does that
     // afterward) — every customer/admin-facing message below names the
@@ -110,7 +105,7 @@ export async function POST(req: NextRequest) {
     try {
       await sendPushNotificationToAdmins({
         title: "New Consultation Booked 🔮",
-        body: `${categoryName} — ₹${data.amount.toLocaleString("en-IN")} (${data.customer_name || "Guest"}) — needs an astrologer assigned`,
+        body: `${categoryName} — ₹${data.amount.toLocaleString("en-IN")} (${data.customer_name?.trim().split(/\s+/)[0] || "Guest"}) — needs an astrologer assigned`,
         data: { type: "consultation", consultationId: data.id }
       });
     } catch (pushError) {
@@ -122,10 +117,7 @@ export async function POST(req: NextRequest) {
         text: [
           "🔮 <b>New Consultation Booked</b>",
           `${escapeTelegramHtml(categoryName)} — ₹${data.amount.toLocaleString("en-IN")}`,
-          `Customer: ${escapeTelegramHtml(data.customer_name || "Guest")}${data.customer_phone ? ` (${escapeTelegramHtml(data.customer_phone)})` : ""}`,
-          kundliDob ? `DOB: ${escapeTelegramHtml(kundliDob)}` : null,
-          kundliTimeOfBirth ? `Time of Birth: ${escapeTelegramHtml(kundliTimeOfBirth)}` : null,
-          kundliPlaceOfBirth ? `Place of Birth: ${escapeTelegramHtml(kundliPlaceOfBirth)}` : null,
+          `Customer: ${telegramFirstName(data.customer_name)}`,
           `Payment ID: ${escapeTelegramHtml(razorpayPaymentId)}`,
           "Needs an astrologer assigned."
         ]
