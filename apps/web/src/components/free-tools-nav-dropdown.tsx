@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { FREE_TOOLS } from "@/lib/free-tools";
 
 interface FreeToolsNavDropdownProps {
   locale: string;
@@ -11,12 +12,6 @@ interface FreeToolsNavDropdownProps {
 
 const PANEL_WIDTH = 240;
 const VIEWPORT_MARGIN = 12;
-
-const TOOLS = [
-  { href: "horoscope", label: "Daily Horoscope", icon: "☀️" },
-  { href: "free-kundli", label: "Free Kundli", icon: "🪔" },
-  { href: "gemstone-recommendation", label: "Gemstone Finder", icon: "💎" }
-];
 
 // Same portal + fixed-position pattern as VastuNavDropdown, for the same
 // reason: this button sits inside the horizontally-scrolling nav row, whose
@@ -81,7 +76,7 @@ export function FreeToolsNavDropdown({ locale }: FreeToolsNavDropdownProps) {
                 }
               }}
             >
-              {TOOLS.map((tool, index) => (
+              {FREE_TOOLS.map((tool, index) => (
                 <Link
                   key={tool.href}
                   href={`/${locale}/${tool.href}`}
