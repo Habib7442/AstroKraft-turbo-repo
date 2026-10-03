@@ -18,7 +18,7 @@ The Board can penalise a missed notification separately from the breach itself.
 
 ## 2. One-time setup (do before go-live)
 
-- [ ] Apply migrations `20261003000000_record_privacy_consent.sql` and `20261003000001_personal_data_retention.sql` **before** deploying the matching code. Checkout fails if the code ships first.
+- [ ] Apply migrations `20261003000000` to `20261003000003` (consent columns, retention job, consent inside the creation functions, keeping paid consultations) **before** deploying the matching code. Checkout and bookings fail if the code ships first.
 - [ ] Confirm the cron job exists: `select * from cron.job where jobname = 'purge-expired-personal-data';`
 - [ ] **Cloudflare R2:** add a lifecycle rule on bucket `astrokraft-media`, prefix `purohit-uploads/`, deleting objects after **180 days**. The privacy policy promises this, and the database purge cannot delete R2 files.
 - [ ] **PostHog:** Project settings → enable "Discard client IP data".
@@ -44,5 +44,5 @@ The Board can penalise a missed notification separately from the breach itself.
 | Testimonial submitter IP | 30 days (then nulled) |
 | Purohit booking requests | 90 days after preferred date |
 | Purohit attachments (R2 lifecycle) | 180 days after upload |
-| Paid orders and consultations | 8 years (tax and company law) |
+| Paid orders and consultations | 8 years (tax and company law). On account deletion, paid consultations keep only invoice fields: birth details, phone and meeting link are wiped at once |
 | Account, approved reviews | Until deleted by the user |

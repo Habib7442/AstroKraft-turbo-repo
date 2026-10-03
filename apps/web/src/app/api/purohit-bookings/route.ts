@@ -58,7 +58,8 @@ export async function POST(req: NextRequest) {
         p_message: data.message?.trim() || null,
         p_attachment_key: data.attachmentKey || null,
         p_rate_limit_max: RATE_LIMIT_MAX_PER_HOUR,
-        p_rate_limit_window: "1 hour"
+        p_rate_limit_window: "1 hour",
+        p_consent_notice_version: PRIVACY_NOTICE_VERSION
       })
       .single<PurohitBooking>();
 
@@ -71,14 +72,6 @@ export async function POST(req: NextRequest) {
       }
       throw rpcError;
     }
-
-    // Separate from the RPC so its signature needn't change; a failure here
-    // must not fail a booking/review that was already written.
-    const { error: consentError } = await supabase
-      .from("purohit_bookings")
-      .update({ consent_notice_version: PRIVACY_NOTICE_VERSION, consented_at: new Date().toISOString() })
-      .eq("id", booking.id);
-    if (consentError) console.error("purohit booking consent record failed:", consentError);
 
     try {
       await sendPurohitBookingEmail(booking);

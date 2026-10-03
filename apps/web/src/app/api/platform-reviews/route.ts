@@ -50,7 +50,8 @@ export async function POST(req: NextRequest) {
         p_comment: data.comment.trim(),
         p_submitter_ip: submitterIp,
         p_rate_limit_max: RATE_LIMIT_MAX_PER_HOUR,
-        p_rate_limit_window: "1 hour"
+        p_rate_limit_window: "1 hour",
+        p_consent_notice_version: PRIVACY_NOTICE_VERSION
       })
       .single<PlatformReview>();
 
@@ -63,14 +64,6 @@ export async function POST(req: NextRequest) {
       }
       throw rpcError;
     }
-
-    // Separate from the RPC so its signature needn't change; a failure here
-    // must not fail a booking/review that was already written.
-    const { error: consentError } = await supabase
-      .from("platform_reviews")
-      .update({ consent_notice_version: PRIVACY_NOTICE_VERSION, consented_at: new Date().toISOString() })
-      .eq("id", review.id);
-    if (consentError) console.error("platform review consent record failed:", consentError);
 
     return NextResponse.json({ reviewId: review.id, status: review.status });
   } catch (err: any) {

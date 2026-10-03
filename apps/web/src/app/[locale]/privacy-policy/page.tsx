@@ -76,8 +76,9 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
         <h2>Who We Share It With</h2>
         <p>
           We share personal data only with the service providers below, under contract, and only what each needs
-          to do its job. Some of them process data outside India (for example in the United States). Internally,
-          only our own staff see your details, through our admin app.
+          to do its job. Some of them process data outside India (for example in the United States). Apart from
+          approved reviews and testimonials, which show your name, rating and comment publicly, only our own staff
+          see your details, through our admin app.
         </p>
         <ul>
           {DATA_PROCESSORS.map((p) => (
@@ -97,7 +98,8 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
           <li>Purohit booking requests: 90 days after the preferred puja date. Attached files: up to 180 days after upload.</li>
           <li>
             Paid orders and consultations, including the invoice details: 8 years, as required by Indian tax and
-            company law, then deleted.
+            company law, then deleted. If you delete your account, we remove your birth details and phone number
+            from paid consultation records straight away, keeping only what the invoice needs.
           </li>
           <li>Your account: until you delete it. Approved reviews: until you ask us to remove them.</li>
         </ul>
@@ -169,7 +171,7 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
         <p>
           Our PostHog analytics store nothing on your device and do not record your screen or what you type into
           forms. We never link analytics to your name, email or phone number. As with any web request, your IP
-          address reaches the analytics service. Your browser&rsquo;s &ldquo;Do Not Track&rdquo; setting is
+          address reaches the analytics service, which discards it rather than storing it. Your browser&rsquo;s &ldquo;Do Not Track&rdquo; setting is
           respected.
         </p>
       </div>

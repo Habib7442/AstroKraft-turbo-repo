@@ -44,9 +44,10 @@ export function MyDataControls({ locale }: { locale: string }) {
       <section className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
         <h2 className="font-serif text-lg font-bold text-foreground">Delete your account</h2>
         <p className="mt-1 text-sm text-ink-body">
-          This withdraws your consent and permanently erases your account, consultations, reviews, Purohit bookings
-          and unpaid orders. Paid order records are kept only as long as tax law requires, then deleted. This
-          cannot be undone.
+          This withdraws your consent and permanently erases your account, reviews, Purohit bookings, and any
+          unpaid orders or consultation bookings. Records of paid orders and paid consultations are kept for 8
+          years because tax law requires it, then deleted. We remove your birth details and phone number from
+          paid consultation records straight away. This cannot be undone.
         </p>
         <label htmlFor="confirm-delete" className="mt-4 block text-xs font-semibold uppercase tracking-wide text-ink-body">
           Type DELETE to confirm
