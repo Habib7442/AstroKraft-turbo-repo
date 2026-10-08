@@ -55,7 +55,7 @@ export default async function ConsultationPage({ params, searchParams }: Consult
             Get personalized guidance from our verified Vedic astrologers.
           </p>
           <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gold">
-            Connected with 100+ verified Vedic astrologers
+            Matched with a verified Vedic astrologer for your question
           </p>
         </div>
 

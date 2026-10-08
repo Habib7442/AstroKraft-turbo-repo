@@ -20,7 +20,7 @@ function formatPrice(price: number) {
 // The customer picks a category only - which specific astrologer handles the
 // session is an internal call an admin makes afterward (from the admin app's
 // Consultations screen), based on category and real-time availability across
-// our network of 100+ astrologers. That's why there's no "choose your
+// our astrologers. That's why there's no "choose your
 // astrologer" step here anymore: picking a category goes straight to the
 // booking form.
 export function ConsultationBookingFlow({ categories, initialCategoryId, locale }: ConsultationBookingFlowProps) {
@@ -177,7 +177,7 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl">✅</div>
         <h2 className="font-serif text-xl font-bold text-green-800">Consultation Booked!</h2>
         <p className="mt-2 text-sm text-green-700">
-          Your {success} booking is confirmed. We&rsquo;ll assign one of our 100+ verified astrologers and reach out
+          Your {success} booking is confirmed. We&rsquo;ll assign one of our verified astrologers and reach out
           shortly to schedule your session.
         </p>
       </div>
@@ -203,7 +203,7 @@ export function ConsultationBookingFlow({ categories, initialCategoryId, locale 
             <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">Select Consultation Category</h2>
           </div>
           <p className="mb-4 text-xs text-ink-body">
-            We&rsquo;ll match you with the right expert from our network of 100+ verified Vedic astrologers.
+            We&rsquo;ll match you with the verified Vedic astrologer best suited to your question.
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {categories.map((category) => (

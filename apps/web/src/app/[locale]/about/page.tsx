@@ -9,41 +9,67 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   return constructMetadata({
     title: "About Us",
-    description: "AstroKraft is a Vedic astrology and lab-certified gemstone marketplace based in Silchar, Assam.",
+    description:
+      "AstroKraft is a small team in Silchar, Assam, selling lab-certified gemstones, Rudraksha and Vastu products, with Vedic astrology consultations from ₹499.",
     path: "/about",
     locale: isValidLocale(locale) ? locale : "en"
   });
 }
 
+// Every claim on this page must be checkable against the live catalogue and
+// database (astrologer count, languages, consultation prices). Update the
+// copy when those change rather than rounding up.
 const offerings = [
   {
     icon: "💎",
     color: "#F1ECFA",
     title: "Vedic Gemstones",
-    description: "100% natural, lab-certified gemstones matched to the right planet for you.",
+    description: "Natural gemstones for each of the nine planets, each sent with its lab certificate.",
     href: "vedic-gemstones"
   },
   {
     icon: "📿",
     color: "#FCEFE3",
     title: "Rudraksha & Bracelets",
-    description: "Authentic Rudraksha beads and crystal bracelets, sourced and verified.",
+    description: "Rudraksha beads and crystal bracelets, checked by our team before they are packed.",
     href: "rudraksha"
   },
   {
     icon: "🔮",
     color: "#E9F4EF",
     title: "Astrology Consultations",
-    description: "One-on-one guidance from verified astrologers on career, love, health, and more.",
+    description: "Pick a topic, pay a fixed ₹499 or ₹999, and we match you with the right astrologer.",
     href: "consultation"
+  },
+  {
+    icon: "🏠",
+    color: "#E6EEF9",
+    title: "Vastu Guidance",
+    description: "Vastu consultations for your current home, planning for a new build, and home care products.",
+    href: "vastu-consultation"
   },
   {
     icon: "🪔",
     color: "#FCE9E3",
-    title: "Vastu & Purohit Services",
-    description: "Vastu consultations for your home, plus priest booking for pujas and rituals.",
+    title: "Purohit Booking",
+    description: "Tell us the puja, date and language. We call you back to confirm the priest and the price.",
     href: "purohit-booking"
+  },
+  {
+    icon: "✨",
+    color: "#FFF6DD",
+    title: "Free Vedic Tools",
+    description: "Your Kundli, daily horoscope and a gemstone suggestion, free and without signing up.",
+    href: "free-kundli"
   }
+];
+
+const commitments = [
+  "Every gemstone ships with its lab certificate, so you can confirm the stone and its weight yourself.",
+  "Consultation fees are fixed and shown before you book. You pay once, at booking.",
+  "Pay by card, UPI, netbanking or EMI through Razorpay. We never see or store your card details.",
+  "You can download or delete your personal data at any time from the Your Data & Privacy page.",
+  "When you write to us, a person on our team in Silchar reads it and replies."
 ];
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -66,18 +92,13 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         />
 
         <div className="relative z-10 mx-auto w-full max-w-3xl px-6 py-16 text-center sm:py-20">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">Our Story</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">About AstroKraft</p>
           <h1 className="mt-3 font-serif text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
-            Vedic Guidance and Certified Gemstones, Under One Roof
+            Gemstones You Can Verify, Astrologers You Can Talk To
           </h1>
           <p className="mt-4 text-sm text-[#EAEAF2]/85 sm:text-base">
-            AstroKraft was built in Rangirkhari, Silchar, Assam, to bring authentic Vedic astrology and
-            lab-certified gemstones to customers across India — without the guesswork.
-          </p>
-          <p className="mt-5 text-[11px] font-medium text-white/70 sm:text-xs">
-            Lab Certified <span className="mx-1.5 text-white/30">·</span> Authentic &amp; Trusted{" "}
-            <span className="mx-1.5 text-white/30">·</span> Expert Guidance{" "}
-            <span className="mx-1.5 text-white/30">·</span> Safe &amp; Fast Delivery
+            We are a small team in Rangirkhari, Silchar, selling lab-certified gemstones, Rudraksha and Vastu
+            products, and booking consultations with Vedic astrologers who speak Hindi, English and Bengali.
           </p>
         </div>
       </div>
@@ -86,19 +107,22 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <section className="w-full bg-white">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-6 py-16 sm:py-20">
           <h2 className="font-serif italic text-2xl font-bold text-foreground underline decoration-gold decoration-2 underline-offset-4 sm:text-3xl">
-            Why AstroKraft
+            Why We Started
           </h2>
           <p className="text-sm leading-relaxed text-ink-body sm:text-base">
-            Gemstones and astrology have always run on trust — trust that a stone is what it&rsquo;s claimed to be,
-            and trust that the person guiding you actually knows their craft. Too often, that trust is hard to
-            verify online. AstroKraft exists to close that gap: every gemstone we sell is lab-certified before it
-            reaches you, and every astrologer on our platform is vetted for genuine expertise, not just a listed
-            profile.
+            Buying a gemstone online usually means trusting a photo and a seller&rsquo;s word. Booking an
+            astrologer often means scrolling through hundreds of profiles you know nothing about, with the meter
+            running. We started AstroKraft so you can check what you are paying for before you pay for it.
           </p>
           <p className="text-sm leading-relaxed text-ink-body sm:text-base">
-            We&rsquo;re rooted in Vedic tradition and built for how people actually shop and seek guidance today —
-            browse and buy gemstones, Rudraksha, and Vastu products online, or book a consultation with one of our
-            100+ verified Vedic astrologers, all from the same trusted platform.
+            So every gemstone we sell comes with its lab certificate. And instead of a crowded directory, we work
+            with a small group of five astrologers. You choose what you want guidance on (career, marriage, health,
+            money, studies or your Kundli), pay one fixed fee, and we match you with the astrologer best suited to
+            that question.
+          </p>
+          <p className="text-sm leading-relaxed text-ink-body sm:text-base">
+            Not ready to buy anything? Start with our free tools. Generate your Kundli, read your daily horoscope, or
+            find out which gemstone your birth chart points to, all without creating an account.
           </p>
         </div>
       </section>
@@ -109,7 +133,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           <h2 className="font-serif italic text-2xl font-bold text-foreground underline decoration-gold decoration-2 underline-offset-4 sm:text-3xl">
             What We Offer
           </h2>
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {offerings.map((item) => (
               <Link
                 key={item.title}
@@ -130,29 +154,21 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         </div>
       </section>
 
-      {/* Promise */}
+      {/* Commitments */}
       <section className="w-full bg-white">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-6 py-16 sm:py-20">
           <h2 className="font-serif italic text-2xl font-bold text-foreground underline decoration-gold decoration-2 underline-offset-4 sm:text-3xl">
-            Our Promise
+            What You Can Count On
           </h2>
           <ul className="flex flex-col gap-3 text-sm leading-relaxed text-ink-body sm:text-base">
-            <li className="flex gap-3">
-              <span className="mt-0.5 text-gold">✓</span>
-              Every gemstone, Rudraksha, and bracelet is verified for authenticity before it ships.
-            </li>
-            <li className="flex gap-3">
-              <span className="mt-0.5 text-gold">✓</span>
-              Every astrologer is vetted for genuine expertise, not just a listed profile.
-            </li>
-            <li className="flex gap-3">
-              <span className="mt-0.5 text-gold">✓</span>
-              Secure checkout via Razorpay — we never store your card, UPI, or netbanking details.
-            </li>
-            <li className="flex gap-3">
-              <span className="mt-0.5 text-gold">✓</span>
-              Real support from a real team in Silchar, Assam — not a chatbot maze.
-            </li>
+            {commitments.map((line) => (
+              <li key={line} className="flex gap-3">
+                <span className="mt-0.5 text-gold" aria-hidden>
+                  ✓
+                </span>
+                {line}
+              </li>
+            ))}
           </ul>
         </div>
       </section>
@@ -160,22 +176,22 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       {/* Closing CTA */}
       <section className="w-full" style={{ background: "linear-gradient(135deg, #0B1026 0%, #2A1A5E 50%, #4C1D95 100%)" }}>
         <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-5 px-6 py-14 text-center sm:py-16">
-          <h2 className="font-serif text-2xl font-bold text-white sm:text-3xl">Ready to begin?</h2>
+          <h2 className="font-serif text-2xl font-bold text-white sm:text-3xl">Not Sure Which Stone Suits You?</h2>
           <p className="max-w-lg text-sm text-[#EAEAF2]/85 sm:text-base">
-            Shop certified gemstones, or talk to a verified astrologer today.
+            Enter your birth details in the free Gemstone Finder, or talk it through with an astrologer from ₹499.
           </p>
           <div className="mt-1 flex flex-col gap-3 sm:flex-row">
             <Link
-              href={`/${locale}/vedic-gemstones`}
+              href={`/${locale}/gemstone-recommendation`}
               className="rounded-full bg-[#12805F] px-8 py-3 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#1BAF82] sm:text-base"
             >
-              Shop Gemstones
+              Find My Gemstone
             </Link>
             <Link
               href={`/${locale}/consultation`}
               className="rounded-full bg-primary px-8 py-3 text-sm font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 sm:text-base"
             >
-              Talk to an Astrologer
+              Book a Consultation
             </Link>
           </div>
           <p className="mt-4 text-xs text-white/60">
