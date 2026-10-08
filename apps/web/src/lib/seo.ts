@@ -8,7 +8,7 @@
  */
 
 import type { Metadata, Viewport } from "next";
-import type { Locale } from "@/lib/locales";
+import { INDEXABLE_LOCALES, type Locale } from "@/lib/locales";
 
 /* ============================================================================
  * 1. CORE SITE CONSTANTS
@@ -55,14 +55,6 @@ export const SITE = {
 
 export const DEFAULT_LOCALE: Locale = "en";
 
-// Locales search engines are told about (sitemap, hreflang, canonical). /bn/*
-// currently serves the exact same English copy as /en/* (same <html lang>,
-// title and headings - only the URL differs), so advertising it as a separate
-// Bengali version made every page look like a duplicate and roughly doubled
-// the URLs Google had to "discover", diluting crawl priority for this whole
-// new domain (137 URLs sat in "Discovered - currently not indexed"). Add
-// "bn" back here once /bn actually has translated content.
-export const INDEXABLE_LOCALES: readonly Locale[] = ["en"];
 
 const OG_LOCALE: Record<Locale, string> = {
   en: "en_IN",

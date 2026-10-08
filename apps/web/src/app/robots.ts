@@ -21,10 +21,10 @@ export default function robots(): MetadataRoute.Robots {
         // the old ?astrologer= links this replaced (GSC previously flagged
         // those as "Crawled - currently not indexed").
         //
-        // /bn: serves the same English copy as /en (no translation yet), so
-        // crawling it only spends budget on ~70 exact duplicates. Remove this
-        // (and add "bn" to INDEXABLE_LOCALES in lib/seo.ts) once it's real.
-        disallow: ["/api/", "/ingest/", "/*/cart", "/*/orders", "/*/search", "/*/consultation?category=*", "/bn/", "/bn"]
+        // /bn is deliberately NOT blocked: middleware 308s every /bn URL to
+        // its /en twin, and Google has to be allowed to crawl a URL to see
+        // that redirect and drop the old /bn entries from its index.
+        disallow: ["/api/", "/ingest/", "/*/cart", "/*/orders", "/*/search", "/*/consultation?category=*"]
       }
     ],
     sitemap: `${SITE.url}/sitemap.xml`,

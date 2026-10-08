@@ -1,6 +1,8 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { LOCALES } from "@/lib/locales";
+import { INDEXABLE_LOCALES, LOCALES } from "@/lib/locales";
+
+const DEFAULT_LOCALE = "en";
 
 // Routes at the true root (outside the [locale] segment) that must never
 // get an /en prefix.
@@ -11,19 +13,13 @@ const LOCALE_EXEMPT_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt"]
 // a real page path down the wrong branch.
 const LOCALE_EXEMPT_FIRST_SEGMENTS = new Set(["_next", "api", "trpc", "__clerk", "ingest"]);
 
-// GSC's Coverage report flagged the bare domain root as "Page with
-// redirect" - it was relying on a page-level `redirect("/en")` in
-// app/page.tsx, which Next.js renders as a client-side
-// `<meta http-equiv="refresh">` for a fully static route instead of a real
-// HTTP redirect (confirmed via curl: 200 OK with the meta tag, not a 3xx).
-// Separately, any unprefixed path (e.g. "/rudraksha", left over from before
-// locale-prefixed URLs existed) matched [locale]/page.tsx with
-// locale="rudraksha" and silently rendered duplicate homepage content
-// instead of 404ing or redirecting - the same is true for the plain
-// domain root once GSC re-crawls it here mid-flight. Doing this in
-// middleware (rather than relying on each page's own redirect()/notFound())
-// guarantees a real, fast HTTP redirect on every request.
-function localePrefixRedirect(request: Request): Response | undefined {
+// Each page has exactly one indexable URL: /en/<path>, no trailing slash.
+// Everything else - no locale (/rudraksha), the untranslated /bn twin, a
+// trailing slash (/en/ - Next's own slash redirect is off for the PostHog
+// proxy, see next.config.mjs) - gets ONE 308 straight to that URL rather
+// than a chain of hops. This lives in middleware because a page-level
+// redirect() on a static route renders a 200 with a meta refresh, not a 3xx.
+function canonicalPathRedirect(request: Request): Response | undefined {
   const url = new URL(request.url);
   const { pathname } = url;
 
@@ -31,20 +27,30 @@ function localePrefixRedirect(request: Request): Response | undefined {
     return undefined;
   }
 
-  const firstSegment = pathname.split("/")[1] ?? "";
-  if (
-    (LOCALES as readonly string[]).includes(firstSegment) ||
-    LOCALE_EXEMPT_FIRST_SEGMENTS.has(firstSegment)
-  ) {
+  const segments = pathname.split("/").filter(Boolean);
+  const first = segments[0] ?? "";
+  if (LOCALE_EXEMPT_FIRST_SEGMENTS.has(first)) {
     return undefined;
   }
 
-  url.pathname = `/en${pathname === "/" ? "" : pathname}`;
+  let target: string[];
+  if ((LOCALES as readonly string[]).includes(first)) {
+    target = (INDEXABLE_LOCALES as readonly string[]).includes(first)
+      ? segments
+      : [DEFAULT_LOCALE, ...segments.slice(1)];
+  } else {
+    target = [DEFAULT_LOCALE, ...segments];
+  }
+
+  const targetPath = `/${target.join("/")}`;
+  if (targetPath === pathname) return undefined;
+
+  url.pathname = targetPath;
   return NextResponse.redirect(url, 308);
 }
 
 export default clerkMiddleware((_auth, req) => {
-  return localePrefixRedirect(req);
+  return canonicalPathRedirect(req);
 });
 
 export const config = {

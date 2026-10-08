@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseClient } from "@/lib/supabase";
-import { localizedUrl, hreflangAlternates, INDEXABLE_LOCALES } from "@/lib/seo";
+import { localizedUrl, hreflangAlternates } from "@/lib/seo";
+import { INDEXABLE_LOCALES } from "@/lib/locales";
 import { SIGNS } from "@/lib/astro/core";
 
 export const revalidate = 3600;
