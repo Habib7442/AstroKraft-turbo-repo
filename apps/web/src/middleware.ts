@@ -13,6 +13,23 @@ const LOCALE_EXEMPT_PATHS = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt"]
 // a real page path down the wrong branch.
 const LOCALE_EXEMPT_FIRST_SEGMENTS = new Set(["_next", "api", "trpc", "__clerk", "ingest"]);
 
+// Paths from the previous site that Google still crawls. Unknown slugs fall
+// through to [category] and render "not found" with a 200 (the loading.tsx
+// stream has already started), so map them to a real page instead.
+// "" means the homepage.
+const LEGACY_SLUGS: Record<string, string> = {
+  gemstones: "vedic-gemstones",
+  "sign-in": "",
+  "sign-up": ""
+};
+
+// Query params old links carried that no page reads any more. The booking
+// flow assigns the astrologer itself, so ?astrologer= only duplicates
+// /consultation.
+const LEGACY_QUERY_PARAMS: Record<string, string[]> = {
+  consultation: ["astrologer"]
+};
+
 // Each page has exactly one indexable URL: /en/<path>, no trailing slash.
 // Everything else - no locale (/rudraksha), the untranslated /bn twin, a
 // trailing slash (/en/ - Next's own slash redirect is off for the PostHog
@@ -42,8 +59,22 @@ function canonicalPathRedirect(request: Request): Response | undefined {
     target = [DEFAULT_LOCALE, ...segments];
   }
 
+  const legacy = target.length === 2 && Object.hasOwn(LEGACY_SLUGS, target[1]) ? LEGACY_SLUGS[target[1]] : undefined;
+  if (legacy !== undefined) {
+    target = legacy ? [target[0], legacy] : [target[0]];
+  }
+
+  let queryChanged = false;
+  const page = target[1] ?? "";
+  for (const param of Object.hasOwn(LEGACY_QUERY_PARAMS, page) ? LEGACY_QUERY_PARAMS[page] : []) {
+    if (url.searchParams.has(param)) {
+      url.searchParams.delete(param);
+      queryChanged = true;
+    }
+  }
+
   const targetPath = `/${target.join("/")}`;
-  if (targetPath === pathname) return undefined;
+  if (targetPath === pathname && !queryChanged) return undefined;
 
   url.pathname = targetPath;
   return NextResponse.redirect(url, 308);
