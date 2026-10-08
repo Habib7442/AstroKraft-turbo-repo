@@ -19,9 +19,14 @@ const LOCALE_EXEMPT_FIRST_SEGMENTS = new Set(["_next", "api", "trpc", "__clerk",
 // "" means the homepage.
 const LEGACY_SLUGS: Record<string, string> = {
   gemstones: "vedic-gemstones",
+  blog: "",
   "sign-in": "",
   "sign-up": ""
 };
+
+// Locale prefixes the previous site used (/hin = Hindi). Dropped like an
+// untranslated locale, keeping the rest of the path.
+const LEGACY_LOCALES = new Set(["hin"]);
 
 // Query params old links carried that no page reads any more. The booking
 // flow assigns the astrologer itself, so ?astrologer= only duplicates
@@ -51,7 +56,9 @@ function canonicalPathRedirect(request: Request): Response | undefined {
   }
 
   let target: string[];
-  if ((LOCALES as readonly string[]).includes(first)) {
+  if (LEGACY_LOCALES.has(first)) {
+    target = [DEFAULT_LOCALE, ...segments.slice(1)];
+  } else if ((LOCALES as readonly string[]).includes(first)) {
     target = (INDEXABLE_LOCALES as readonly string[]).includes(first)
       ? segments
       : [DEFAULT_LOCALE, ...segments.slice(1)];
