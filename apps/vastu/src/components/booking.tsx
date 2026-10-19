@@ -200,7 +200,7 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
         <Field label="Full name">
           <input className="field" autoComplete="name" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} required />
         </Field>
-        <Field label="WhatsApp number">
+        <Field label="Phone / WhatsApp number">
           <div className="flex">
             <span className="flex items-center rounded-l-xl border border-r-0 border-night-600 bg-night-600 px-3 text-sm text-muted">+91</span>
             <input
