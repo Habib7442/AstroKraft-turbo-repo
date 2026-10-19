@@ -58,16 +58,26 @@ export function PayPanel({ leadId, initiallyPaid }: { leadId: string; initiallyP
         prefill: order.prefill,
         notes: { app: "vastu", leadId },
         theme: { color: "#D4AF37" },
+        // Runs after pay() has returned, so pay()'s try/catch doesn't cover it:
+        // a failed verify request must still leave the panel usable. Retrying
+        // is safe — create-order sees the order is already paid and records it
+        // instead of charging again.
         handler: async (r: RazorpaySuccess) => {
           setState({ kind: "working" });
-          const v = await fetch("/api/razorpay/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature })
-          });
-          const json = await v.json().catch(() => ({}));
-          if (v.ok && json.paid) onPaid();
-          else setState({ kind: "retry", message: json.error || "We couldn't confirm your payment. If money was deducted, message us on WhatsApp." });
+          const unconfirmed =
+            "We couldn't confirm your payment yet. Tap below to check again — you won't be charged twice. If money was deducted and this persists, message us on WhatsApp.";
+          try {
+            const v = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature })
+            });
+            const json = await v.json().catch(() => ({}));
+            if (v.ok && json.paid) return onPaid();
+            setState({ kind: "retry", message: json.error || unconfirmed });
+          } catch {
+            setState({ kind: "retry", message: unconfirmed });
+          }
         },
         modal: {
           ondismiss: () =>

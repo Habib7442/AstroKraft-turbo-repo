@@ -208,7 +208,7 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
               type="tel"
               inputMode="numeric"
               autoComplete="tel-national"
-              maxLength={14}
+              maxLength={18}
               value={form.whatsapp}
               onChange={(e) => set("whatsapp", e.target.value)}
               required

@@ -10,7 +10,7 @@ Your goal is to build, maintain, and expand the AstroKraft monorepo containing a
 
 AstroKraft combines ancient Vedic wisdom with modern luxury D2C commerce. The platform provides:
 - **Storefront (`apps/web`)**: Next.js App Router storefront with locale-prefixed routing (`/en` default canonical prefix), lab-certified product variants, direct Razorpay checkout (including Bajaj Finserv Cardless EMI), astrologer consultation booking, verified review submission, and free top-of-funnel Vedic tools (Kundli, Matching, Panchang, Daily Horoscope flag).
-- **Vastu Landing (`apps/vastu`)**: Single-page Meta-ads booking page for VASTU by Biprangshu (₹1,900 consultation) — Cal.com booking/payment/SMS, leads in Supabase `vastu_leads`. See `apps/vastu/AGENTS.md`.
+- **Vastu Landing (`apps/vastu`)**: Single-page Meta-ads booking page for VASTU by Biprangshu (₹1,900 consultation) — Cal.com for slot booking and SMS, Razorpay checkout for payment (auto-confirms the Cal.com booking once paid), leads in Supabase `vastu_leads`. See `apps/vastu/AGENTS.md`.
 - **Mobile Admin App (`apps/admin`)**: Phone-optimized Expo SDK 57 application (Expo Router + NativeWind v4) for real-time catalog management, order state transitions, consultation schedules, review moderation queue, and presigned Cloudflare R2 media uploads.
 - **Shared Packages (`packages/*`)**:
   - `@astrokraft/theme`: Brand tokens (Royal Violet, Champagne Gold, Saffron, Temple Lavender, Deep Ink).

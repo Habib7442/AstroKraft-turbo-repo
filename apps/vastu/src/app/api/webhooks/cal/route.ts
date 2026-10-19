@@ -82,8 +82,19 @@ export async function POST(req: NextRequest) {
     const { data } = await supabase.from("vastu_leads").select("*").eq(column, value).maybeSingle<VastuLead>();
     return data;
   };
+  // metadata[leadId] can be set by anyone holding the Cal.com link (it is a URL
+  // param), so it only identifies the lead's OWN booking: the lead's first
+  // booking, the same booking again, or a reschedule of it. Any other booking
+  // carrying a lead's id — e.g. a paid customer booking extra slots via the raw
+  // link — must not take over that row (or be auto-confirmed off its payment);
+  // it falls through to its own unpaid row below.
+  const isOwnBooking = (l: VastuLead) =>
+    !l.cal_booking_uid ||
+    l.cal_booking_uid === payload.uid ||
+    (!!payload.rescheduleUid && l.cal_booking_uid === payload.rescheduleUid);
+  const metaLead = await findBy("id", metaLeadId);
   const lead =
-    (await findBy("id", metaLeadId)) ??
+    (metaLead && isOwnBooking(metaLead) ? metaLead : null) ??
     (await findBy("cal_booking_uid", payload.uid)) ??
     (await findBy("cal_booking_uid", payload.rescheduleUid));
 
@@ -108,12 +119,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "db error" }, { status: 500 });
     }
     // Paid before this booking's webhook arrived (or a paid booking was
-    // rescheduled into a new pending booking): confirm it now.
-    if (trigger === "BOOKING_REQUESTED" && lead.payment_status === "paid") {
+    // rescheduled into a new pending booking): confirm it now. isOwnBooking
+    // is re-checked so a payment only ever confirms the booking it paid for.
+    if (trigger === "BOOKING_REQUESTED" && lead.payment_status === "paid" && isOwnBooking(lead)) {
       await confirmCalBooking(payload.uid);
     }
   } else {
-    // Booking made outside the landing-page form (e.g. the raw Cal.com link).
+    // A booking with no row of its own: made outside the landing-page form
+    // (the raw Cal.com link), or carrying another lead's id (see isOwnBooking).
+    // It gets its own unpaid row and is never auto-confirmed.
     const phone = responseValue(payload, "attendeePhoneNumber") ?? attendee?.phoneNumber ?? "";
     const { error } = await supabase
       .from("vastu_leads")
@@ -126,7 +140,10 @@ export async function POST(req: NextRequest) {
           city: "",
           state: "",
           business_category: "Unknown",
-          business_stage: "existing"
+          business_stage: "existing",
+          admin_notes: metaLead
+            ? `Booked via Cal.com with lead ${metaLead.id}'s link — a separate booking, not covered by that lead's payment.`
+            : null
         },
         { onConflict: "cal_booking_uid" }
       );

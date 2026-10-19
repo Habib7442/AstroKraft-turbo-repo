@@ -16,7 +16,10 @@ export async function confirmCalBooking(bookingUid: string): Promise<boolean> {
   try {
     const res = await fetch(`${CAL_API_URL}/bookings/${encodeURIComponent(bookingUid)}/confirm`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "cal-api-version": "2024-08-13" }
+      headers: { Authorization: `Bearer ${apiKey}`, "cal-api-version": "2024-08-13" },
+      // Payment verification waits on this. On timeout the booking stays
+      // unconfirmed in Cal.com for the team to confirm by hand (logged below).
+      signal: AbortSignal.timeout(8000)
     });
     if (!res.ok) console.error("Cal.com confirm failed:", bookingUid, res.status, await res.text());
     return res.ok;

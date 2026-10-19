@@ -29,9 +29,16 @@ export default function PoliciesPage() {
           email, and measure how our advertising performs. We do not sell your data.
         </p>
         <p>
-          Your data is processed by service providers that help us run this service: Cal.com (scheduling and booking notifications), our
-          payment processor (payments), Supabase (secure data storage) and Meta Platforms (advertising measurement, using hashed contact
-          details). Payment card and UPI details are handled by the payment processor and never stored by us.
+          Your data is processed by service providers that help us run this service: Cal.com (scheduling and booking notifications),
+          Razorpay (payments), Supabase (secure data storage) and Meta Platforms (advertising measurement). Payment card and UPI
+          details are handled by Razorpay and never stored by us.
+        </p>
+        <p>
+          This website uses the Meta Pixel and related cookies. When you visit any page — whether or not you book — Meta may receive
+          information such as the pages you view, the actions you take (for example, opening the booking form), your browser and device
+          details, IP address and cookie identifiers. When you submit the booking form or pay, we also send Meta hashed (encrypted) contact
+          details such as your phone number, name and city. We use this only to measure and improve our Facebook and Instagram advertising.
+          You can manage how Meta uses this information for ads in your Facebook or Instagram ad settings.
         </p>
         <p>
           You may request access to, correction of, or deletion of your personal data at any time by writing to{" "}

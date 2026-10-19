@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
 
   try {
     if (event.event === "payment.captured" || event.event === "order.paid") {
-      await markLeadPaid(orderId, payment.id);
+      const notes = { ...event.payload?.order?.entity?.notes, ...payment?.notes };
+      const leadId = typeof notes.leadId === "string" ? notes.leadId : undefined;
+      await markLeadPaid(orderId, payment.id, leadId);
     } else if (event.event === "payment.failed") {
       await getSupabaseAdminClient()
         .from("vastu_leads")

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createRazorpayOrder, formatINRToPaise } from "@astrokraft/payments";
+import { createRazorpayOrder, formatINRToPaise, getRazorpayClient } from "@astrokraft/payments";
+import { markLeadPaid } from "@/lib/mark-paid";
 import type { VastuLead } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { CONSULTATION_FEE } from "@/lib/site";
@@ -17,21 +18,43 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseAdminClient();
     const { data: lead } = await supabase
       .from("vastu_leads")
-      .select("id, full_name, whatsapp, attendee_email, payment_status")
+      .select("id, full_name, whatsapp, attendee_email, payment_status, razorpay_order_id")
       .eq("id", leadId)
-      .maybeSingle<Pick<VastuLead, "id" | "full_name" | "whatsapp" | "attendee_email" | "payment_status">>();
+      .maybeSingle<Pick<VastuLead, "id" | "full_name" | "whatsapp" | "attendee_email" | "payment_status" | "razorpay_order_id">>();
 
     if (!lead) return NextResponse.json({ error: "Booking not found." }, { status: 404 });
     if (lead.payment_status === "paid") return NextResponse.json({ alreadyPaid: true });
 
-    // A fresh order per attempt: a retry after a failed/abandoned checkout
-    // replaces the previous order id, so only the latest order can mark paid.
-    const order = await createRazorpayOrder({
-      amount: formatINRToPaise(CONSULTATION_FEE),
-      currency: "INR",
-      receipt: `vastu_${lead.id.slice(0, 8)}_${Date.now()}`.slice(0, 40),
-      notes: { app: "vastu", leadId: lead.id }
-    });
+    const amount = formatINRToPaise(CONSULTATION_FEE);
+
+    // Reuse the stored order while it can still be paid. A refresh, a second
+    // tab or "Retry payment" must not replace an order that a slow UPI
+    // approval may still complete (markLeadPaid also falls back to the
+    // order's notes.leadId, but reusing keeps one order per lead).
+    const existing = lead.razorpay_order_id
+      ? await getRazorpayClient().orders.fetch(lead.razorpay_order_id).catch(() => null)
+      : null;
+
+    if (existing?.status === "paid") {
+      // Paid but not yet recorded (verify call and webhook both missed so
+      // far): record it now from Razorpay's own data.
+      const payments = await getRazorpayClient().orders.fetchPayments(existing.id);
+      const captured = payments.items.find((p) => p.status === "captured");
+      if (captured) await markLeadPaid(existing.id, captured.id, lead.id);
+      return NextResponse.json({ alreadyPaid: true });
+    }
+
+    const reusable =
+      existing && (existing.status === "created" || existing.status === "attempted") && Number(existing.amount) === amount ? existing : null;
+
+    const order =
+      reusable ??
+      (await createRazorpayOrder({
+        amount,
+        currency: "INR",
+        receipt: `vastu_${lead.id.slice(0, 8)}_${Date.now()}`.slice(0, 40),
+        notes: { app: "vastu", leadId: lead.id }
+      }));
 
     const { error } = await supabase
       .from("vastu_leads")

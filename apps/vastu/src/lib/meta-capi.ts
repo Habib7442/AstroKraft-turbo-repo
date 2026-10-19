@@ -62,7 +62,10 @@ export async function sendMetaEvent({ eventName, eventId, lead, customData }: Ca
     const res = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${pixelId}/events?access_token=${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      // /api/leads and payment verification wait on this; tracking must never
+      // hold up the booking flow. A timeout lands in the catch below.
+      signal: AbortSignal.timeout(3000)
     });
     if (!res.ok) console.error(`Meta CAPI ${eventName} failed:`, res.status, await res.text());
   } catch (error) {

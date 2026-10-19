@@ -156,10 +156,13 @@ export const vastuLeadSchema = z.object({
   // Indian mobile, optionally prefixed with +91 / 91 / 0. Normalized to
   // +91XXXXXXXXXX by the API route before it is stored or sent to Cal.com,
   // whose SMS workflows need E.164.
+  // Separators people commonly type ("98765 43210", "+91 98765-43210",
+  // "(98765) 43210") are stripped before the check.
   whatsapp: z
     .string()
     .trim()
-    .regex(/^(?:\+?91|0)?[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
+    .transform((v) => v.replace(/[\s\-()]/g, ""))
+    .pipe(z.string().regex(/^(?:\+?91|0)?[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number")),
   city: z.string().trim().min(2, "City is required").max(80),
   state: z.string().trim().min(2, "State is required").max(80),
   businessCategory: z.enum(VASTU_BUSINESS_CATEGORIES, {
