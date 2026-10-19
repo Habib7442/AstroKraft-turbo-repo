@@ -19,6 +19,10 @@ keeps booking status / slot times on the same row.
   (unconfirmed, no Cal.com SMS yet); after payment `lib/cal-api.ts` confirms it via the
   Cal.com v2 API (`CAL_API_KEY`), which triggers Cal.com's confirmation SMS/email.
   Whichever arrives second (payment or the Cal webhook) does the confirm.
+- Biprangshu does not use Cal.com: `lib/notify-host.ts` emails him (cc the team) via
+  Resend for PAID bookings only — confirmed (on `BOOKING_CREATED`, with the Cal Video
+  link from `videoCallData.url`), rescheduled, cancelled. The Cal.com account email is
+  the team's, so unpaid "booking requested" mails go to the team, never to him.
 - Booking state = `status`; payment state = `payment_status` (+ `paid_at`, `razorpay_*`).
   Both writers of 'paid' go through `lib/mark-paid.ts` (idempotent). If a paid order id
   isn't the lead's stored one (an older order completed late), it falls back to the

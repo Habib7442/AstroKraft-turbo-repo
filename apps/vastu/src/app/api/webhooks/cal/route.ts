@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { VastuLead, VastuLeadStatus } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { confirmCalBooking } from "@/lib/cal-api";
+import { notifyHost, type HostNotice } from "@/lib/notify-host";
 
 // Cal.com webhook → vastu_leads. Configure in Cal.com: Settings → Developer →
 // Webhooks, URL https://<site>/api/webhooks/cal, a secret (= CAL_WEBHOOK_SECRET),
@@ -19,6 +20,8 @@ type CalPayload = {
   attendees?: CalAttendee[];
   metadata?: Record<string, unknown>;
   responses?: Record<string, { value?: unknown } | undefined>;
+  videoCallData?: { url?: string };
+  location?: string;
 };
 
 const STATUS_BY_TRIGGER: Partial<Record<string, VastuLeadStatus>> = {
@@ -123,6 +126,26 @@ export async function POST(req: NextRequest) {
     // is re-checked so a payment only ever confirms the booking it paid for.
     if (trigger === "BOOKING_REQUESTED" && lead.payment_status === "paid" && isOwnBooking(lead)) {
       await confirmCalBooking(payload.uid);
+    }
+
+    // Tell Biprangshu (by email) about PAID bookings only. BOOKING_CREATED is
+    // what Cal.com sends once our auto-confirm (after payment) accepts the
+    // booking, and it carries the meeting link. Unpaid requests never reach him.
+    if (lead.payment_status === "paid") {
+      const notice: HostNotice | null =
+        trigger === "BOOKING_CREATED"
+          ? payload.rescheduleUid
+            ? "rescheduled"
+            : "confirmed"
+          : trigger === "BOOKING_RESCHEDULED"
+            ? "rescheduled"
+            : trigger === "BOOKING_CANCELLED" || trigger === "BOOKING_REJECTED"
+              ? "cancelled"
+              : null;
+      if (notice) {
+        const meetingUrl = payload.videoCallData?.url || (/^https?:\/\//.test(String(payload.location ?? "")) ? String(payload.location) : null);
+        await notifyHost(notice, { ...lead, ...update } as VastuLead, meetingUrl);
+      }
     }
   } else {
     // A booking with no row of its own: made outside the landing-page form
