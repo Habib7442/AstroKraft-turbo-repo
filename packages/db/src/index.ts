@@ -233,6 +233,53 @@ export interface PromoBanner {
   updated_at: string;
 }
 
+export type VastuLeadStatus = "lead" | "booked" | "rescheduled" | "cancelled" | "completed" | "no_show";
+export type VastuPaymentStatus = "unpaid" | "pending" | "paid" | "failed" | "refunded";
+export type VastuFollowUpStatus = "pending" | "contacted" | "interested_premium" | "not_interested" | "converted";
+
+/** One row per prospect from the VASTU by Biprangshu landing page (apps/vastu). */
+export interface VastuLead {
+  id: string;
+  full_name: string;
+  whatsapp: string;
+  city: string;
+  state: string;
+  business_category: string;
+  business_stage: "existing" | "new" | "expansion";
+  problems: string[];
+  floor_plan_available: boolean;
+  status: VastuLeadStatus;
+  follow_up_status: VastuFollowUpStatus;
+  premium_interest: boolean;
+  admin_notes?: string | null;
+  cal_booking_uid?: string | null;
+  cal_booking_id?: number | null;
+  attendee_email?: string | null;
+  scheduled_start?: string | null;
+  scheduled_end?: string | null;
+  amount_paid?: number | null;
+  paid_at?: string | null;
+  payment_status: VastuPaymentStatus;
+  razorpay_order_id?: string | null;
+  razorpay_payment_id?: string | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  fbclid?: string | null;
+  fbp?: string | null;
+  fbc?: string | null;
+  user_agent?: string | null;
+  ip_address?: string | null;
+  last_cal_event?: string | null;
+  cal_payload?: Record<string, unknown> | null;
+  consent_notice_version?: string | null;
+  consented_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // --------------------------------------------------------
 // Native Clerk + Supabase Integration Client Helpers
 // --------------------------------------------------------

@@ -119,3 +119,77 @@ export const kundliInputSchema = z.object({
 });
 
 export type KundliInput = z.infer<typeof kundliInputSchema>;
+
+// ---------------------------------------------------------------------------
+// VASTU by Biprangshu — consultation intake (apps/vastu)
+// ---------------------------------------------------------------------------
+// Separate brand from AstroKraft, so it carries its own notice version. Bump
+// with any substantive change to apps/vastu's /policies page.
+export const VASTU_PRIVACY_NOTICE_VERSION = "2026-10-19";
+
+export const VASTU_BUSINESS_CATEGORIES = [
+  "Jewellery Showroom",
+  "Retail Shop",
+  "Hotel",
+  "Restaurant / Cafe",
+  "Factory / Manufacturing",
+  "Builder / Real Estate",
+  "Office",
+  "Clinic / Hospital",
+  "Other"
+] as const;
+
+export const VASTU_BUSINESS_STAGES = ["existing", "new", "expansion"] as const;
+
+export const VASTU_BUSINESS_PROBLEMS = [
+  "Sales",
+  "Cash flow",
+  "Expansion",
+  "Staff / workplace issues",
+  "Partnership issues",
+  "Business stagnation",
+  "Other"
+] as const;
+
+export const vastuLeadSchema = z.object({
+  fullName: z.string().trim().min(2, "Please enter your full name").max(100),
+  // Indian mobile, optionally prefixed with +91 / 91 / 0. Normalized to
+  // +91XXXXXXXXXX by the API route before it is stored or sent to Cal.com,
+  // whose SMS workflows need E.164.
+  whatsapp: z
+    .string()
+    .trim()
+    .regex(/^(?:\+?91|0)?[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
+  city: z.string().trim().min(2, "City is required").max(80),
+  state: z.string().trim().min(2, "State is required").max(80),
+  businessCategory: z.enum(VASTU_BUSINESS_CATEGORIES, {
+    errorMap: () => ({ message: "Choose your business category" })
+  }),
+  businessStage: z.enum(VASTU_BUSINESS_STAGES, {
+    errorMap: () => ({ message: "Choose existing, new or expansion" })
+  }),
+  problems: z.array(z.enum(VASTU_BUSINESS_PROBLEMS)).min(1, "Pick at least one problem").max(VASTU_BUSINESS_PROBLEMS.length),
+  floorPlanAvailable: z.boolean(),
+  consent: consentAccepted,
+  // Attribution captured from the ad click's landing URL / Meta cookies.
+  attribution: z
+    .object({
+      utm_source: z.string().max(200).optional(),
+      utm_medium: z.string().max(200).optional(),
+      utm_campaign: z.string().max(200).optional(),
+      utm_content: z.string().max(200).optional(),
+      utm_term: z.string().max(200).optional(),
+      fbclid: z.string().max(500).optional(),
+      fbp: z.string().max(200).optional(),
+      fbc: z.string().max(600).optional()
+    })
+    .default({}),
+  // Honeypot — see purohitBookingSchema.
+  website: z.string().optional()
+});
+
+export type VastuLeadInput = z.infer<typeof vastuLeadSchema>;
+
+export function normalizeIndianMobile(value: string): string {
+  return `+91${value.replace(/\D/g, "").slice(-10)}`;
+}
