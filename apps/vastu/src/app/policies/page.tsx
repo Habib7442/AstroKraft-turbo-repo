@@ -36,8 +36,11 @@ export default function PoliciesPage() {
         <p>
           This website uses the Meta Pixel and related cookies. When you visit any page — whether or not you book — Meta may receive
           information such as the pages you view, the actions you take (for example, opening the booking form), your browser and device
-          details, IP address and cookie identifiers. When you submit the booking form or pay, we also send Meta hashed (encrypted) contact
-          details such as your phone number, name and city. We use this only to measure and improve our Facebook and Instagram advertising.
+          details, IP address and cookie identifiers. When you submit the booking form or pay, we also send Meta your contact details —
+          phone number, name, city, state, country and email (if you gave one) — in hashed form, along with your IP address and browser
+          details. Hashing converts each value into a one-way code; it is not encryption, and Meta matches these codes against its own
+          records, so they can be linked to your Facebook or Instagram account. We use this only to measure and improve our Facebook and
+          Instagram advertising.
           You can manage how Meta uses this information for ads in your Facebook or Instagram ad settings.
         </p>
         <p>

@@ -22,7 +22,17 @@ function loadRazorpay(): Promise<RazorpayCtor | null> {
   });
 }
 
-type State = { kind: "idle" } | { kind: "working" } | { kind: "retry"; message: string } | { kind: "paid" };
+// `pending` = a payment Razorpay reported as successful that we haven't yet
+// managed to verify. While set, the button re-checks that same payment
+// instead of opening checkout again (which could take a second payment).
+type State =
+  | { kind: "idle" }
+  | { kind: "working" }
+  | { kind: "retry"; message: string; pending?: RazorpaySuccess }
+  | { kind: "paid" };
+
+const UNCONFIRMED =
+  "Your payment went through but we couldn't confirm it yet. Tap “Check payment status” — don't pay again. If this persists, message us on WhatsApp.";
 
 export function PayPanel({ leadId, initiallyPaid }: { leadId: string; initiallyPaid: boolean }) {
   const [state, setState] = useState<State>(initiallyPaid ? { kind: "paid" } : { kind: "idle" });
@@ -32,6 +42,28 @@ export function PayPanel({ leadId, initiallyPaid }: { leadId: string; initiallyP
     trackPixel("Purchase", { value: CONSULTATION_FEE, currency: "INR" }, `purchase_${leadId}`);
     setState({ kind: "paid" });
   }, [leadId]);
+
+  // Verify a Razorpay success response server-side. Also used by the
+  // "Check payment status" button, with the same signed response.
+  const verify = useCallback(
+    async (r: RazorpaySuccess) => {
+      setState({ kind: "working" });
+      try {
+        const v = await fetch("/api/razorpay/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature })
+        });
+        const json = await v.json().catch(() => ({}));
+        if (v.ok && json.paid) return onPaid();
+        if (json.error) console.error("payment verify failed:", json.error);
+        setState({ kind: "retry", message: UNCONFIRMED, pending: r });
+      } catch {
+        setState({ kind: "retry", message: UNCONFIRMED, pending: r });
+      }
+    },
+    [onPaid]
+  );
 
   const pay = useCallback(async () => {
     setState({ kind: "working" });
@@ -58,27 +90,9 @@ export function PayPanel({ leadId, initiallyPaid }: { leadId: string; initiallyP
         prefill: order.prefill,
         notes: { app: "vastu", leadId },
         theme: { color: "#D4AF37" },
-        // Runs after pay() has returned, so pay()'s try/catch doesn't cover it:
-        // a failed verify request must still leave the panel usable. Retrying
-        // is safe — create-order sees the order is already paid and records it
-        // instead of charging again.
-        handler: async (r: RazorpaySuccess) => {
-          setState({ kind: "working" });
-          const unconfirmed =
-            "We couldn't confirm your payment yet. Tap below to check again — you won't be charged twice. If money was deducted and this persists, message us on WhatsApp.";
-          try {
-            const v = await fetch("/api/razorpay/verify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature })
-            });
-            const json = await v.json().catch(() => ({}));
-            if (v.ok && json.paid) return onPaid();
-            setState({ kind: "retry", message: json.error || unconfirmed });
-          } catch {
-            setState({ kind: "retry", message: unconfirmed });
-          }
-        },
+        // Runs after pay() has returned, so pay()'s try/catch doesn't cover
+        // it — verify() handles its own failures.
+        handler: (r: RazorpaySuccess) => void verify(r),
         modal: {
           ondismiss: () =>
             setState((s) => (s.kind === "working" ? { kind: "retry", message: "Payment was not completed. Your slot is held — pay now to confirm it." } : s))
@@ -91,7 +105,7 @@ export function PayPanel({ leadId, initiallyPaid }: { leadId: string; initiallyP
     } catch (error) {
       setState({ kind: "retry", message: error instanceof Error ? error.message : "Something went wrong. Please try again." });
     }
-  }, [leadId, onPaid]);
+  }, [leadId, verify]);
 
   // "Redirected to payment": open checkout straight away on arrival.
   useEffect(() => {
@@ -115,6 +129,8 @@ export function PayPanel({ leadId, initiallyPaid }: { leadId: string; initiallyP
     );
   }
 
+  const pending = state.kind === "retry" ? state.pending : undefined;
+
   return (
     <div className="mt-6">
       {state.kind === "retry" && (
@@ -122,7 +138,12 @@ export function PayPanel({ leadId, initiallyPaid }: { leadId: string; initiallyP
           {state.message}
         </p>
       )}
-      <button type="button" onClick={pay} disabled={state.kind === "working"} className="btn-gold w-full">
+      <button
+        type="button"
+        onClick={() => (pending ? verify(pending) : pay())}
+        disabled={state.kind === "working"}
+        className="btn-gold w-full"
+      >
         {state.kind === "working" ? (
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
         ) : state.kind === "retry" ? (
@@ -130,7 +151,7 @@ export function PayPanel({ leadId, initiallyPaid }: { leadId: string; initiallyP
         ) : (
           <Lock className="h-5 w-5" aria-hidden />
         )}
-        {state.kind === "retry" ? "Retry payment" : `Pay ${CONSULTATION_FEE_LABEL}`}
+        {pending ? "Check payment status" : state.kind === "retry" ? "Retry payment" : `Pay ${CONSULTATION_FEE_LABEL}`}
       </button>
       <p className="mt-3 text-center text-xs text-muted">Secure payment by Razorpay · UPI, cards, netbanking &amp; wallets</p>
       <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="mt-4 flex items-center justify-center gap-2 text-sm text-gold-soft">
