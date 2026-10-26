@@ -26,7 +26,10 @@ export const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@vastubiprangshu";
  * while this list is empty.
  */
 export const VIDEOS: { id: string; title: string; tag: "Client feedback" | "Site visit" | "Consultation" }[] = [
-  { id: "RDVv-tSTgkQ", title: "Mr. K. Ganatra, Ahmedabad", tag: "Client feedback" }
+  { id: "RDVv-tSTgkQ", title: "Mr. K. Ganatra, Ahmedabad", tag: "Client feedback" },
+  { id: "gDZiINDc8vQ", title: "Construction site, Udaipur, Tripura", tag: "Site visit" },
+  { id: "gJibaChdkoo", title: "When Vastu meets Tollywood", tag: "Consultation" },
+  { id: "v7XYc6gYd1s", title: "How an on-site consultation works", tag: "Site visit" }
 ];
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3002";
