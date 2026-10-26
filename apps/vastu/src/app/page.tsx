@@ -24,6 +24,7 @@ import {
 import type { PlatformReview } from "@astrokraft/db";
 import { BookingProvider, BookNowButton } from "@/components/booking";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
+import { VideoStories } from "@/components/video-stories";
 import { getSupabasePublicClient } from "@/lib/supabase";
 import {
   BRAND,
@@ -161,6 +162,7 @@ export default async function Home() {
       <main className="pb-24 sm:pb-0">
         <Hero />
         <About />
+        <VideoStories />
         <Problems />
         <Offer />
         <WhoCanBook />

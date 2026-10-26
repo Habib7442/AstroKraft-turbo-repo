@@ -17,6 +17,18 @@ export const WHATSAPP_URL = `https://wa.me/91${CONTACT_PHONE}?text=${encodeURICo
 
 export const FOUNDER_PHOTO: string | null = "/biprangshu.webp";
 
+export const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@vastubiprangshu";
+
+/**
+ * Videos shown in the "Client stories & site visits" section, in display
+ * order. To add one: upload it (public, embedding allowed) and add its ID —
+ * the part after /shorts/ or ?v= in the YouTube link. The section is hidden
+ * while this list is empty.
+ */
+export const VIDEOS: { id: string; title: string; tag: "Client feedback" | "Site visit" | "Consultation" }[] = [
+  { id: "RDVv-tSTgkQ", title: "Mr. K. Ganatra, Ahmedabad", tag: "Client feedback" }
+];
+
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3002";
 export const CAL_LINK = process.env.NEXT_PUBLIC_CAL_LINK || "";
 export const CAL_ORIGIN = process.env.NEXT_PUBLIC_CAL_ORIGIN || "https://cal.com";

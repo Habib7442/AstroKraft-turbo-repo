@@ -6,6 +6,8 @@
 //     same origins apps/web allows).
 //   - Meta Pixel: connect.facebook.net (fbevents.js), www.facebook.com (the
 //     pixel's image/XHR beacon).
+//   - YouTube: thumbnails (i.ytimg.com) and the click-to-play player on the
+//     privacy-enhanced youtube-nocookie.com domain (components/video-stories.tsx).
 //   - static.cloudflareinsights.com: injected at the edge if proxied by
 //     Cloudflare.
 const calOrigin = process.env.NEXT_PUBLIC_CAL_ORIGIN || "https://cal.com";
@@ -16,10 +18,10 @@ const CSP_DIRECTIVES = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' ${calSources} https://checkout.razorpay.com https://connect.facebook.net https://static.cloudflareinsights.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https://www.facebook.com https://*.razorpay.com",
+  "img-src 'self' data: https://www.facebook.com https://*.razorpay.com https://i.ytimg.com",
   "font-src 'self'",
   `connect-src 'self' ${calSources} https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com https://www.facebook.com https://connect.facebook.net`,
-  `frame-src ${calSources} https://checkout.razorpay.com https://api.razorpay.com`,
+  `frame-src ${calSources} https://checkout.razorpay.com https://api.razorpay.com https://www.youtube-nocookie.com`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
