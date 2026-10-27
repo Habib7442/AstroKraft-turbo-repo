@@ -223,17 +223,15 @@ function Hero() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.18),transparent_60%)]"
       />
       <div className="relative mx-auto max-w-5xl px-4 pb-14 pt-10 text-center sm:px-6 sm:pb-20 sm:pt-16">
-        <div className="mb-6 flex justify-center">
-          <Wordmark />
-        </div>
-        <p className="font-display text-[10px] tracking-[0.3em] text-muted sm:text-xs">BUSINESS SPACES · PEOPLE · PROSPERITY</p>
-
-        <p className="eyebrow mt-8">For Business Owners</p>
-        <h1 className="mx-auto mt-3 max-w-3xl text-[2.1rem] font-extrabold leading-[1.1] sm:text-6xl">
-          <span className="text-cream">Is Your Business Space </span>
-          <span className="text-crimson">Supporting Your Growth?</span>
+        <p className="eyebrow">For Business Owners</p>
+        <h1 className="mx-auto mt-3 max-w-3xl text-[1.9rem] font-extrabold leading-[1.12] sm:text-5xl">
+          <span className="block text-cream">Your Business Is Running.</span>
+          <span className="mt-1 block text-crimson">But Is It Growing the Way It Should?</span>
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-base text-cream/85 sm:text-lg">
+        <p className="mx-auto mt-5 max-w-xl text-lg font-semibold text-gold-soft sm:text-xl">
+          Discover what your business space may be missing.
+        </p>
+        <p className="mx-auto mt-3 max-w-xl text-base text-cream/85">
           A personalised <strong className="text-gold-soft">1:1 Business Vastu Consultation</strong> to understand your business, your space
           and your growth goals.
         </p>
@@ -343,10 +341,10 @@ function About() {
             <img
               src={FOUNDER_PHOTO}
               alt={FOUNDER}
-              width={384}
-              height={512}
+              width={720}
+              height={960}
               fetchPriority="high"
-              className="aspect-[3/4] w-full rounded-2xl border border-gold/40 object-cover object-[25%_center]"
+              className="aspect-[3/4] w-full rounded-2xl border border-gold/40 object-cover object-top"
             />
           ) : (
             <div className="flex aspect-[4/5] w-full items-center justify-center rounded-2xl border border-gold/40 bg-gradient-to-b from-night-700 to-night-900">

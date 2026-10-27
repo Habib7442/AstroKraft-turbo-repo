@@ -15,7 +15,7 @@ export const WHATSAPP_URL = `https://wa.me/91${CONTACT_PHONE}?text=${encodeURICo
   "Hi, I'd like to know more about the 1:1 Business Vastu Consultation."
 )}`;
 
-export const FOUNDER_PHOTO: string | null = "/biprangshu.webp";
+export const FOUNDER_PHOTO: string | null = "/biprangshu-office.webp";
 
 export const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@vastubiprangshu";
 

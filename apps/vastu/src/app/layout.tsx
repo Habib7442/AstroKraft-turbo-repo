@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png"
   },
   openGraph: {
-    title: "Is Your Business Space Supporting Your Growth?",
+    title: "Your Business Is Running. But Is It Growing the Way It Should?",
     description: `Personalised 1:1 Business Vastu Consultation — ${CONSULTATION_FEE_LABEL}.`,
     siteName: BRAND,
     type: "website"
