@@ -303,6 +303,7 @@ export interface VastuLead {
   payment_status: VastuPaymentStatus;
   razorpay_order_id?: string | null;
   razorpay_payment_id?: string | null;
+  meeting_url?: string | null;
   utm_source?: string | null;
   utm_medium?: string | null;
   utm_campaign?: string | null;

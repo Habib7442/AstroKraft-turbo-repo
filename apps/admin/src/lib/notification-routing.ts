@@ -7,10 +7,12 @@
 // Keep in sync with the `data: { type: ... }` shapes sent from
 // apps/web/src/lib/send-push-notification.ts callers (currently
 // purohit-bookings, razorpay verify-payment, razorpay
-// verify-consultation-payment).
+// verify-consultation-payment) and apps/vastu/src/lib/push-admins.ts
+// ("vastu_consultation").
 export type NotificationRoute =
   | { pathname: "/purohit-bookings" }
   | { pathname: "/consultations" }
+  | { pathname: "/vastu-consultations" }
   | { pathname: "/order-detail"; params: { id: string } };
 
 export function getNotificationRoute(data: unknown): NotificationRoute | null {
@@ -37,6 +39,8 @@ export function getNotificationRoute(data: unknown): NotificationRoute | null {
       return { pathname: "/purohit-bookings" };
     case "consultation":
       return { pathname: "/consultations" };
+    case "vastu_consultation":
+      return { pathname: "/vastu-consultations" };
     case "order":
       return typeof parsed.orderId === "string" ? { pathname: "/order-detail", params: { id: parsed.orderId } } : null;
     default:

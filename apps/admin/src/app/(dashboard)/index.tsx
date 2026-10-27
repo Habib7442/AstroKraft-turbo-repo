@@ -54,6 +54,12 @@ const WORKING_SCREENS = [
 
 const NEW_SCREENS = [
   {
+    href: "/vastu-consultations",
+    emoji: "🧭",
+    title: "1:1 Vastu Consultations",
+    description: "Paid bookings, client details & join link"
+  },
+  {
     href: "/purohit-bookings",
     emoji: "🪔",
     title: "Purohit Bookings",

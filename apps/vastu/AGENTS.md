@@ -23,6 +23,9 @@ keeps booking status / slot times on the same row.
   Resend for PAID bookings only — confirmed (on `BOOKING_CREATED`, with the Cal Video
   link from `videoCallData.url`), rescheduled, cancelled. The Cal.com account email is
   the team's, so unpaid "booking requested" mails go to the team, never to him.
+- Admin app: `apps/admin` screen "1:1 Vastu Consultations" (`vastu-consultations.tsx`)
+  reads `vastu_leads` (admin RLS); the Cal webhook stores the join link in `meeting_url`
+  and `lib/push-admins.ts` pushes paid-booking alerts (data.type `vastu_consultation`).
 - Booking state = `status`; payment state = `payment_status` (+ `paid_at`, `razorpay_*`).
   Both writers of 'paid' go through `lib/mark-paid.ts` (idempotent). If a paid order id
   isn't the lead's stored one (an older order completed late), it falls back to the

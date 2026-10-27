@@ -4,6 +4,7 @@ import type { VastuLead, VastuLeadStatus } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { confirmCalBooking } from "@/lib/cal-api";
 import { notifyHost, type HostNotice } from "@/lib/notify-host";
+import { pushToAdmins } from "@/lib/push-admins";
 
 // Cal.com webhook → vastu_leads. Configure in Cal.com: Settings → Developer →
 // Webhooks, URL https://<site>/api/webhooks/cal, a secret (= CAL_WEBHOOK_SECRET),
@@ -110,6 +111,11 @@ export async function POST(req: NextRequest) {
     last_cal_event: trigger,
     cal_payload: payload as Record<string, unknown>
   };
+  // The join link (Cal Video), for the admin app's "Join call" button. Only
+  // overwrite when this event carries one — a cancellation payload may not.
+  const meetingUrl =
+    payload.videoCallData?.url || (/^https?:\/\//.test(String(payload.location ?? "")) ? String(payload.location) : null);
+  if (meetingUrl) update.meeting_url = meetingUrl;
   const status = STATUS_BY_TRIGGER[trigger];
   // Late/out-of-order deliveries must not move a finished booking backwards.
   const terminal = lead && (lead.status === "cancelled" || lead.status === "completed");
@@ -143,8 +149,9 @@ export async function POST(req: NextRequest) {
               ? "cancelled"
               : null;
       if (notice) {
-        const meetingUrl = payload.videoCallData?.url || (/^https?:\/\//.test(String(payload.location ?? "")) ? String(payload.location) : null);
-        await notifyHost(notice, { ...lead, ...update } as VastuLead, meetingUrl);
+        const merged = { ...lead, ...update } as VastuLead;
+        await notifyHost(notice, merged, merged.meeting_url);
+        await pushToAdmins(notice, merged);
       }
     }
   } else {

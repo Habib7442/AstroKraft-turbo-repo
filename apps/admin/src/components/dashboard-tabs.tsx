@@ -62,6 +62,7 @@ export function DashboardTabs() {
       <Tabs.Screen name="consultation-categories" options={{ href: null }} />
       <Tabs.Screen name="consultations" options={{ href: null }} />
       <Tabs.Screen name="purohit-bookings" options={{ href: null }} />
+      <Tabs.Screen name="vastu-consultations" options={{ href: null }} />
       <Tabs.Screen name="reviews" options={{ href: null }} />
       <Tabs.Screen name="platform-reviews" options={{ href: null }} />
       <Tabs.Screen name="blogs" options={{ href: null }} />
