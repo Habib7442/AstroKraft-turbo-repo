@@ -19,7 +19,6 @@ const LOCALE_EXEMPT_FIRST_SEGMENTS = new Set(["_next", "api", "trpc", "__clerk",
 // "" means the homepage.
 const LEGACY_SLUGS: Record<string, string> = {
   gemstones: "vedic-gemstones",
-  blog: "",
   "sign-in": "",
   "sign-up": ""
 };

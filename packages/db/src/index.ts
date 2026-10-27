@@ -233,6 +233,47 @@ export interface PromoBanner {
   updated_at: string;
 }
 
+export type BlogEmbedProvider = "youtube" | "facebook" | "instagram";
+
+export interface BlogImage {
+  url: string; // Cloudflare R2 uploaded image URL
+  alt: string;
+  caption?: string;
+}
+
+/** One block of a blog post body, stored in order in `blog_posts.content`. */
+export type BlogBlock =
+  | { type: "heading"; level: 2 | 3; text: string }
+  | { type: "paragraph"; text: string } // supports **bold**, *italic*, [label](url)
+  | { type: "list"; style: "bullet" | "number"; items: string[] }
+  | { type: "quote"; text: string; cite?: string }
+  | { type: "images"; images: BlogImage[] }
+  | { type: "embed"; provider: BlogEmbedProvider; url: string; caption?: string };
+
+export interface BlogFaq {
+  question: string;
+  answer: string;
+}
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  cover_image_url: string; // also the OG / Twitter share image
+  cover_image_alt: string;
+  content: BlogBlock[];
+  faqs: BlogFaq[];
+  tags: string[];
+  author_name: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  status: "draft" | "published";
+  published_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type VastuLeadStatus = "lead" | "booked" | "rescheduled" | "cancelled" | "completed" | "no_show";
 export type VastuPaymentStatus = "unpaid" | "pending" | "paid" | "failed" | "refunded";
 export type VastuFollowUpStatus = "pending" | "contacted" | "interested_premium" | "not_interested" | "converted";

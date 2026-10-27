@@ -196,3 +196,181 @@ export type VastuLeadInput = z.infer<typeof vastuLeadSchema>;
 export function normalizeIndianMobile(value: string): string {
   return `+91${value.replace(/\D/g, "").slice(-10)}`;
 }
+
+// --------------------------------------------------------
+// Blog (authored in apps/admin, rendered at /en/blog)
+// --------------------------------------------------------
+
+export const BLOG_EMBED_PROVIDERS = ["youtube", "facebook", "instagram"] as const;
+export type BlogEmbedProviderId = (typeof BLOG_EMBED_PROVIDERS)[number];
+
+export interface ParsedVideoEmbed {
+  provider: BlogEmbedProviderId;
+  /** The only iframe src the storefront ever renders - always rebuilt from the parsed id, never taken from the stored URL. */
+  embedSrc: string;
+  orientation: "landscape" | "portrait";
+}
+
+const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtube-nocookie.com"]);
+const INSTAGRAM_HOSTS = new Set(["instagram.com", "www.instagram.com"]);
+const FACEBOOK_HOSTS = new Set(["facebook.com", "www.facebook.com", "m.facebook.com", "web.facebook.com", "fb.watch"]);
+const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
+
+/**
+ * Turns a pasted YouTube / Facebook / Instagram link into a safe iframe src.
+ * Returns null for anything that isn't a recognised video/post URL on one of
+ * those hosts, so a stored URL can never point an iframe somewhere else.
+ */
+export function parseVideoEmbed(rawUrl: string): ParsedVideoEmbed | null {
+  let url: URL;
+  try {
+    url = new URL(rawUrl.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:") return null;
+  const host = url.hostname.toLowerCase();
+  const segments = url.pathname.split("/").filter(Boolean);
+
+  if (YOUTUBE_HOSTS.has(host)) {
+    let id: string | undefined;
+    let orientation: ParsedVideoEmbed["orientation"] = "landscape";
+    if (host === "youtu.be") {
+      id = segments[0];
+    } else if (segments[0] === "watch") {
+      id = url.searchParams.get("v") ?? undefined;
+    } else if (segments[0] === "shorts" || segments[0] === "embed" || segments[0] === "live") {
+      id = segments[1];
+      if (segments[0] === "shorts") orientation = "portrait";
+    }
+    if (!id || !YOUTUBE_ID.test(id)) return null;
+    return { provider: "youtube", embedSrc: `https://www.youtube-nocookie.com/embed/${id}`, orientation };
+  }
+
+  if (INSTAGRAM_HOSTS.has(host)) {
+    const kind = segments[0] === "reels" ? "reel" : segments[0];
+    const code = segments[1];
+    if (!kind || !["p", "reel", "tv"].includes(kind) || !code || !/^[A-Za-z0-9_-]+$/.test(code)) return null;
+    return { provider: "instagram", embedSrc: `https://www.instagram.com/${kind}/${code}/embed`, orientation: "portrait" };
+  }
+
+  if (FACEBOOK_HOSTS.has(host)) {
+    const isVideo =
+      host === "fb.watch" ||
+      segments.includes("videos") ||
+      segments[0] === "watch" ||
+      segments[0] === "reel" ||
+      (segments[0] === "share" && (segments[1] === "v" || segments[1] === "r"));
+    if (!isVideo) return null;
+    const isReel = segments[0] === "reel" || (segments[0] === "share" && segments[1] === "r");
+    const href = `https://www.facebook.com${url.pathname}${segments[0] === "watch" ? url.search : ""}`;
+    return {
+      provider: "facebook",
+      embedSrc: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+        host === "fb.watch" ? url.href : href
+      )}&show_text=false`,
+      orientation: isReel ? "portrait" : "landscape"
+    };
+  }
+
+  return null;
+}
+
+/** "Which Finger to Wear Blue Sapphire?" -> "which-finger-to-wear-blue-sapphire" */
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120)
+    .replace(/-+$/g, "");
+}
+
+const blogText = (max: number) => z.string().trim().min(1, "This field can't be empty").max(max);
+const httpsUrl = z.string().trim().url("Must be a valid URL").startsWith("https://", "Must be an https:// URL");
+
+export const blogImageSchema = z.object({
+  url: httpsUrl,
+  alt: z.string().trim().min(3, "Every image needs alt text (describe what it shows)").max(200),
+  caption: z.string().trim().max(300).optional()
+});
+
+export const blogBlockSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("heading"), level: z.union([z.literal(2), z.literal(3)]), text: blogText(200) }),
+  z.object({ type: z.literal("paragraph"), text: blogText(10000) }),
+  z.object({
+    type: z.literal("list"),
+    style: z.enum(["bullet", "number"]),
+    items: z.array(blogText(1000)).min(1, "A list needs at least one item").max(50)
+  }),
+  z.object({ type: z.literal("quote"), text: blogText(1000), cite: z.string().trim().max(200).optional() }),
+  z.object({ type: z.literal("images"), images: z.array(blogImageSchema).min(1, "Add at least one image").max(12) }),
+  // discriminatedUnion members can't carry .refine(), so the URL is checked
+  // on its own here and the provider match on the content array below.
+  z.object({
+    type: z.literal("embed"),
+    provider: z.enum(BLOG_EMBED_PROVIDERS),
+    url: httpsUrl.refine((url) => parseVideoEmbed(url) !== null, {
+      message: "Paste a YouTube, Facebook video/reel, or Instagram post/reel link"
+    }),
+    caption: z.string().trim().max(300).optional()
+  })
+]);
+
+export const blogFaqSchema = z.object({
+  question: blogText(300),
+  answer: blogText(2000)
+});
+
+const blogPostFields = {
+  slug: z
+    .string()
+    .trim()
+    .min(3, "URL slug is too short")
+    .max(120)
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use lowercase letters, numbers and single hyphens only"),
+  title: blogText(200),
+  faqs: z.array(blogFaqSchema).max(20).default([]),
+  tags: z.array(z.string().trim().min(1).max(40)).max(10).default([]),
+  author_name: z.string().trim().min(2).max(100).default("AstroKraft"),
+  seo_title: z.string().trim().max(70, "SEO title should be 70 characters or fewer").nullable().optional(),
+  seo_description: z.string().trim().max(170, "SEO description should be 170 characters or fewer").nullable().optional()
+};
+
+// A draft only needs a title and slug - everything else may be half-written,
+// and its blocks are not validated until publish (the storefront never reads
+// drafts).
+export const blogDraftSchema = z.object({
+  ...blogPostFields,
+  status: z.literal("draft"),
+  excerpt: z.string().trim().max(300),
+  cover_image_url: z.union([httpsUrl, z.literal("")]),
+  cover_image_alt: z.string().trim().max(200),
+  content: z.array(z.object({ type: z.string() }).passthrough()).max(150)
+});
+
+export const blogPublishSchema = z.object({
+  ...blogPostFields,
+  status: z.literal("published"),
+  excerpt: z.string().trim().min(50, "Write at least 50 characters - this is the Google snippet").max(300),
+  cover_image_url: httpsUrl,
+  cover_image_alt: z.string().trim().min(3, "Cover image needs alt text").max(200),
+  content: z
+    .array(blogBlockSchema)
+    .min(1, "Add at least one section to the post")
+    .max(150)
+    .superRefine((blocks, ctx) => {
+      blocks.forEach((block, index) => {
+        if (block.type === "embed" && parseVideoEmbed(block.url)?.provider !== block.provider) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Embed link doesn't match its provider", path: [index, "url"] });
+        }
+      });
+    })
+});
+
+export const blogPostSchema = z.discriminatedUnion("status", [blogDraftSchema, blogPublishSchema]);
+
+export type BlogPostInput = z.infer<typeof blogPostSchema>;
+export type BlogBlockInput = z.infer<typeof blogBlockSchema>;

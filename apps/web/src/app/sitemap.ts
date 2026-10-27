@@ -12,6 +12,7 @@ const STATIC_PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[numbe
   { path: "/horoscope", changeFrequency: "daily", priority: 0.8 },
   { path: "/free-kundli", changeFrequency: "monthly", priority: 0.8 },
   { path: "/gemstone-recommendation", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/blog", changeFrequency: "weekly", priority: 0.7 },
   { path: "/testimonials", changeFrequency: "weekly", priority: 0.6 },
   { path: "/about", changeFrequency: "monthly", priority: 0.5 },
   { path: "/contact", changeFrequency: "monthly", priority: 0.5 },
@@ -40,9 +41,10 @@ function entriesForPath(
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = getSupabaseClient();
 
-  const [{ data: categories }, { data: products }] = await Promise.all([
+  const [{ data: categories }, { data: products }, { data: posts }] = await Promise.all([
     supabase.from("categories").select("slug, created_at").eq("is_active", true),
-    supabase.from("products").select("slug, updated_at").eq("is_active", true)
+    supabase.from("products").select("slug, updated_at").eq("is_active", true),
+    supabase.from("blog_posts").select("slug, updated_at").eq("status", "published")
   ]);
 
   const entries: MetadataRoute.Sitemap = [];
@@ -71,6 +73,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         0.7
       )
     );
+  }
+
+  for (const post of posts ?? []) {
+    entries.push(...entriesForPath(`/blog/${post.slug}`, new Date(post.updated_at), "monthly", 0.7));
   }
 
   return entries;

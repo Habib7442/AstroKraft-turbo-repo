@@ -69,6 +69,11 @@ const r2PublicHostname = process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN
 //     invisibly not allowing anything at all — caught from a real
 //     "invalid source, it will be ignored" console warning, not by
 //     re-reading this file.
+//   - youtube-nocookie.com / facebook.com / instagram.com in frame-src:
+//     blog post video embeds (components/blog/blog-content.tsx). The iframe
+//     src is always rebuilt from parseVideoEmbed() in
+//     @astrokraft/validators, which only emits these three origins - no
+//     third-party embed *scripts* (embed.js / sdk.js) are loaded.
 //   - worker-src 'self' blob:: Clerk's browser SDK creates a Web Worker
 //     from a blob: URL (presumably for background token refresh). With no
 //     worker-src directive, CSP falls back to script-src for workers too
@@ -84,7 +89,7 @@ const CSP_DIRECTIVES = [
   "img-src 'self' data: https://media.astrokraft.online https://*.r2.dev https://*.razorpay.com https://img.clerk.com",
   "font-src 'self'",
   "connect-src 'self' https://svfhlhmrnoywfqmkcgue.supabase.co https://*.r2.cloudflarestorage.com https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com https://*.clerk.accounts.dev https://clerk.astrokraft.online",
-  "frame-src https://checkout.razorpay.com https://api.razorpay.com",
+  "frame-src https://checkout.razorpay.com https://api.razorpay.com https://www.youtube-nocookie.com https://www.facebook.com https://www.instagram.com",
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",

@@ -81,6 +81,12 @@ export function SiteHeader({ categories, locale }: SiteHeaderProps) {
           >
             Reviews
           </Link>
+          <Link
+            href={`/${locale}/blog`}
+            className="whitespace-nowrap text-xs font-medium text-white/85 transition-colors hover:text-gold sm:text-sm"
+          >
+            Blog
+          </Link>
           {/* The header's icon row hides the About icon below sm: (there's no
               room for a 3rd icon there on mobile without recrowding it), so
               this scrollable row - which already has room - is the only

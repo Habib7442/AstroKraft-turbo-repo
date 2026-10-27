@@ -43,6 +43,12 @@ const WORKING_SCREENS = [
     emoji: "💬",
     title: "Testimonials",
     description: "Public reviews of AstroKraft itself"
+  },
+  {
+    href: "/blogs",
+    emoji: "✍️",
+    title: "Blog",
+    description: "Articles with images, videos & FAQs"
   }
 ] as const;
 

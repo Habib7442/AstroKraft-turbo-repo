@@ -64,6 +64,9 @@ export function DashboardTabs() {
       <Tabs.Screen name="purohit-bookings" options={{ href: null }} />
       <Tabs.Screen name="reviews" options={{ href: null }} />
       <Tabs.Screen name="platform-reviews" options={{ href: null }} />
+      <Tabs.Screen name="blogs" options={{ href: null }} />
+      {/* Reachable only from the Blog list (new post / edit). */}
+      <Tabs.Screen name="blog-editor" options={{ href: null }} />
       {/* Reachable only by tapping an order card — not a tab destination. */}
       <Tabs.Screen name="order-detail" options={{ href: null }} />
       {/* Reachable only via the home screen's notification bell — not a tab destination. */}

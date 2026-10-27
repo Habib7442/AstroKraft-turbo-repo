@@ -9,14 +9,26 @@ export const revalidate = 3600;
 // maps to that literal path, same trick used for robots.txt/sitemap.xml.
 export async function GET() {
   const supabase = getSupabaseClient();
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("name, slug, description")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+  const [{ data: categories }, { data: posts }] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("name, slug, description")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("blog_posts")
+      .select("title, slug, excerpt")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(30)
+  ]);
 
   const shopLinks = (categories ?? [])
     .map((c) => `- [${c.name}](${localizedUrl(c.slug)})${c.description ? `: ${c.description}` : ""}`)
+    .join("\n");
+
+  const guideLinks = (posts ?? [])
+    .map((p) => `- [${p.title}](${localizedUrl(`blog/${p.slug}`)}): ${p.excerpt}`)
     .join("\n");
 
   const body = `# ${SITE.name}
@@ -32,7 +44,7 @@ ${shopLinks}
 - [Book a Consultation](${localizedUrl("consultation")}): Vedic astrology consultations with verified astrologers, by category (career, love, finance, health, and more)
 - [Book a Purohit](${localizedUrl("purohit-booking")}): Book a priest for pujas and rituals, with pricing and material options
 
-## Company
+${guideLinks ? `## Guides\n- [Blog](${localizedUrl("blog")}): All articles\n${guideLinks}\n\n` : ""}## Company
 - [About Us](${localizedUrl("about")})
 - [Contact Us](${localizedUrl("contact")})
 

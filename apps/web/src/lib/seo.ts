@@ -100,6 +100,21 @@ export interface BuildMetaInput {
   keywords?: readonly string[];
   /** Set true on cart/account pages you don't want indexed. */
   noIndex?: boolean;
+  /** OG image alt text. Defaults to the page title. */
+  imageAlt?: string;
+  /**
+   * Pixel size of `image`. Defaults to the 1200×630 site OG image; pass null
+   * for an uploaded image of unknown size (e.g. a blog cover) so crawlers
+   * read the real dimensions instead of a wrong hint.
+   */
+  imageSize?: { width: number; height: number } | null;
+  /** Emits og:type=article with its article:* tags (blog posts). */
+  article?: {
+    publishedTime?: string;
+    modifiedTime?: string;
+    authors?: string[];
+    tags?: string[];
+  };
   /**
    * Only the root layout should pass this. It establishes the
    * `{ default, template }` title pair that every page without its own
@@ -125,7 +140,10 @@ export function constructMetadata(input: BuildMetaInput = {}): Metadata {
     image = SITE.ogImage,
     keywords = [],
     noIndex = false,
-    root = false
+    root = false,
+    imageAlt,
+    imageSize = { width: 1200, height: 630 },
+    article
   } = input;
 
   // A non-indexable locale's page canonicalizes to its default-locale twin
@@ -156,14 +174,14 @@ export function constructMetadata(input: BuildMetaInput = {}): Metadata {
       languages: hreflangAlternates(path)
     },
     openGraph: {
-      type: "website",
+      ...(article ? { type: "article" as const, ...article } : { type: "website" as const }),
       siteName: SITE.name,
       title: fullTitle,
       description,
       url: canonical,
       locale: OG_LOCALE[locale],
       alternateLocale: INDEXABLE_LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),
-      images: [{ url: ogImage, width: 1200, height: 630, alt: fullTitle }]
+      images: [{ url: ogImage, ...(imageSize ?? {}), alt: imageAlt ?? fullTitle }]
     },
     twitter: {
       card: "summary_large_image",
@@ -316,6 +334,84 @@ export function webApplicationSchema(input: { name: string; description: string;
     applicationCategory: "LifestyleApplication",
     operatingSystem: "Any",
     offers: { "@type": "Offer", price: "0", priceCurrency: "INR" }
+  };
+}
+
+/** BreadcrumbList - `items` are [name, path-without-locale] pairs, home first. */
+export function breadcrumbSchema(items: { name: string; path: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: localizedUrl(item.path)
+    }))
+  };
+}
+
+export interface BlogPostingSchemaInput {
+  title: string;
+  description: string;
+  path: string;
+  image: string;
+  imageAlt: string;
+  authorName: string;
+  datePublished: string;
+  dateModified: string;
+  wordCount: number;
+  keywords: string[];
+  /** Section headings - lets AI answer engines map the article's structure. */
+  articleSection: string[];
+}
+
+/** BlogPosting schema for /blog/[slug]. */
+export function blogPostingSchema(p: BlogPostingSchemaInput) {
+  const url = localizedUrl(p.path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+    headline: p.title.slice(0, 110),
+    description: p.description,
+    image: { "@type": "ImageObject", url: absoluteUrl(p.image), caption: p.imageAlt },
+    datePublished: p.datePublished,
+    dateModified: p.dateModified,
+    author:
+      p.authorName === SITE.name
+        ? { "@id": ORG_ID }
+        : { "@type": "Person", name: p.authorName, worksFor: { "@id": ORG_ID } },
+    publisher: { "@id": ORG_ID },
+    isPartOf: { "@id": `${localizedUrl("/blog")}#blog` },
+    inLanguage: "en-IN",
+    wordCount: p.wordCount,
+    ...(p.keywords.length ? { keywords: p.keywords.join(", ") } : {}),
+    ...(p.articleSection.length ? { articleSection: p.articleSection } : {})
+  };
+}
+
+/** Blog schema for the /blog index, listing its posts. */
+export function blogSchema(posts: { title: string; path: string; datePublished: string; image: string }[]) {
+  const url = localizedUrl("/blog");
+  return {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "@id": `${url}#blog`,
+    url,
+    name: `${SITE.name} Blog`,
+    description: "Guides on Vedic astrology, gemstones, Rudraksha and Vastu from the AstroKraft team in Silchar.",
+    publisher: { "@id": ORG_ID },
+    inLanguage: "en-IN",
+    blogPost: posts.map((post) => ({
+      "@type": "BlogPosting",
+      headline: post.title.slice(0, 110),
+      url: localizedUrl(post.path),
+      datePublished: post.datePublished,
+      image: absoluteUrl(post.image)
+    }))
   };
 }
 

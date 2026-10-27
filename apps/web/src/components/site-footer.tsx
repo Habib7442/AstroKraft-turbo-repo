@@ -20,6 +20,7 @@ export function SiteFooter({ categories, locale }: SiteFooterProps) {
     { label: "Free Kundli", href: `/${locale}/free-kundli` },
     { label: "Gemstone Recommendation", href: `/${locale}/gemstone-recommendation` },
     { label: "Testimonials", href: `/${locale}/testimonials` },
+    { label: "Blog", href: `/${locale}/blog` },
     { label: "My Orders", href: `/${locale}/orders` }
   ];
 
