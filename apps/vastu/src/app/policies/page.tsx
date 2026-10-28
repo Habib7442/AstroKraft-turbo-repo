@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 // DRAFT terms — to be reviewed and confirmed by the business before ads go live.
 export default function PoliciesPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 text-cream/90 sm:px-6">
+    <main className="mx-auto max-w-3xl px-4 py-12 text-cream sm:px-6">
       <a href="/" className="text-sm text-gold-soft hover:underline">
         ← Back to booking
       </a>

@@ -34,6 +34,19 @@ import {
   WHATSAPP_URL
 } from "@/lib/site";
 
+const HERO_INCLUDES = [
+  "Floor plan check: main door, kitchen, bedrooms, toilets",
+  "Written report with your major Vastu defects",
+  "30-minute one-to-one call with the expert",
+  "Simple remedies that need no construction"
+];
+
+const FLAT_PROBLEMS = [
+  { icon: Wallet, title: "Money and growth", text: "Savings not building, payments delayed, income stuck." },
+  { icon: Users, title: "Family peace", text: "Frequent fights, poor sleep, health worries at home." },
+  { icon: Building2, title: "Buying a flat", text: "Check a flat before you pay the booking amount." }
+];
+
 const PROBLEMS = [
   { icon: TrendingDown, title: "Sales not growing", text: "Footfall or orders have flattened despite effort and marketing spend." },
   { icon: Banknote, title: "Cash flow pressure", text: "Money comes in but doesn't stay — payments get stuck, expenses keep rising." },
@@ -174,6 +187,7 @@ export default function Home() {
       <SiteHeader />
       <main className="pb-24 sm:pb-0">
         <Hero />
+        <FlatProblems />
         <About />
         <VideoStories />
         <Problems />
@@ -192,11 +206,17 @@ export default function Home() {
   );
 }
 
-function Wordmark({ small = false }: { small?: boolean }) {
+function Wordmark({ small = false, onDark = false }: { small?: boolean; onDark?: boolean }) {
   return (
     <span className="inline-flex flex-col items-center leading-none">
-      <span className={`gold-text font-display font-bold tracking-[0.12em] ${small ? "text-xl" : "text-4xl"}`}>VASTU</span>
-      <span className={`font-display tracking-[0.25em] text-gold-soft ${small ? "mt-0.5 text-[8px]" : "mt-1 text-[11px]"}`}>
+      <span
+        className={`font-display font-bold tracking-[0.12em] ${onDark ? "text-gold-bright" : "gold-text"} ${small ? "text-xl" : "text-4xl"}`}
+      >
+        VASTU
+      </span>
+      <span
+        className={`font-display tracking-[0.25em] ${onDark ? "text-gold-bright" : "text-gold-soft"} ${small ? "mt-0.5 text-[8px]" : "mt-1 text-[11px]"}`}
+      >
         by BIPRANGSHU<sup className="ml-0.5">™</sup>
       </span>
     </span>
@@ -205,21 +225,21 @@ function Wordmark({ small = false }: { small?: boolean }) {
 
 function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-gold-line/60 bg-night/85 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-navy">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
         <a href="#top" aria-label={BRAND}>
-          <Wordmark small />
+          <Wordmark small onDark />
         </a>
         <div className="flex items-center gap-2">
           <a
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 px-3 py-2 text-xs font-semibold text-gold-soft"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/30 px-3 py-2 text-xs font-semibold text-white"
           >
             <WhatsAppIcon className="h-4 w-4" /> <span className="hidden sm:inline">WhatsApp</span>
           </a>
-          <BookNowButton className="hidden rounded-full bg-gold-gradient px-4 py-2 text-xs font-extrabold uppercase text-night sm:inline-flex">
+          <BookNowButton className="hidden rounded-full bg-gold-gradient px-4 py-2 text-xs font-extrabold uppercase text-navy sm:inline-flex">
             Book Now
           </BookNowButton>
         </div>
@@ -230,41 +250,56 @@ function SiteHeader() {
 
 function Hero() {
   return (
-    <section id="top" className="relative overflow-hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.18),transparent_60%)]"
-      />
-      <div className="relative mx-auto max-w-5xl px-4 pb-14 pt-10 text-center sm:px-6 sm:pb-20 sm:pt-16">
-        <p className="eyebrow">For Business Owners</p>
-        <h1 className="mx-auto mt-3 max-w-3xl text-[1.9rem] font-extrabold leading-[1.12] sm:text-5xl">
-          <span className="block text-cream">Your Business Is Running.</span>
-          <span className="mt-1 block text-crimson">But Is It Growing the Way It Should?</span>
-        </h1>
-        <p className="mx-auto mt-5 max-w-xl text-lg font-semibold text-gold-soft sm:text-xl">
-          Discover what your business space may be missing.
-        </p>
-        <p className="mx-auto mt-3 max-w-xl text-base text-cream/85">
-          A personalised <strong className="text-gold-soft">1:1 Business Vastu Consultation</strong> to understand your business, your space
-          and your growth goals.
-        </p>
+    <section id="top" className="relative overflow-hidden bg-navy">
+      <div className="relative mx-auto grid max-w-5xl items-center gap-10 px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <div>
+          <p className="eyebrow !text-gold-bright">Vastu for flats and apartments</p>
+          <h1 className="mt-3 text-[2rem] font-extrabold leading-[1.1] text-white sm:text-5xl">
+            Get Your Flat Vastu <span className="text-gold-bright">Report + Expert Call</span>
+          </h1>
+          <p className="mt-5 max-w-xl text-base text-white/80 sm:text-lg">
+            Money stuck? Constant tension at home? Find out what your flat is doing to you, with simple fixes that need no breaking of walls.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <BookNowButton className="btn-gold w-full sm:w-auto">Book My Vastu Call</BookNowButton>
+            <p className="text-center text-sm text-white/70 sm:text-left">
+              Only <strong className="text-gold-bright">{CONSULTATION_FEE_LABEL}</strong>. Report and call included.
+            </p>
+          </div>
+        </div>
 
-        <ul className="mx-auto mt-8 grid max-w-3xl grid-cols-2 gap-3 text-left text-sm sm:grid-cols-4">
-          {["Identify Vastu blocks in your space", "Personalised solutions for your goals", "Clarity on expansion & team", "Practical, actionable guidance"].map(
-            (t) => (
-              <li key={t} className="flex items-start gap-2 rounded-xl border border-gold-line bg-night-800/60 p-3 text-cream/90">
-                <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden />
+        <div className="rounded-2xl border-t-4 border-gold-bright bg-white p-6 shadow-2xl shadow-black/30">
+          <h2 className="text-lg font-bold text-cream">What you get for {CONSULTATION_FEE_LABEL}</h2>
+          <ol className="mt-4 space-y-3">
+            {HERO_INCLUDES.map((t, i) => (
+              <li key={t} className="flex gap-3 text-sm text-cream">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold-gradient text-xs font-extrabold text-navy">
+                  {i + 1}
+                </span>
                 {t}
               </li>
-            )
-          )}
-        </ul>
+            ))}
+          </ol>
+          <p className="mt-5 border-t border-gold-line pt-4 text-xs text-muted">Limited call slots every week.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-        <div className="mx-auto mt-10 max-w-md rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-transparent p-6">
-          <p className="text-sm font-semibold uppercase tracking-wider text-gold-soft">1:1 Vastu Consultation</p>
-          <p className="mt-1 text-5xl font-extrabold text-cream">{CONSULTATION_FEE_LABEL}</p>
-          <BookNowButton className="btn-gold mt-5 w-full" />
-          <p className="mt-3 text-xs text-muted">Pick your slot · Pay securely online · Instant SMS confirmation</p>
+function FlatProblems() {
+  return (
+    <section className="border-y border-gold-line/50 bg-night-800/40">
+      <div className="section">
+        <h2 className="section-title text-center">Is your flat working against you?</h2>
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          {FLAT_PROBLEMS.map(({ icon: Icon, title, text }) => (
+            <div key={title} className="card">
+              <Icon className="h-6 w-6 text-gold" aria-hidden />
+              <h3 className="mt-3 font-bold text-cream">{title}</h3>
+              <p className="mt-1 text-sm text-muted">{text}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -369,11 +404,11 @@ function About() {
           <p className="eyebrow">Meet your consultant</p>
           <h2 className="section-title">{FOUNDER}</h2>
           <p className="mt-2 font-semibold text-gold-soft">Founder, {BRAND} &amp; AstroKraft · Business &amp; Vastu Consultant</p>
-          <p className="mt-4 text-cream/85">
+          <p className="mt-4 text-cream">
             Biprangshu brings a business lens to Vastu. He looks at your space the way you look at your business — sales,
             customers, cash flow, team and growth — and connects Vastu principles to practical decisions you can actually act on.
           </p>
-          <p className="mt-3 text-cream/85">
+          <p className="mt-3 text-cream">
             As the founder of AstroKraft, a Vedic astrology and certified-gemstone brand, he helps people apply traditional Indian wisdom to
             real-life decisions. {BRAND} brings that same approach to business owners and their workplaces.
           </p>
@@ -425,7 +460,7 @@ function Testimonials() {
               <span className="font-display text-4xl leading-none text-gold" aria-hidden>
                 “
               </span>
-              <blockquote className="mt-1 flex-1 text-sm leading-relaxed text-cream/85">{t.quote}</blockquote>
+              <blockquote className="mt-1 flex-1 text-sm leading-relaxed text-cream">{t.quote}</blockquote>
               <figcaption className="mt-5 flex items-center gap-3 border-t border-night-600 pt-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-sm font-bold text-gold">
                   {t.name.replace(/^Dr\.\s*/, "").charAt(0)}
@@ -452,7 +487,7 @@ function Inclusions() {
           <h3 className="font-bold text-gold-soft">Included</h3>
           <ul className="mt-3 space-y-2.5">
             {INCLUDED.map((t) => (
-              <li key={t} className="flex gap-2.5 text-sm text-cream/90">
+              <li key={t} className="flex gap-2.5 text-sm text-cream">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden /> {t}
               </li>
             ))}
@@ -482,7 +517,7 @@ function HowItWorks() {
         <ol className="mt-8 grid gap-4 sm:grid-cols-4">
           {STEPS.map((s, i) => (
             <li key={s.title} className="card">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-gradient text-sm font-extrabold text-night">{i + 1}</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-gradient text-sm font-extrabold text-navy">{i + 1}</span>
               <h3 className="mt-3 font-bold text-cream">{s.title}</h3>
               <p className="mt-1 text-sm text-muted">{s.text}</p>
             </li>
@@ -517,15 +552,15 @@ function Faq() {
 function FinalCta() {
   return (
     <section className="px-4 pb-16 sm:px-6">
-      <div className="mx-auto max-w-3xl rounded-3xl border border-gold/40 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.18),transparent_70%)] px-6 py-12 text-center">
-        <h2 className="text-3xl font-extrabold text-cream sm:text-4xl">
+      <div className="mx-auto max-w-5xl rounded-3xl bg-navy px-6 py-12 text-center sm:py-16">
+        <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
           Make your space work <span className="gold-text">for</span> your business
         </h2>
-        <p className="mx-auto mt-3 max-w-md text-muted">Book your personalised 1:1 Business Vastu Consultation today.</p>
-        <p className="mt-6 text-4xl font-extrabold text-cream">{CONSULTATION_FEE_LABEL}</p>
+        <p className="mx-auto mt-3 max-w-xl text-white/70">Book your personalised 1:1 Business Vastu Consultation today.</p>
+        <p className="mt-6 text-4xl font-extrabold text-white">{CONSULTATION_FEE_LABEL}</p>
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <BookNowButton className="btn-gold w-full sm:w-auto" />
-          <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-outline w-full sm:w-auto">
+          <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-outline w-full !border-white/40 !text-white hover:!bg-white/10 sm:w-auto">
             <WhatsAppIcon className="h-4 w-4" /> Ask on WhatsApp
           </a>
         </div>
@@ -536,29 +571,29 @@ function FinalCta() {
 
 function SiteFooter() {
   return (
-    <footer className="border-t border-gold-line/60 bg-night-900">
-      <div className="mx-auto max-w-5xl px-4 py-10 text-sm text-muted sm:px-6">
+    <footer className="bg-navy">
+      <div className="mx-auto max-w-5xl px-4 py-10 text-sm text-white/70 sm:px-6">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <Wordmark small />
+          <Wordmark small onDark />
           <div className="space-y-2">
-            <a href={`tel:+91${CONTACT_PHONE}`} className="flex items-center gap-2 hover:text-cream">
+            <a href={`tel:+91${CONTACT_PHONE}`} className="flex items-center gap-2 hover:text-white">
               <Phone className="h-4 w-4" aria-hidden /> +91 {CONTACT_PHONE}
             </a>
-            <a href={`mailto:${CONTACT_EMAIL}`} className="flex items-center gap-2 hover:text-cream">
+            <a href={`mailto:${CONTACT_EMAIL}`} className="flex items-center gap-2 hover:text-white">
               <Mail className="h-4 w-4" aria-hidden /> {CONTACT_EMAIL}
             </a>
           </div>
           <nav className="flex flex-col gap-2">
-            <a href="/policies#privacy" className="hover:text-cream">Privacy Policy</a>
-            <a href="/policies#payment" className="hover:text-cream">Payment Terms</a>
-            <a href="/policies#refunds" className="hover:text-cream">Refund &amp; Rescheduling</a>
+            <a href="/policies#privacy" className="hover:text-white">Privacy Policy</a>
+            <a href="/policies#payment" className="hover:text-white">Payment Terms</a>
+            <a href="/policies#refunds" className="hover:text-white">Refund &amp; Rescheduling</a>
           </nav>
         </div>
-        <p className="mt-8 text-xs leading-relaxed text-muted/80">
+        <p className="mt-8 text-xs leading-relaxed text-white/50">
           Disclaimer: Vastu consultation offers guidance based on traditional principles and is not a guarantee of any financial or business
           outcome. It is not a substitute for professional legal, financial, structural or engineering advice.
         </p>
-        <p className="mt-4 text-xs text-muted/70">
+        <p className="mt-4 text-xs text-white/50">
           © {new Date().getFullYear()} {BRAND}™. All rights reserved.
         </p>
       </div>

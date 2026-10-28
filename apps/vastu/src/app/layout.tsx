@@ -30,14 +30,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0A0C",
-  colorScheme: "dark"
+  themeColor: "#0B2545",
+  colorScheme: "light"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
-      <body className="bg-night font-sans text-cream antialiased">
+    <html lang="en" className={`${display.variable} ${sans.variable}`} suppressHydrationWarning>
+      <body className="bg-night font-sans text-cream antialiased" suppressHydrationWarning>
         {children}
         <MetaPixel />
       </body>

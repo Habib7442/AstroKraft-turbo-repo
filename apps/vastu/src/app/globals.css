@@ -7,7 +7,7 @@ html {
 }
 
 body {
-  background-color: #0a0a0c;
+  background-color: #ffffff;
 }
 
 @layer components {
@@ -16,7 +16,7 @@ body {
   }
 
   .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-gold-gradient px-7 py-4 text-base font-extrabold uppercase tracking-wide text-night shadow-[0_8px_30px_rgba(212,175,55,0.25)] transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-gold-gradient px-7 py-4 text-base font-extrabold uppercase tracking-wide text-navy shadow-[0_8px_30px_rgba(212,175,55,0.25)] transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .btn-outline {
@@ -44,6 +44,6 @@ body {
   }
 
   .chip {
-    @apply cursor-pointer rounded-full border border-night-600 bg-night-700 px-3.5 py-2 text-sm text-cream/90 transition has-[:checked]:border-gold has-[:checked]:bg-gold/15 has-[:checked]:text-gold-soft has-[:focus-visible]:ring-1 has-[:focus-visible]:ring-gold;
+    @apply cursor-pointer rounded-full border border-night-600 bg-night-700 px-3.5 py-2 text-sm text-cream transition has-[:checked]:border-gold has-[:checked]:bg-gold/15 has-[:checked]:text-gold-soft has-[:focus-visible]:ring-1 has-[:focus-visible]:ring-gold;
   }
 }

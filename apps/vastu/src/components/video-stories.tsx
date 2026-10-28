@@ -65,7 +65,7 @@ function VideoCard({ id, title, tag }: (typeof VIDEOS)[number]) {
             />
             <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             <span className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-gold-gradient shadow-lg transition group-hover:scale-110">
-              <Play className="ml-1 h-7 w-7 fill-night text-night" aria-hidden />
+              <Play className="ml-1 h-7 w-7 fill-navy text-navy" aria-hidden />
             </span>
           </button>
         )}

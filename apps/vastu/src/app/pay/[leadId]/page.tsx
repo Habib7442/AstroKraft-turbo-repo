@@ -22,15 +22,16 @@ export default async function PayPage({ params }: { params: Promise<{ leadId: st
 
   const { data: lead } = await getSupabaseAdminClient()
     .from("vastu_leads")
-    .select("id, full_name, scheduled_start, payment_status")
+    .select("id, full_name, scheduled_start, payment_status, floor_plan_available")
     .eq("id", leadId)
-    .maybeSingle<Pick<VastuLead, "id" | "full_name" | "scheduled_start" | "payment_status">>();
+    .maybeSingle<Pick<VastuLead, "id" | "full_name" | "scheduled_start" | "payment_status" | "floor_plan_available">>();
   if (!lead) notFound();
 
   const firstName = lead.full_name.trim().split(/\s+/)[0];
-  const slot = lead.scheduled_start
-    ? new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(lead.scheduled_start))
-    : null;
+  const fmt = (opts: Intl.DateTimeFormatOptions) =>
+    lead.scheduled_start ? new Intl.DateTimeFormat("en-IN", { ...opts, timeZone: "Asia/Kolkata" }).format(new Date(lead.scheduled_start)) : null;
+  const slot = fmt({ dateStyle: "full", timeStyle: "short" });
+  const shortSlot = fmt({ weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4 py-10">
@@ -41,7 +42,7 @@ export default async function PayPage({ params }: { params: Promise<{ leadId: st
         <div className="mt-4 flex items-start gap-3 rounded-xl border border-night-600 bg-night-700 p-4 text-sm">
           <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden />
           <div>
-            <p className="font-semibold text-cream">1:1 Business Vastu Consultation</p>
+            <p className="font-semibold text-cream">Flat Vastu Report + Expert Call</p>
             <p className="text-muted">{slot ? `${slot} (IST)` : "Slot details are in your SMS / email confirmation"}</p>
           </div>
         </div>
@@ -49,7 +50,13 @@ export default async function PayPage({ params }: { params: Promise<{ leadId: st
           <span className="text-muted">Consultation fee</span>
           <span className="text-3xl font-extrabold text-cream">{CONSULTATION_FEE_LABEL}</span>
         </div>
-        <PayPanel leadId={lead.id} initiallyPaid={lead.payment_status === "paid"} />
+        <PayPanel
+          leadId={lead.id}
+          initiallyPaid={lead.payment_status === "paid"}
+          fullName={lead.full_name}
+          slot={shortSlot}
+          hasFloorPlan={lead.floor_plan_available}
+        />
       </div>
     </main>
   );

@@ -65,7 +65,7 @@ export function CalEmbed({ prefill, onBooked }: { prefill: CalPrefill; onBooked:
       calLink: CAL_LINK,
       config: {
         layout: "month_view",
-        theme: "dark",
+        theme: "light",
         name: prefill.name,
         notes: prefill.notes,
         // Cal.com's phone booking field and its SMS-workflow reminder number.
@@ -76,7 +76,7 @@ export function CalEmbed({ prefill, onBooked }: { prefill: CalPrefill; onBooked:
       }
     });
     api("ui", {
-      theme: "dark",
+      theme: "light",
       hideEventTypeDetails: false,
       layout: "month_view",
       cssVarsPerTheme: { dark: { "cal-brand": "#D4AF37" }, light: { "cal-brand": "#A8841F" } }

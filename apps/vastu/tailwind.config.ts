@@ -1,17 +1,20 @@
 import type { Config } from "tailwindcss";
 
-// VASTU by Biprangshu is its own brand (black & gold, from the ad poster),
-// deliberately not wired to @astrokraft/theme.
+// VASTU by Biprangshu is its own brand (blue & white with gold CTAs),
+// deliberately not wired to @astrokraft/theme. The token names date from the
+// original black & gold theme: `night-*` are the page/surface shades, `cream`
+// is the main text colour, `navy` is used for the dark hero/CTA bands.
 const config: Config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
       colors: {
-        night: { DEFAULT: "#0A0A0C", 900: "#0A0A0C", 800: "#121215", 700: "#1A1A1F", 600: "#26262D" },
-        gold: { DEFAULT: "#D4AF37", soft: "#E9CF7A", deep: "#A8841F", line: "#3A3220" },
-        cream: "#F4ECD8",
-        muted: "#A9A39A",
-        crimson: "#E5383B"
+        night: { DEFAULT: "#FFFFFF", 900: "#F4F6FA", 800: "#F4F6FA", 700: "#EEF2F8", 600: "#D6DEEA" },
+        navy: { DEFAULT: "#0B2545", 800: "#13315C" },
+        gold: { DEFAULT: "#9A7419", soft: "#8C6A17", deep: "#7A5C12", line: "#E3E8F0", bright: "#E2B857" },
+        cream: "#0B2545",
+        muted: "#3F4B63",
+        crimson: "#D62828"
       },
       fontFamily: {
         display: ["var(--font-display)", "serif"],

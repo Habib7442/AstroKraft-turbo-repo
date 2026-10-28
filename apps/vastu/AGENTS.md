@@ -1,6 +1,6 @@
 # apps/vastu — VASTU by Biprangshu landing page
 
-Single-page Meta-ads landing page for the ₹1,900 1:1 Business Vastu Consultation.
+Single-page Meta-ads landing page for the ₹999 1:1 Business Vastu Consultation.
 Separate brand (black & gold) — does not use `@astrokraft/theme` or Clerk.
 
 Flow: Book Now → intake form (`components/booking.tsx`) → `POST /api/leads` inserts a

@@ -26,11 +26,12 @@ export async function POST(req: NextRequest) {
     full_name: data.fullName,
     whatsapp,
     city: data.city,
-    state: data.state,
-    business_category: data.businessCategory,
-    business_stage: data.businessStage,
-    problems: data.problems,
-    floor_plan_available: data.floorPlanAvailable,
+    // The short flat-Vastu form doesn't ask these; the columns predate it.
+    state: "",
+    business_category: "Flat / Apartment",
+    business_stage: "existing" as const,
+    problems: data.concern ? [data.concern] : [],
+    floor_plan_available: data.floorPlanAvailable ?? false,
     utm_source: data.attribution.utm_source ?? null,
     utm_medium: data.attribution.utm_medium ?? null,
     utm_campaign: data.attribution.utm_campaign ?? null,
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
       eventName: "Lead",
       eventId: `lead_${lead.id}`,
       lead: row,
-      customData: { content_category: data.businessCategory }
+      customData: { content_category: data.concern ?? "Flat / Apartment" }
     });
 
     return NextResponse.json({ leadId: lead.id, whatsapp });

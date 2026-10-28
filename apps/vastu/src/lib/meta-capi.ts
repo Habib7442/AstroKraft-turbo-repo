@@ -32,10 +32,11 @@ export async function sendMetaEvent({ eventName, eventId, lead, customData }: Ca
   const userData: Record<string, unknown> = {
     ph: [sha256(lead.whatsapp.replace(/\D/g, ""))],
     fn: [sha256(firstName ?? "")],
-    ct: [sha256(lead.city.replace(/\s+/g, ""))],
-    st: [sha256(lead.state.replace(/\s+/g, ""))],
     country: [sha256("in")]
   };
+  // Blank city/state (short form, direct Cal.com bookings) must be omitted, not hashed.
+  if (lead.city.trim()) userData.ct = [sha256(lead.city.replace(/\s+/g, ""))];
+  if (lead.state.trim()) userData.st = [sha256(lead.state.replace(/\s+/g, ""))];
   if (rest.length) userData.ln = [sha256(rest[rest.length - 1])];
   if (lead.attendee_email) userData.em = [sha256(lead.attendee_email)];
   if (lead.fbp) userData.fbp = lead.fbp;

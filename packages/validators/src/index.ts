@@ -127,29 +127,9 @@ export type KundliInput = z.infer<typeof kundliInputSchema>;
 // with any substantive change to apps/vastu's /policies page.
 export const VASTU_PRIVACY_NOTICE_VERSION = "2026-10-19";
 
-export const VASTU_BUSINESS_CATEGORIES = [
-  "Jewellery Showroom",
-  "Retail Shop",
-  "Hotel",
-  "Restaurant / Cafe",
-  "Factory / Manufacturing",
-  "Builder / Real Estate",
-  "Office",
-  "Clinic / Hospital",
-  "Other"
-] as const;
-
-export const VASTU_BUSINESS_STAGES = ["existing", "new", "expansion"] as const;
-
-export const VASTU_BUSINESS_PROBLEMS = [
-  "Sales",
-  "Cash flow",
-  "Expansion",
-  "Staff / workplace issues",
-  "Partnership issues",
-  "Business stagnation",
-  "Other"
-] as const;
+// The booking form asks only name, WhatsApp, city and an optional one-tap
+// concern — the floor plan and everything else come on WhatsApp and the call.
+export const VASTU_CONCERNS = ["Money", "Family peace", "Health", "Buying a flat"] as const;
 
 export const vastuLeadSchema = z.object({
   fullName: z.string().trim().min(2, "Please enter your full name").max(100),
@@ -163,16 +143,9 @@ export const vastuLeadSchema = z.object({
     .trim()
     .transform((v) => v.replace(/[\s\-()]/g, ""))
     .pipe(z.string().regex(/^(?:\+?91|0)?[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number")),
-  city: z.string().trim().min(2, "City is required").max(80),
-  state: z.string().trim().min(2, "State is required").max(80),
-  businessCategory: z.enum(VASTU_BUSINESS_CATEGORIES, {
-    errorMap: () => ({ message: "Choose your business category" })
-  }),
-  businessStage: z.enum(VASTU_BUSINESS_STAGES, {
-    errorMap: () => ({ message: "Choose existing, new or expansion" })
-  }),
-  problems: z.array(z.enum(VASTU_BUSINESS_PROBLEMS)).min(1, "Pick at least one problem").max(VASTU_BUSINESS_PROBLEMS.length),
-  floorPlanAvailable: z.boolean(),
+  city: z.string().trim().min(2, "Please enter your city").max(80),
+  concern: z.enum(VASTU_CONCERNS).optional(),
+  floorPlanAvailable: z.boolean().optional(),
   consent: consentAccepted,
   // Attribution captured from the ad click's landing URL / Meta cookies.
   attribution: z

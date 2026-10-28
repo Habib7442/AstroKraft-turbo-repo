@@ -2,16 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ArrowRight, Check, Loader2, X } from "lucide-react";
-import {
-  VASTU_BUSINESS_CATEGORIES,
-  VASTU_BUSINESS_PROBLEMS,
-  vastuLeadSchema,
-  type VastuLeadInput
-} from "@astrokraft/validators";
+import { VASTU_CONCERNS, vastuLeadSchema, type VastuLeadInput } from "@astrokraft/validators";
 import { captureAttribution, getAttribution } from "@/lib/attribution";
 import { CONSULTATION_FEE, CONSULTATION_FEE_LABEL } from "@/lib/site";
 import { CalEmbed, type CalPrefill } from "./cal-embed";
 import { trackPixel } from "./meta-pixel";
+import { WhatsAppIcon } from "./whatsapp-icon";
 
 const BookingContext = createContext<{ open: () => void }>({ open: () => {} });
 
@@ -48,12 +44,6 @@ export function BookNowButton({ className = "btn-gold", children }: { className?
 
 type Step = { kind: "form" } | { kind: "calendar"; prefill: CalPrefill } | { kind: "redirecting" };
 
-const STAGES: { value: VastuLeadInput["businessStage"]; label: string }[] = [
-  { value: "existing", label: "Existing business" },
-  { value: "new", label: "New business" },
-  { value: "expansion", label: "Planning expansion" }
-];
-
 const STEP_LABELS = ["Your details", "Pick a slot", `Pay ${CONSULTATION_FEE_LABEL}`];
 
 function BookingSheet({ onClose }: { onClose: () => void }) {
@@ -83,7 +73,7 @@ function BookingSheet({ onClose }: { onClose: () => void }) {
         <header className="flex items-start justify-between gap-4 border-b border-night-600 px-5 py-4">
           <div>
             <h2 id="booking-title" className="text-lg font-bold text-cream">
-              Book your 1:1 Business Vastu Consultation
+              Book your Flat Vastu Call — {CONSULTATION_FEE_LABEL}
             </h2>
             <ol className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {STEP_LABELS.map((label, i) => (
@@ -127,39 +117,28 @@ function BookingSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-type FormState = Omit<VastuLeadInput, "attribution" | "consent" | "businessCategory" | "businessStage"> & {
-  businessCategory: VastuLeadInput["businessCategory"] | "";
-  businessStage: VastuLeadInput["businessStage"] | "";
-  consent: boolean;
-};
+type FormState = Omit<VastuLeadInput, "attribution" | "consent"> & { consent: boolean };
 
 const INITIAL: FormState = {
   fullName: "",
   whatsapp: "",
   city: "",
-  state: "",
-  businessCategory: "",
-  businessStage: "",
-  problems: [],
-  floorPlanAvailable: false,
+  concern: undefined,
+  floorPlanAvailable: undefined,
   consent: false,
   website: ""
 };
 
 function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
   const [form, setForm] = useState<FormState>(INITIAL);
-  const [floorPlanAnswered, setFloorPlanAnswered] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
-  const toggleProblem = (p: (typeof VASTU_BUSINESS_PROBLEMS)[number]) =>
-    set("problems", form.problems.includes(p) ? form.problems.filter((x) => x !== p) : [...form.problems, p]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!floorPlanAnswered) return setError("Let us know if a floor plan is available");
 
     const payload = { ...form, attribution: getAttribution() };
     const parsed = vastuLeadSchema.safeParse(payload);
@@ -175,17 +154,19 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "Something went wrong. Please try again.");
 
-      trackPixel("Lead", { content_category: parsed.data.businessCategory }, `lead_${json.leadId}`);
+      trackPixel("Lead", { content_category: parsed.data.concern ?? "Flat / Apartment" }, `lead_${json.leadId}`);
       onDone({
         leadId: json.leadId,
         name: parsed.data.fullName,
         phone: json.whatsapp,
         notes: [
-          `${parsed.data.businessCategory} (${parsed.data.businessStage})`,
-          `${parsed.data.city}, ${parsed.data.state}`,
-          `Problems: ${parsed.data.problems.join(", ")}`,
-          `Floor plan: ${parsed.data.floorPlanAvailable ? "Yes" : "No"}`
-        ].join(" | ")
+          "Flat Vastu",
+          parsed.data.city,
+          parsed.data.concern && `Concern: ${parsed.data.concern}`,
+          parsed.data.floorPlanAvailable !== undefined && `Floor plan: ${parsed.data.floorPlanAvailable ? "Yes" : "No"}`
+        ]
+          .filter(Boolean)
+          .join(" | ")
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -197,10 +178,10 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Full name">
+        <Field label="Your name">
           <input className="field" autoComplete="name" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} required />
         </Field>
-        <Field label="Phone / WhatsApp number">
+        <Field label="WhatsApp number">
           <div className="flex">
             <span className="flex items-center rounded-l-xl border border-r-0 border-night-600 bg-night-600 px-3 text-sm text-muted">+91</span>
             <input
@@ -216,86 +197,61 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
           </div>
         </Field>
         <Field label="City">
-          <input className="field" autoComplete="address-level2" value={form.city} onChange={(e) => set("city", e.target.value)} required />
+          <input
+            className="field"
+            autoComplete="address-level2"
+            placeholder="e.g. Kolkata"
+            value={form.city}
+            onChange={(e) => set("city", e.target.value)}
+            required
+          />
         </Field>
-        <Field label="State">
-          <input className="field" autoComplete="address-level1" value={form.state} onChange={(e) => set("state", e.target.value)} required />
-        </Field>
+        <fieldset>
+          <legend className="mb-1.5 text-sm font-semibold text-cream">Have a floor plan?</legend>
+          <div className="flex gap-2">
+            {[true, false].map((v) => (
+              <label key={String(v)} className="chip flex-1 py-3 text-center">
+                <input
+                  type="radio"
+                  name="floorplan"
+                  className="sr-only"
+                  checked={form.floorPlanAvailable === v}
+                  onChange={() => set("floorPlanAvailable", v)}
+                />
+                {form.floorPlanAvailable === v && <Check className="-ml-0.5 mr-1 inline h-3.5 w-3.5" aria-hidden />}
+                {v ? "Yes" : "No"}
+              </label>
+            ))}
+          </div>
+          {form.floorPlanAvailable !== undefined && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
+              <WhatsAppIcon className="h-3.5 w-3.5 shrink-0" />
+              {form.floorPlanAvailable ? "Great — send it on WhatsApp after booking." : "No problem — photos or a rough sketch work too."}
+            </p>
+          )}
+        </fieldset>
       </div>
-
-      <Field label="Business category">
-        <select
-          className="field"
-          value={form.businessCategory}
-          onChange={(e) => set("businessCategory", e.target.value as FormState["businessCategory"])}
-          required
-        >
-          <option value="" disabled>
-            Select your business
-          </option>
-          {VASTU_BUSINESS_CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <fieldset>
-        <legend className="mb-2 text-sm font-semibold text-cream">Business stage</legend>
-        <div className="flex flex-wrap gap-2">
-          {STAGES.map((s) => (
-            <label key={s.value} className="chip">
-              <input
-                type="radio"
-                name="stage"
-                className="sr-only"
-                checked={form.businessStage === s.value}
-                onChange={() => set("businessStage", s.value)}
-              />
-              {s.label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
 
       <fieldset>
         <legend className="mb-2 text-sm font-semibold text-cream">
-          Main business problem <span className="font-normal text-muted">(choose all that apply)</span>
+          Main concern <span className="font-normal text-muted">(optional)</span>
         </legend>
         <div className="flex flex-wrap gap-2">
-          {VASTU_BUSINESS_PROBLEMS.map((p) => (
-            <label key={p} className="chip">
-              <input type="checkbox" className="sr-only" checked={form.problems.includes(p)} onChange={() => toggleProblem(p)} />
-              {form.problems.includes(p) && <Check className="-ml-0.5 mr-1 inline h-3.5 w-3.5" aria-hidden />}
-              {p}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend className="mb-2 text-sm font-semibold text-cream">Do you have a floor plan of your business space?</legend>
-        <div className="flex gap-2">
-          {[true, false].map((v) => (
-            <label key={String(v)} className="chip">
+          {VASTU_CONCERNS.map((c) => (
+            <label key={c} className="chip">
               <input
                 type="radio"
-                name="floorplan"
+                name="concern"
                 className="sr-only"
-                checked={floorPlanAnswered && form.floorPlanAvailable === v}
-                onChange={() => {
-                  setFloorPlanAnswered(true);
-                  set("floorPlanAvailable", v);
-                }}
+                checked={form.concern === c}
+                onClick={() => form.concern === c && set("concern", undefined)}
+                onChange={() => set("concern", c)}
               />
-              {v ? "Yes" : "No"}
+              {form.concern === c && <Check className="-ml-0.5 mr-1 inline h-3.5 w-3.5" aria-hidden />}
+              {c}
             </label>
           ))}
         </div>
-        {floorPlanAnswered && form.floorPlanAvailable && (
-          <p className="mt-2 text-xs text-muted">Great — please share it with us on WhatsApp after booking so it can be reviewed before your call.</p>
-        )}
       </fieldset>
 
       {/* Honeypot: hidden from people, filled by bots. */}
@@ -338,8 +294,9 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
 
       <button type="submit" disabled={submitting} className="btn-gold w-full whitespace-normal text-center">
         {submitting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : null}
-        Continue to pick a slot
+        Continue to pick a slot <ArrowRight className="h-5 w-5" aria-hidden />
       </button>
+      <p className="-mt-2 text-center text-xs text-muted">Secure payment · Report + 30-min call included</p>
     </form>
   );
 }
