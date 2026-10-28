@@ -21,11 +21,9 @@ import {
   Wallet,
   X
 } from "lucide-react";
-import type { PlatformReview } from "@astrokraft/db";
 import { BookingProvider, BookNowButton } from "@/components/booking";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { VideoStories } from "@/components/video-stories";
-import { getSupabasePublicClient } from "@/lib/supabase";
 import {
   BRAND,
   CONSULTATION_FEE_LABEL,
@@ -135,27 +133,42 @@ const FAQS = [
   }
 ];
 
-type Review = Pick<PlatformReview, "id" | "name" | "rating" | "comment">;
+// Client testimonials for VASTU by Biprangshu consultations (provided by the
+// business; real clients). Add new ones here.
+const TESTIMONIALS: { name: string; business: string; quote: string }[] = [
+  {
+    name: "Rajesh Agarwal",
+    business: "Jewellery Retail",
+    quote:
+      "We wanted to understand how our showroom layout could be improved without disturbing our existing operations. The consultation was detailed, practical, and focused on customer movement, display positioning, and overall business space planning. I particularly appreciated the professional approach and clear recommendations."
+  },
+  {
+    name: "Arindam Chatterjee",
+    business: "Real Estate & Property Development",
+    quote:
+      "What impressed me was the combination of traditional Vastu principles with practical architectural understanding. The suggestions were explained logically, keeping both design requirements and commercial usability in mind. A very structured consultation that I would recommend to other developers."
+  },
+  {
+    name: "Sandeep Sharma",
+    business: "Hotel & Hospitality",
+    quote:
+      "Our hotel has multiple functional areas, so we needed guidance that considered the property as a whole. The consultation covered reception placement, room arrangements, entrance alignment, and operational spaces. The recommendations were practical and did not involve unnecessary structural changes."
+  },
+  {
+    name: "Vikram Mehta",
+    business: "Manufacturing & Industrial Operations",
+    quote:
+      "I was looking for a professional assessment of our factory layout rather than general Vastu advice. The consultation addressed important areas such as production flow, machinery placement, management cabins, and the overall layout. The explanations were clear, systematic, and relevant to our business environment."
+  },
+  {
+    name: "Dr. Ananya Sen",
+    business: "Healthcare & Diagnostics",
+    quote:
+      "The consultation offered a thoughtful perspective on space planning for our diagnostic centre. From the reception and waiting area to consultation rooms and staff spaces, every recommendation was discussed carefully. I appreciated the attention to functionality, comfort, and the practical limitations of an existing property."
+  }
+];
 
-// Testimonials are AstroKraft's own approved platform reviews (same query as
-// the AstroKraft homepage), refreshed every 5 minutes.
-export const revalidate = 300;
-
-async function getAstroKraftReviews(): Promise<Review[]> {
-  const supabase = getSupabasePublicClient();
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("platform_reviews")
-    .select("id, name, rating, comment")
-    .eq("status", "approved")
-    .order("created_at", { ascending: false })
-    .limit(9);
-  if (error) console.error("platform_reviews fetch failed:", error);
-  return data ?? [];
-}
-
-export default async function Home() {
-  const reviews = await getAstroKraftReviews();
+export default function Home() {
   return (
     <BookingProvider>
       <SiteHeader />
@@ -169,7 +182,7 @@ export default async function Home() {
         <WhyChoose />
         <HowItWorks />
         <Inclusions />
-        <Testimonials reviews={reviews} />
+        <Testimonials />
         <Faq />
         <FinalCta />
       </main>
@@ -401,29 +414,26 @@ function WhyChoose() {
   );
 }
 
-function Testimonials({ reviews }: { reviews: Review[] }) {
-  if (reviews.length === 0) return null;
+function Testimonials() {
   return (
     <section className="border-y border-gold-line/50 bg-night-800/40">
       <div className="section">
-        <SectionHead
-          eyebrow="Testimonials"
-          title="What people say about AstroKraft"
-          sub={`Verified reviews from customers of AstroKraft, the Vedic astrology and gemstone brand founded by ${FOUNDER}.`}
-        />
+        <SectionHead eyebrow="Testimonials" title="What business owners say" sub="Clients of VASTU by Biprangshu, in their own words." />
         <div className="-mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
-          {reviews.map((r) => (
-            <figure key={r.id} className="card flex w-[82%] shrink-0 snap-start flex-col sm:w-auto">
-              <div className="text-sm text-gold" aria-label={`${r.rating} out of 5 stars`}>
-                {"★".repeat(r.rating)}
-                <span className="text-night-600">{"★".repeat(5 - r.rating)}</span>
-              </div>
-              <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-cream/85">“{r.comment}”</blockquote>
-              <figcaption className="mt-4 flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold/15 text-sm font-bold text-gold">
-                  {r.name.charAt(0).toUpperCase()}
+          {TESTIMONIALS.map((t) => (
+            <figure key={t.name} className="card flex w-[85%] shrink-0 snap-start flex-col sm:w-auto">
+              <span className="font-display text-4xl leading-none text-gold" aria-hidden>
+                “
+              </span>
+              <blockquote className="mt-1 flex-1 text-sm leading-relaxed text-cream/85">{t.quote}</blockquote>
+              <figcaption className="mt-5 flex items-center gap-3 border-t border-night-600 pt-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-sm font-bold text-gold">
+                  {t.name.replace(/^Dr\.\s*/, "").charAt(0)}
                 </span>
-                <span className="text-sm font-semibold text-cream">{r.name}</span>
+                <span>
+                  <span className="block text-sm font-semibold text-cream">{t.name}</span>
+                  <span className="block text-xs text-gold-soft">{t.business}</span>
+                </span>
               </figcaption>
             </figure>
           ))}
