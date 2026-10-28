@@ -236,8 +236,8 @@ function Hero() {
     <section id="top" className="relative overflow-hidden bg-navy">
       <div className="relative mx-auto grid max-w-5xl items-center gap-10 px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <div>
-          <p className="eyebrow !text-gold-bright">Vastu for flats and apartments</p>
-          <h1 className="mt-3 text-[2rem] font-extrabold leading-[1.1] text-white sm:text-5xl">
+          <p className="eyebrow !text-gold-bright">Vastu for home and flat</p>
+          <h1 className="mt-3 text-[2.5rem] font-extrabold leading-[1.05] text-white sm:text-6xl">
             Get Your Flat Vastu <span className="text-gold-bright">Report + Expert Call</span>
           </h1>
           <p className="mt-5 max-w-xl text-base text-white/80 sm:text-lg">
