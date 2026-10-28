@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2, Lock, RotateCcw } from "lucide-react";
-import { BRAND, CONSULTATION_FEE, CONSULTATION_FEE_LABEL, WHATSAPP_URL, whatsappLink } from "@/lib/site";
+import { BRAND, CONSULTATION_FEE, CONSULTATION_FEE_LABEL, whatsappLink } from "@/lib/site";
 import { trackPixel } from "./meta-pixel";
 import { WhatsAppIcon } from "./whatsapp-icon";
 
@@ -46,7 +46,8 @@ export function PayPanel({
   fullName: string;
   /** Short IST slot label, e.g. "Mon, 3 Nov, 5:00 pm"; null if Cal.com hasn't reported it yet. */
   slot: string | null;
-  hasFloorPlan: boolean;
+  /** null = skipped the optional question; ask for either. */
+  hasFloorPlan: boolean | null;
 }) {
   const [state, setState] = useState<State>(initiallyPaid ? { kind: "paid" } : { kind: "idle" });
   const autoStarted = useRef(false);
@@ -128,21 +129,34 @@ export function PayPanel({
   }, [pay, initiallyPaid]);
 
   if (state.kind === "paid") {
-    const what = hasFloorPlan ? "floor plan" : "flat photos";
+    const copy =
+      hasFloorPlan === null
+        ? {
+            what: "floor plan / flat photos",
+            note: "Send your floor plan on WhatsApp — or, if you don't have one, photos of each room and the main door — before your call.",
+            button: "Send floor plan or photos on WhatsApp"
+          }
+        : hasFloorPlan
+          ? {
+              what: "floor plan",
+              note: "Send your floor plan on WhatsApp now, so it can be checked before your call.",
+              button: "Send floor plan on WhatsApp"
+            }
+          : {
+              what: "flat photos",
+              note: "No floor plan? Send a few photos of each room and the main door, or a rough sketch — on WhatsApp, before your call.",
+              button: "Send photos of your flat on WhatsApp"
+            };
     const shareUrl = whatsappLink(
-      `Hi, I've booked my Flat Vastu Call${slot ? ` for ${slot}` : ""}. Sharing my ${what} here — ${fullName.trim()}`
+      `Hi, I've booked my Flat Vastu Call${slot ? ` for ${slot}` : ""}. Sharing my ${copy.what} here — ${fullName.trim()}`
     );
     return (
       <div className="mt-6 text-center">
         <CheckCircle2 className="mx-auto h-14 w-14 text-gold" aria-hidden />
         <h2 className="mt-3 text-xl font-bold text-cream">Payment received — you&apos;re confirmed!</h2>
-        <p className="mt-2 text-sm text-muted">
-          {hasFloorPlan
-            ? "Send your floor plan on WhatsApp now, so it can be checked before your call."
-            : "No floor plan? Send a few photos of each room and the main door, or a rough sketch — on WhatsApp, before your call."}
-        </p>
+        <p className="mt-2 text-sm text-muted">{copy.note}</p>
         <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="btn-gold mt-5 whitespace-normal">
-          <WhatsAppIcon className="h-4 w-4" /> {hasFloorPlan ? "Send floor plan on WhatsApp" : "Send photos of your flat on WhatsApp"}
+          <WhatsAppIcon className="h-4 w-4" /> {copy.button}
         </a>
       </div>
     );
@@ -173,7 +187,12 @@ export function PayPanel({
         {pending ? "Check payment status" : state.kind === "retry" ? "Retry payment" : `Pay ${CONSULTATION_FEE_LABEL}`}
       </button>
       <p className="mt-3 text-center text-xs text-muted">Secure payment by Razorpay · UPI, cards, netbanking &amp; wallets</p>
-      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="mt-4 flex items-center justify-center gap-2 text-sm text-gold-soft">
+      <a
+        href={whatsappLink(`Hi, I need help paying for my Flat Vastu Call${slot ? ` (${slot})` : ""} — ${fullName.trim()}`)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 flex items-center justify-center gap-2 text-sm text-gold-soft"
+      >
         <WhatsAppIcon className="h-4 w-4" /> Need help? WhatsApp us
       </a>
     </div>

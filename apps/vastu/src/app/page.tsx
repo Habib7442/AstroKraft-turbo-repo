@@ -1,22 +1,18 @@
 import {
   BadgeCheck,
-  Banknote,
+  Building,
   Building2,
   Check,
-  ClipboardList,
-  Compass,
-  Factory,
-  Gem,
-  Hotel,
+  FileText,
+  Globe,
+  House,
+  KeyRound,
   Lightbulb,
   Mail,
   Phone,
   Search,
-  ShoppingBag,
-  Store,
-  TrendingDown,
+  Sparkles,
   Users,
-  UtensilsCrossed,
   Video,
   Wallet,
   X
@@ -47,46 +43,38 @@ const FLAT_PROBLEMS = [
   { icon: Building2, title: "Buying a flat", text: "Check a flat before you pay the booking amount." }
 ];
 
-const PROBLEMS = [
-  { icon: TrendingDown, title: "Sales not growing", text: "Footfall or orders have flattened despite effort and marketing spend." },
-  { icon: Banknote, title: "Cash flow pressure", text: "Money comes in but doesn't stay — payments get stuck, expenses keep rising." },
-  { icon: Building2, title: "Expansion feels blocked", text: "A new branch, floor or unit keeps getting delayed or doesn't take off." },
-  { icon: Users, title: "Workplace issues", text: "Staff turnover, conflicts or low energy in the team and the workspace." }
-];
-
 const OFFER = [
-  { icon: Search, title: "Business Space Assessment", text: "A structured look at your shop, office or unit — entrance, cash counter, seating, storage and flow." },
-  { icon: Compass, title: "Vastu Observations", text: "Clear, specific observations on what in your space may be working against your goals." },
-  { icon: Lightbulb, title: "Personalised Guidance", text: "Practical, actionable steps for your business — prioritised, so you know what to do first." }
+  { icon: Search, title: "Floor plan check", text: "Main door, kitchen, bedrooms, toilets and balcony — checked direction by direction." },
+  { icon: FileText, title: "Written Vastu report", text: "Your major Vastu defects in plain language, so you know what is wrong and where." },
+  { icon: Video, title: "30-minute expert call", text: `One-to-one with ${FOUNDER} to walk through your report and answer your questions.` },
+  { icon: Lightbulb, title: "Simple remedies", text: "Placement, colour and usage fixes, prioritised — with no breaking of walls." }
 ];
 
 const WHO = [
-  { icon: Gem, label: "Jewellery Showrooms", text: "Display, locker and cash counter placement, and how customers move through the showroom." },
-  { icon: ShoppingBag, label: "Retail Shops", text: "Entrance, billing counter and stock areas — so the shop invites footfall instead of turning it away." },
-  { icon: Hotel, label: "Hotels", text: "Reception, kitchen, rooms and owner's cabin, looked at together as one guest experience." },
-  { icon: UtensilsCrossed, label: "Restaurants & Cafes", text: "Kitchen and fire placement, seating, entrance and cash counter for a busy, steady business." },
-  { icon: Factory, label: "Factories", text: "Machinery, raw material and finished-goods storage, dispatch and office — around your production flow." },
-  { icon: Building2, label: "Builders & Developers", text: "Plot orientation and layout decisions before construction, when changes cost the least." },
-  { icon: Store, label: "Offices", text: "Owner's seat, team seating, meeting rooms and accounts — for decisions, focus and teamwork." },
-  { icon: ClipboardList, label: "Clinics & Others", text: "Any working business space — salons, clinics, coaching centres, warehouses and more." }
+  { icon: House, label: "Flat owners", text: "Living in your flat and facing money, health or family worries." },
+  { icon: KeyRound, label: "Tenants", text: "Renting? Most fixes are placement and usage changes you can make without the landlord." },
+  { icon: Building2, label: "Flat buyers", text: "Check a flat's Vastu before you pay the booking amount." },
+  { icon: Sparkles, label: "Moving in soon", text: "Griha pravesh coming up? Set up rooms and furniture right from day one." },
+  { icon: Building, label: "Any apartment", text: "1BHK to 4BHK, any floor, any facing — builder flats and resale flats." },
+  { icon: Globe, label: "Anywhere in India", text: "Fully online. Share your floor plan on WhatsApp from any city." }
 ];
 
 const WHY = [
-  { icon: TrendingDown, title: "Business-first approach", text: "Your space is discussed in the context of your sales, customers, team and growth plans — not in isolation." },
-  { icon: Wallet, title: "Practical & budget-aware", text: "The focus is on changes a running business can actually make, prioritised so you start with what matters most." },
-  { icon: Building2, title: "No demolition mindset", text: "Most guidance works with your existing layout — rearrangement, placement and usage — before anything structural." },
-  { icon: Users, title: "Directly with the founder", text: `Every ${CONSULTATION_FEE_LABEL} consultation is a 1:1 session with ${FOUNDER} himself.` },
-  { icon: Video, title: "From anywhere in India", text: "The consultation is online. Share your floor plan or photos and get guidance without waiting for a visit." },
-  { icon: BadgeCheck, title: "Honest guidance", text: "Clear observations and next steps — no fear-based advice and no pressure to buy expensive remedies." }
+  { icon: Building2, title: "No demolition", text: "Remedies work with your existing walls — rearrangement, placement and colour, not construction." },
+  { icon: Wallet, title: "Practical & budget-aware", text: "Fixes are prioritised so you start with what matters most, without expensive products." },
+  { icon: Users, title: "Directly with the founder", text: `Every ${CONSULTATION_FEE_LABEL} call is one-to-one with ${FOUNDER} himself.` },
+  { icon: FileText, title: "A report you keep", text: "Your defects and fixes in writing, so nothing from the call is forgotten." },
+  { icon: Video, title: "Fully online", text: "Share your floor plan or photos on WhatsApp and get guidance without waiting for a visit." },
+  { icon: BadgeCheck, title: "Honest guidance", text: "Clear observations and next steps — no fear-based advice and no pressure to buy remedies." }
 ];
 
 const INCLUDED = [
-  "One focused 1:1 consultation with Biprangshu",
-  "Discussion of your business, space and growth goals",
-  "Review of your floor plan or space photos (if shared)",
-  "Key Vastu observations for your business space",
-  "Prioritised, practical recommendations",
-  "Guidance on next steps for expansion or a new space"
+  "Floor plan check: main door, kitchen, bedrooms, toilets",
+  "Written report with your major Vastu defects",
+  `30-minute one-to-one call with ${FOUNDER}`,
+  "Simple remedies that need no construction",
+  "Review of photos or a hand-drawn sketch if you have no floor plan",
+  "Guidance before buying or moving into a flat"
 ];
 
 const EXCLUDED = [
@@ -97,52 +85,48 @@ const EXCLUDED = [
 ];
 
 const STEPS = [
-  { title: "Share a few details", text: "Tell us about your business in a 60-second form." },
-  { title: `Pick a slot & pay ${CONSULTATION_FEE_LABEL}`, text: "Choose a time that suits you and pay securely online." },
-  { title: "Get confirmation", text: "Receive SMS & email confirmation instantly. Share your floor plan on WhatsApp." },
-  { title: "Your 1:1 consultation", text: "Discuss your space and goals, and leave with clear, actionable guidance." }
+  { title: "Share a few details", text: "Name, WhatsApp and city — it takes under a minute." },
+  { title: `Pick a slot & pay ${CONSULTATION_FEE_LABEL}`, text: "Choose a call time and pay securely by UPI or card." },
+  { title: "Send your floor plan", text: "Share the floor plan, or photos of each room, on WhatsApp." },
+  { title: "Get your report & call", text: `Receive your written report and talk it through one-to-one with ${FOUNDER}.` }
 ];
 
 const FAQS = [
   {
-    q: "What is Business Vastu?",
-    a: "Vastu Shastra is the traditional Indian science of space and direction. Business Vastu applies it to working spaces — shops, showrooms, offices, factories, hotels and restaurants — looking at entrances, cash and storage areas, seating and the flow of people and goods."
+    q: `What does the ${CONSULTATION_FEE_LABEL} include?`,
+    a: `A floor plan check (main door, kitchen, bedrooms, toilets), a written report of your major Vastu defects, a 30-minute one-to-one call with ${FOUNDER}, and simple remedies that need no construction.`
   },
   {
-    q: "Does Vastu apply to a rented shop or office?",
-    a: "Yes. Much of the guidance is about how a space is used — where you sit, where cash and stock are kept, how the entrance and counters are arranged — which you can change in a rented space too."
+    q: "I don't have a floor plan. Can I still book?",
+    a: "Yes. Photos of each room and the main door, or a rough hand-drawn sketch with directions marked, work well."
   },
   {
-    q: "How is the consultation conducted?",
-    a: "It is a 1:1 online consultation. Your booking confirmation will include the joining details for your selected slot."
+    q: "Will I need to break walls or rebuild anything?",
+    a: "No. The remedies focus on placement, colour and how rooms are used — changes you can make in a finished flat."
   },
   {
-    q: "Do I need a floor plan?",
-    a: "A floor plan helps, but it isn't mandatory. If you don't have one, photos or a rough hand-drawn sketch of your space with directions marked works well."
+    q: "I live in a rented flat. Does Vastu still apply?",
+    a: "Yes. Much of the guidance is about where you sleep, cook and keep money, and how rooms are used — which you can change in a rented flat too."
   },
   {
-    q: "Will I need to demolish or rebuild anything?",
-    a: "The focus is on practical, actionable guidance for a working business. Any recommendation is discussed with your budget and operations in mind."
+    q: "Can you check a flat before I buy it?",
+    a: "Yes. Share the floor plan from the builder or seller, and you'll know its major Vastu defects before you pay the booking amount."
   },
   {
-    q: "How should I prepare for the call?",
-    a: "Keep your floor plan (or photos of each area) ready with the main entrance direction marked, and note down the 2–3 business problems you most want to discuss. Share them on WhatsApp before the call if you can."
+    q: "How is the call done?",
+    a: "It is a one-to-one online call. Your booking confirmation includes the joining details for your selected slot."
+  },
+  {
+    q: "How do I get my written report?",
+    a: "Your report covers the major Vastu defects found in your floor plan, and it is discussed with you on your call."
   },
   {
     q: "Do you offer site visits?",
-    a: `The ${CONSULTATION_FEE_LABEL} consultation is online. On-site visits and detailed planning for new spaces are available as premium services — ask about them during your consultation or on WhatsApp.`
+    a: `The ${CONSULTATION_FEE_LABEL} call is online. On-site visits are available as a premium service — ask about them on WhatsApp or during your call.`
   },
   {
-    q: "Can I reschedule my slot?",
-    a: "Yes. Use the reschedule link in your confirmation email, subject to our Refund & Rescheduling Policy."
-  },
-  {
-    q: "Is Vastu a guarantee of business results?",
-    a: "No. Vastu guidance is one input alongside your business decisions. We share honest observations and practical steps; outcomes depend on many factors."
-  },
-  {
-    q: "What happens after the consultation?",
-    a: "Many business owners only need this session. If you want deeper support — a site visit, detailed planning for a new space or ongoing guidance — premium services are available, and we'll discuss them only if you're interested."
+    q: "Is Vastu a guarantee of results?",
+    a: "No. Vastu guidance is for balance and harmony at home; outcomes depend on many factors. We share honest observations and practical steps."
   }
 ];
 
@@ -190,7 +174,6 @@ export default function Home() {
         <FlatProblems />
         <About />
         <VideoStories />
-        <Problems />
         <Offer />
         <WhoCanBook />
         <WhyChoose />
@@ -316,31 +299,12 @@ function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; 
   );
 }
 
-function Problems() {
-  return (
-    <section className="section">
-      <SectionHead eyebrow="Sound familiar?" title="Common challenges business owners face" sub="Sometimes the space you work in quietly adds to these." />
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        {PROBLEMS.map(({ icon: Icon, title, text }) => (
-          <div key={title} className="card flex gap-4">
-            <Icon className="h-6 w-6 shrink-0 text-crimson" aria-hidden />
-            <div>
-              <h3 className="font-bold text-cream">{title}</h3>
-              <p className="mt-1 text-sm text-muted">{text}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function Offer() {
   return (
     <section className="border-y border-gold-line/50 bg-night-800/40">
       <div className="section">
-        <SectionHead eyebrow="What we offer" title="A focused consultation built around your business" />
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <SectionHead eyebrow="What you get" title={`Everything in your ${CONSULTATION_FEE_LABEL} Flat Vastu package`} />
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {OFFER.map(({ icon: Icon, title, text }) => (
             <div key={title} className="card">
               <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/50">
@@ -361,10 +325,10 @@ function WhoCanBook() {
     <section className="section">
       <SectionHead
         eyebrow="Who can book"
-        title="For every kind of business space"
-        sub="Every business uses its space differently, so the consultation looks at what matters most for yours."
+        title="For every kind of flat and home"
+        sub="Whether you own, rent or are about to buy, the check looks at what matters most in your flat."
       />
-      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {WHO.map(({ icon: Icon, label, text }) => (
           <div key={label} className="card p-4">
             <div className="flex items-center gap-3">
@@ -431,8 +395,8 @@ function WhyChoose() {
     <section className="section">
       <SectionHead
         eyebrow={`Why ${BRAND}`}
-        title="Vastu guidance that respects how your business runs"
-        sub="Many business owners avoid Vastu because they expect demolition, fear or costly remedies. This consultation is built the other way round."
+        title="Vastu guidance that fits how your family lives"
+        sub="Many people avoid Vastu because they expect demolition, fear or costly remedies. This is built the other way round."
       />
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {WHY.map(({ icon: Icon, title, text }) => (
@@ -453,7 +417,7 @@ function Testimonials() {
   return (
     <section className="border-y border-gold-line/50 bg-night-800/40">
       <div className="section">
-        <SectionHead eyebrow="Testimonials" title="What business owners say" sub="Clients of VASTU by Biprangshu, in their own words." />
+        <SectionHead eyebrow="Testimonials" title="What our clients say" sub="Clients of VASTU by Biprangshu, in their own words." />
         <div className="-mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
           {TESTIMONIALS.map((t) => (
             <figure key={t.name} className="card flex w-[85%] shrink-0 snap-start flex-col sm:w-auto">
@@ -481,7 +445,7 @@ function Testimonials() {
 function Inclusions() {
   return (
     <section className="section">
-      <SectionHead eyebrow={`What ${CONSULTATION_FEE_LABEL} covers`} title="Consultation inclusions" />
+      <SectionHead eyebrow={`What ${CONSULTATION_FEE_LABEL} covers`} title="What's included" />
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <div className="card">
           <h3 className="font-bold text-gold-soft">Included</h3>
@@ -502,7 +466,7 @@ function Inclusions() {
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-xs text-muted">Available separately as premium business Vastu services.</p>
+          <p className="mt-4 text-xs text-muted">Available separately as premium Vastu services.</p>
         </div>
       </div>
     </section>
@@ -531,7 +495,7 @@ function HowItWorks() {
 function Faq() {
   return (
     <section className="section">
-      <SectionHead eyebrow="FAQs" title="Questions business owners ask" />
+      <SectionHead eyebrow="FAQs" title="Questions flat owners ask" />
       <div className="mt-8 divide-y divide-night-600 rounded-2xl border border-gold-line">
         {FAQS.map((f) => (
           <details key={f.q} className="group px-5 py-4">
@@ -554,9 +518,9 @@ function FinalCta() {
     <section className="px-4 pb-16 sm:px-6">
       <div className="mx-auto max-w-5xl rounded-3xl bg-navy px-6 py-12 text-center sm:py-16">
         <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-          Make your space work <span className="gold-text">for</span> your business
+          Get clarity on your flat this week
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-white/70">Book your personalised 1:1 Business Vastu Consultation today.</p>
+        <p className="mx-auto mt-3 max-w-xl text-white/70">Your Flat Vastu Report + 30-minute expert call, one-to-one with Biprangshu.</p>
         <p className="mt-6 text-4xl font-extrabold text-white">{CONSULTATION_FEE_LABEL}</p>
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <BookNowButton className="btn-gold w-full sm:w-auto" />
@@ -606,7 +570,7 @@ function StickyCta() {
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gold-line bg-night/95 px-4 py-3 backdrop-blur sm:hidden">
       <div className="flex items-center gap-3">
         <div className="shrink-0 leading-tight">
-          <p className="text-[11px] uppercase tracking-wider text-muted">1:1 Consultation</p>
+          <p className="text-[11px] uppercase tracking-wider text-muted">Report + Call</p>
           <p className="text-xl font-extrabold text-cream">{CONSULTATION_FEE_LABEL}</p>
         </div>
         <BookNowButton className="btn-gold min-w-0 flex-1 px-4 py-3.5 text-sm" />

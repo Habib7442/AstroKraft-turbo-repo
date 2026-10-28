@@ -9,9 +9,9 @@ const sans = Montserrat({ subsets: ["latin"], weight: ["400", "500", "600", "700
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: `1:1 Business Vastu Consultation | ${BRAND}`,
+  title: `Flat Vastu Report + Expert Call | ${BRAND}`,
   description:
-    `Is your business space supporting your growth? Book a personalised 1:1 Business Vastu Consultation with Biprangshu Bhattacharjee for ${CONSULTATION_FEE_LABEL}.`,
+    `Money stuck? Constant tension at home? Get a written Vastu report of your flat and a 30-minute one-to-one call with Biprangshu Bhattacharjee — ${CONSULTATION_FEE_LABEL}, no breaking of walls.`,
   // AstroKraft's icons — Biprangshu is its founder.
   icons: {
     icon: [
@@ -22,8 +22,8 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png"
   },
   openGraph: {
-    title: "Your Business Is Running. But Is It Growing the Way It Should?",
-    description: `Personalised 1:1 Business Vastu Consultation — ${CONSULTATION_FEE_LABEL}.`,
+    title: "Get Your Flat Vastu Report + Expert Call",
+    description: `Floor plan check, written report and a 30-minute expert call — ${CONSULTATION_FEE_LABEL}.`,
     siteName: BRAND,
     type: "website"
   }

@@ -12,7 +12,7 @@ export const CONSULTATION_FEE_LABEL = `₹${new Intl.NumberFormat("en-IN").forma
 export const CONTACT_PHONE = "6001730761";
 export const CONTACT_EMAIL = "vastubipra@gmail.com";
 export const whatsappLink = (text: string) => `https://wa.me/91${CONTACT_PHONE}?text=${encodeURIComponent(text)}`;
-export const WHATSAPP_URL = whatsappLink("Hi, I'd like to know more about the 1:1 Business Vastu Consultation.");
+export const WHATSAPP_URL = whatsappLink("Hi, I'd like to know more about the Flat Vastu Report + Expert Call.");
 
 export const FOUNDER_PHOTO: string | null = "/biprangshu-office.webp";
 

@@ -125,7 +125,7 @@ export type KundliInput = z.infer<typeof kundliInputSchema>;
 // ---------------------------------------------------------------------------
 // Separate brand from AstroKraft, so it carries its own notice version. Bump
 // with any substantive change to apps/vastu's /policies page.
-export const VASTU_PRIVACY_NOTICE_VERSION = "2026-10-19";
+export const VASTU_PRIVACY_NOTICE_VERSION = "2026-10-28";
 
 // The booking form asks only name, WhatsApp, city and an optional one-tap
 // concern — the floor plan and everything else come on WhatsApp and the call.

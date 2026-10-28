@@ -252,7 +252,12 @@ export default function VastuConsultationsScreen() {
                     <Text className="text-xs text-ink-body">Location: {[lead.city, lead.state].filter(Boolean).join(", ") || "—"}</Text>
                     <Text className="text-xs text-ink-body">Problems: {lead.problems?.length ? lead.problems.join(", ") : "—"}</Text>
                     <Text className="text-xs text-ink-body">
-                      Floor plan: {lead.floor_plan_available ? "Yes — ask them to share it on WhatsApp" : "No"}
+                      Floor plan:{" "}
+                      {lead.floor_plan_available === null
+                        ? "Not answered — ask on WhatsApp"
+                        : lead.floor_plan_available
+                          ? "Yes — ask them to share it on WhatsApp"
+                          : "No"}
                     </Text>
                     {lead.utm_campaign || lead.utm_source ? (
                       <Text className="text-xs text-ink-muted">

@@ -288,7 +288,8 @@ export interface VastuLead {
   business_category: string;
   business_stage: "existing" | "new" | "expansion";
   problems: string[];
-  floor_plan_available: boolean;
+  /** null = the optional booking-form question was skipped. */
+  floor_plan_available: boolean | null;
   status: VastuLeadStatus;
   follow_up_status: VastuFollowUpStatus;
   premium_interest: boolean;

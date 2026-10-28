@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
     business_category: "Flat / Apartment",
     business_stage: "existing" as const,
     problems: data.concern ? [data.concern] : [],
-    floor_plan_available: data.floorPlanAvailable ?? false,
+    // Optional question: omitted when skipped so the column stays NULL
+    // ("not answered") rather than reading as "No".
+    ...(data.floorPlanAvailable !== undefined && { floor_plan_available: data.floorPlanAvailable }),
     utm_source: data.attribution.utm_source ?? null,
     utm_medium: data.attribution.utm_medium ?? null,
     utm_campaign: data.attribution.utm_campaign ?? null,

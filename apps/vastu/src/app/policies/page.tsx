@@ -20,8 +20,8 @@ export default function PoliciesPage() {
       <section id="privacy" className="mt-10 scroll-mt-20 space-y-3">
         <h2 className="text-xl font-bold text-gold-soft">Privacy Policy</h2>
         <p>
-          When you book a consultation we collect your name, phone / WhatsApp number, city and state, business category and stage, the business
-          challenges you select, whether a floor plan is available, and — through our booking provider — your chosen slot (and your email address, if you give one).
+          When you book a consultation we collect your name, phone / WhatsApp number, city, the main concern you select (if any), whether a floor plan is
+          available (if you answer), and — through our booking provider — your chosen slot (and your email address, if you give one).
           We also record which advertisement or link brought you to this page.
         </p>
         <p>

@@ -53,7 +53,14 @@ export async function notifyHost(kind: HostNotice, lead: VastuLead, meetingUrl?:
     ["Business", `${lead.business_category} (${lead.business_stage})`],
     ["Location", [lead.city, lead.state].filter(Boolean).join(", ") || "—"],
     ["Main concern", lead.problems?.length ? lead.problems.join(", ") : "—"],
-    ["Floor plan", lead.floor_plan_available ? "Yes — ask them to share it on WhatsApp" : "No — ask for photos or a rough sketch"]
+    [
+      "Floor plan",
+      lead.floor_plan_available === null
+        ? "Not answered — ask for the floor plan or photos"
+        : lead.floor_plan_available
+          ? "Yes — ask them to share it on WhatsApp"
+          : "No — ask for photos or a rough sketch"
+    ]
   ];
   const showJoin = kind !== "cancelled" && !!meetingUrl;
 
