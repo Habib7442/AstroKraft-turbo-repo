@@ -1,5 +1,6 @@
 import "server-only";
 import type { VastuLead } from "@astrokraft/db";
+import { offerForCategory } from "./site";
 
 // Biprangshu isn't expected to use Cal.com, so each PAID booking reaches him
 // as one plain email with everything needed for the call, plus a copy to the
@@ -47,6 +48,7 @@ export async function notifyHost(kind: HostNotice, lead: VastuLead, meetingUrl?:
   const h = HEADINGS[kind];
   const slot = formatSlot(lead.scheduled_start);
   const rows: [string, string][] = [
+    ["Consultation", offerForCategory(lead.business_category).name],
     ["Client", lead.full_name],
     ["Phone", lead.whatsapp || "—"],
     ["When", slot],

@@ -2,21 +2,28 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ArrowRight, Check, Loader2, X } from "lucide-react";
-import { VASTU_CONCERNS, vastuLeadSchema, type VastuLeadInput } from "@astrokraft/validators";
+import {
+  VASTU_BUSINESS_CONCERNS,
+  VASTU_BUSINESS_TYPES,
+  VASTU_CONCERNS,
+  vastuLeadSchema,
+  type VastuLeadInput
+} from "@astrokraft/validators";
 import { captureAttribution, getAttribution } from "@/lib/attribution";
-import { CONSULTATION_FEE, CONSULTATION_FEE_LABEL } from "@/lib/site";
+import { FLAT_CATEGORY, OFFERS, type Offer, type OfferId } from "@/lib/site";
 import { CalEmbed, type CalPrefill } from "./cal-embed";
 import { trackPixel } from "./meta-pixel";
 import { WhatsAppIcon } from "./whatsapp-icon";
 
 const BookingContext = createContext<{ open: () => void }>({ open: () => {} });
 
-export function BookingProvider({ children }: { children: React.ReactNode }) {
+export function BookingProvider({ offer: offerId = "flat", children }: { offer?: OfferId; children: React.ReactNode }) {
+  const offer = OFFERS[offerId];
   const [isOpen, setOpen] = useState(false);
   const open = useCallback(() => {
     setOpen(true);
-    trackPixel("InitiateCheckout", { value: CONSULTATION_FEE, currency: "INR" });
-  }, []);
+    trackPixel("InitiateCheckout", { value: offer.fee, currency: "INR" });
+  }, [offer]);
   const value = useMemo(() => ({ open }), [open]);
 
   useEffect(() => captureAttribution(), []);
@@ -24,7 +31,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
   return (
     <BookingContext.Provider value={value}>
       {children}
-      {isOpen && <BookingSheet onClose={() => setOpen(false)} />}
+      {isOpen && <BookingSheet offer={offer} onClose={() => setOpen(false)} />}
     </BookingContext.Provider>
   );
 }
@@ -44,9 +51,8 @@ export function BookNowButton({ className = "btn-gold", children }: { className?
 
 type Step = { kind: "form" } | { kind: "calendar"; prefill: CalPrefill } | { kind: "redirecting" };
 
-const STEP_LABELS = ["Your details", "Pick a slot", `Pay ${CONSULTATION_FEE_LABEL}`];
-
-function BookingSheet({ onClose }: { onClose: () => void }) {
+function BookingSheet({ offer, onClose }: { offer: Offer; onClose: () => void }) {
+  const stepLabels = ["Your details", "Pick a slot", `Pay ${offer.feeLabel}`];
   const [step, setStep] = useState<Step>({ kind: "form" });
   const stepIndex = step.kind === "form" ? 0 : step.kind === "calendar" ? 1 : 2;
 
@@ -73,10 +79,10 @@ function BookingSheet({ onClose }: { onClose: () => void }) {
         <header className="flex items-start justify-between gap-4 border-b border-night-600 px-5 py-4">
           <div>
             <h2 id="booking-title" className="text-lg font-bold text-cream">
-              Book your Flat Vastu Call — {CONSULTATION_FEE_LABEL}
+              Book your {offer.callName} — {offer.feeLabel}
             </h2>
             <ol className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-              {STEP_LABELS.map((label, i) => (
+              {stepLabels.map((label, i) => (
                 <li key={label} className={i <= stepIndex ? "font-semibold text-gold" : "text-muted"}>
                   {i + 1}. {label}
                 </li>
@@ -89,13 +95,14 @@ function BookingSheet({ onClose }: { onClose: () => void }) {
         </header>
 
         <div className="overflow-y-auto px-5 py-5">
-          {step.kind === "form" && <IntakeForm onDone={(prefill) => setStep({ kind: "calendar", prefill })} />}
+          {step.kind === "form" && <IntakeForm offer={offer} onDone={(prefill) => setStep({ kind: "calendar", prefill })} />}
           {step.kind === "calendar" && (
             <div>
               <p className="mb-3 text-sm text-muted">
-                Choose a convenient slot. You'll pay {CONSULTATION_FEE_LABEL} on the next screen to confirm it.
+                Choose a convenient slot. You'll pay {offer.feeLabel} on the next screen to confirm it.
               </p>
               <CalEmbed
+                calLink={offer.calLink}
                 prefill={step.prefill}
                 onBooked={() => {
                   trackPixel("Schedule", {}, `schedule_${step.prefill.leadId}`);
@@ -123,14 +130,18 @@ const INITIAL: FormState = {
   fullName: "",
   whatsapp: "",
   city: "",
+  offer: "flat",
+  businessType: undefined,
   concern: undefined,
   floorPlanAvailable: undefined,
   consent: false,
   website: ""
 };
 
-function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
-  const [form, setForm] = useState<FormState>(INITIAL);
+function IntakeForm({ offer, onDone }: { offer: Offer; onDone: (prefill: CalPrefill) => void }) {
+  const isBusiness = offer.id === "business";
+  const concerns: readonly string[] = isBusiness ? VASTU_BUSINESS_CONCERNS : VASTU_CONCERNS;
+  const [form, setForm] = useState<FormState>({ ...INITIAL, offer: offer.id });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -154,13 +165,14 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "Something went wrong. Please try again.");
 
-      trackPixel("Lead", { content_category: parsed.data.concern ?? "Flat / Apartment" }, `lead_${json.leadId}`);
+      const category = parsed.data.businessType ?? FLAT_CATEGORY;
+      trackPixel("Lead", { content_category: parsed.data.concern ?? category }, `lead_${json.leadId}`);
       onDone({
         leadId: json.leadId,
         name: parsed.data.fullName,
         phone: json.whatsapp,
         notes: [
-          "Flat Vastu",
+          isBusiness ? `Business Vastu: ${category}` : "Flat Vastu",
           parsed.data.city,
           parsed.data.concern && `Concern: ${parsed.data.concern}`,
           parsed.data.floorPlanAvailable !== undefined && `Floor plan: ${parsed.data.floorPlanAvailable ? "Yes" : "No"}`
@@ -207,7 +219,7 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
           />
         </Field>
         <fieldset>
-          <legend className="mb-1.5 text-sm font-semibold text-cream">Have a floor plan?</legend>
+          <legend className="mb-1.5 text-sm font-semibold text-cream">{isBusiness ? "Have a floor plan or layout?" : "Have a floor plan?"}</legend>
           <div className="flex gap-2">
             {[true, false].map((v) => (
               <label key={String(v)} className="chip flex-1 py-3 text-center">
@@ -232,12 +244,33 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
         </fieldset>
       </div>
 
+      {isBusiness && (
+        <fieldset>
+          <legend className="mb-2 text-sm font-semibold text-cream">Type of business</legend>
+          <div className="flex flex-wrap gap-2">
+            {VASTU_BUSINESS_TYPES.map((t) => (
+              <label key={t} className="chip">
+                <input
+                  type="radio"
+                  name="businessType"
+                  className="sr-only"
+                  checked={form.businessType === t}
+                  onChange={() => set("businessType", t)}
+                />
+                {form.businessType === t && <Check className="-ml-0.5 mr-1 inline h-3.5 w-3.5" aria-hidden />}
+                {t}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
       <fieldset>
         <legend className="mb-2 text-sm font-semibold text-cream">
           Main concern <span className="font-normal text-muted">(optional)</span>
         </legend>
         <div className="flex flex-wrap gap-2">
-          {VASTU_CONCERNS.map((c) => (
+          {concerns.map((c) => (
             <label key={c} className="chip">
               <input
                 type="radio"
@@ -245,7 +278,7 @@ function IntakeForm({ onDone }: { onDone: (prefill: CalPrefill) => void }) {
                 className="sr-only"
                 checked={form.concern === c}
                 onClick={() => form.concern === c && set("concern", undefined)}
-                onChange={() => set("concern", c)}
+                onChange={() => set("concern", c as FormState["concern"])}
               />
               {form.concern === c && <Check className="-ml-0.5 mr-1 inline h-3.5 w-3.5" aria-hidden />}
               {c}

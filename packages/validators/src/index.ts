@@ -130,6 +130,9 @@ export const VASTU_PRIVACY_NOTICE_VERSION = "2026-10-28";
 // The booking form asks only name, WhatsApp, city and an optional one-tap
 // concern — the floor plan and everything else come on WhatsApp and the call.
 export const VASTU_CONCERNS = ["Money", "Family peace", "Health", "Buying a flat"] as const;
+// Business Vastu page (apps/vastu /business-vastu).
+export const VASTU_BUSINESS_TYPES = ["Shop / Showroom", "Office", "Clinic", "Factory", "Other business"] as const;
+export const VASTU_BUSINESS_CONCERNS = ["Sales are flat", "Money is stuck", "Partner or staff trouble", "Opening something new"] as const;
 
 export const vastuLeadSchema = z.object({
   fullName: z.string().trim().min(2, "Please enter your full name").max(100),
@@ -144,7 +147,10 @@ export const vastuLeadSchema = z.object({
     .transform((v) => v.replace(/[\s\-()]/g, ""))
     .pipe(z.string().regex(/^(?:\+?91|0)?[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number")),
   city: z.string().trim().min(2, "Please enter your city").max(80),
-  concern: z.enum(VASTU_CONCERNS).optional(),
+  // "flat" (default) or "business" — which landing page the lead came from.
+  offer: z.enum(["flat", "business"]).default("flat"),
+  businessType: z.enum(VASTU_BUSINESS_TYPES).optional(),
+  concern: z.union([z.enum(VASTU_CONCERNS), z.enum(VASTU_BUSINESS_CONCERNS)]).optional(),
   floorPlanAvailable: z.boolean().optional(),
   consent: consentAccepted,
   // Attribution captured from the ad click's landing URL / Meta cookies.
@@ -162,6 +168,9 @@ export const vastuLeadSchema = z.object({
     .default({}),
   // Honeypot — see purohitBookingSchema.
   website: z.string().optional()
+}).refine((d) => d.offer !== "business" || d.businessType, {
+  message: "Please choose your type of business",
+  path: ["businessType"]
 });
 
 export type VastuLeadInput = z.infer<typeof vastuLeadSchema>;

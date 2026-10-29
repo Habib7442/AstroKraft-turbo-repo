@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2, Lock, RotateCcw } from "lucide-react";
-import { BRAND, CONSULTATION_FEE, CONSULTATION_FEE_LABEL, whatsappLink } from "@/lib/site";
+import { BRAND, OFFERS, whatsappLink, type OfferId } from "@/lib/site";
 import { trackPixel } from "./meta-pixel";
 import { WhatsAppIcon } from "./whatsapp-icon";
 
@@ -36,12 +36,14 @@ const UNCONFIRMED =
 
 export function PayPanel({
   leadId,
+  offerId,
   initiallyPaid,
   fullName,
   slot,
   hasFloorPlan
 }: {
   leadId: string;
+  offerId: OfferId;
   initiallyPaid: boolean;
   fullName: string;
   /** Short IST slot label, e.g. "Mon, 3 Nov, 5:00 pm"; null if Cal.com hasn't reported it yet. */
@@ -49,13 +51,14 @@ export function PayPanel({
   /** null = skipped the optional question; ask for either. */
   hasFloorPlan: boolean | null;
 }) {
+  const offer = OFFERS[offerId];
   const [state, setState] = useState<State>(initiallyPaid ? { kind: "paid" } : { kind: "idle" });
   const autoStarted = useRef(false);
 
   const onPaid = useCallback(() => {
-    trackPixel("Purchase", { value: CONSULTATION_FEE, currency: "INR" }, `purchase_${leadId}`);
+    trackPixel("Purchase", { value: offer.fee, currency: "INR" }, `purchase_${leadId}`);
     setState({ kind: "paid" });
-  }, [leadId]);
+  }, [leadId, offer]);
 
   // Verify a Razorpay success response server-side. Also used by the
   // "Check payment status" button, with the same signed response.
@@ -100,7 +103,7 @@ export function PayPanel({
         currency: order.currency,
         order_id: order.orderId,
         name: BRAND,
-        description: "Flat Vastu Report + Expert Call",
+        description: offer.name,
         prefill: order.prefill,
         notes: { app: "vastu", leadId },
         theme: { color: "#D4AF37" },
@@ -119,7 +122,7 @@ export function PayPanel({
     } catch (error) {
       setState({ kind: "retry", message: error instanceof Error ? error.message : "Something went wrong. Please try again." });
     }
-  }, [leadId, verify]);
+  }, [leadId, offer, verify]);
 
   // "Redirected to payment": open checkout straight away on arrival.
   useEffect(() => {
@@ -132,7 +135,7 @@ export function PayPanel({
     const copy =
       hasFloorPlan === null
         ? {
-            what: "floor plan / flat photos",
+            what: `floor plan / ${offer.space} photos`,
             note: "Send your floor plan on WhatsApp — or, if you don't have one, photos of each room and the main door — before your call.",
             button: "Send floor plan or photos on WhatsApp"
           }
@@ -143,12 +146,12 @@ export function PayPanel({
               button: "Send floor plan on WhatsApp"
             }
           : {
-              what: "flat photos",
+              what: `${offer.space} photos`,
               note: "No floor plan? Send a few photos of each room and the main door, or a rough sketch — on WhatsApp, before your call.",
-              button: "Send photos of your flat on WhatsApp"
+              button: `Send photos of your ${offer.space} on WhatsApp`
             };
     const shareUrl = whatsappLink(
-      `Hi, I've booked my Flat Vastu Call${slot ? ` for ${slot}` : ""}. Sharing my ${copy.what} here — ${fullName.trim()}`
+      `Hi, I've booked my ${offer.callName}${slot ? ` for ${slot}` : ""}. Sharing my ${copy.what} here — ${fullName.trim()}`
     );
     return (
       <div className="mt-6 text-center">
@@ -184,11 +187,11 @@ export function PayPanel({
         ) : (
           <Lock className="h-5 w-5" aria-hidden />
         )}
-        {pending ? "Check payment status" : state.kind === "retry" ? "Retry payment" : `Pay ${CONSULTATION_FEE_LABEL}`}
+        {pending ? "Check payment status" : state.kind === "retry" ? "Retry payment" : `Pay ${offer.feeLabel}`}
       </button>
       <p className="mt-3 text-center text-xs text-muted">Secure payment by Razorpay · UPI, cards, netbanking &amp; wallets</p>
       <a
-        href={whatsappLink(`Hi, I need help paying for my Flat Vastu Call${slot ? ` (${slot})` : ""} — ${fullName.trim()}`)}
+        href={whatsappLink(`Hi, I need help paying for my ${offer.callName}${slot ? ` (${slot})` : ""} — ${fullName.trim()}`)}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-4 flex items-center justify-center gap-2 text-sm text-gold-soft"

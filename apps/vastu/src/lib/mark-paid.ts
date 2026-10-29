@@ -4,7 +4,7 @@ import type { VastuLead } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "./supabase";
 import { sendMetaEvent } from "./meta-capi";
 import { confirmCalBooking } from "./cal-api";
-import { CONSULTATION_FEE } from "./site";
+import { offerForCategory } from "./site";
 
 /** leadId from a Razorpay order's own notes (set by create-order) — trusted, server-fetched. */
 async function leadIdFromRazorpayOrder(razorpayOrderId: string): Promise<string | null> {
@@ -42,8 +42,7 @@ export async function markLeadPaid(
     payment_status: "paid",
     razorpay_order_id: razorpayOrderId,
     razorpay_payment_id: razorpayPaymentId,
-    paid_at: new Date().toISOString(),
-    amount_paid: CONSULTATION_FEE
+    paid_at: new Date().toISOString()
   };
 
   let { data: updated, error } = await supabase
@@ -86,6 +85,12 @@ export async function markLeadPaid(
     }
   }
 
+  // The fee depends on the lead's offer, known only once the row is found.
+  const offer = offerForCategory(updated.business_category);
+  const { error: amountError } = await supabase.from("vastu_leads").update({ amount_paid: offer.fee }).eq("id", updated.id);
+  if (amountError) console.error("could not record vastu amount_paid:", updated.id, amountError);
+  else updated.amount_paid = offer.fee;
+
   // No uid yet means Cal.com's webhook hasn't arrived; the Cal webhook
   // confirms on BOOKING_REQUESTED once it sees the lead is already paid.
   if (updated.cal_booking_uid) await confirmCalBooking(updated.cal_booking_uid);
@@ -93,7 +98,7 @@ export async function markLeadPaid(
     eventName: "Purchase",
     eventId: `purchase_${updated.id}`,
     lead: updated,
-    customData: { currency: "INR", value: CONSULTATION_FEE, content_name: "1:1 Business Vastu Consultation" }
+    customData: { currency: "INR", value: offer.fee, content_name: offer.name }
   });
   return updated;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { CAL_LINK, CAL_ORIGIN } from "@/lib/site";
+import { CAL_ORIGIN } from "@/lib/site";
 
 const NAMESPACE = "vastu";
 
@@ -49,20 +49,20 @@ export type CalPrefill = {
   notes: string;
 };
 
-export function CalEmbed({ prefill, onBooked }: { prefill: CalPrefill; onBooked: () => void }) {
+export function CalEmbed({ calLink, prefill, onBooked }: { calLink: string; prefill: CalPrefill; onBooked: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onBookedRef = useRef(onBooked);
   onBookedRef.current = onBooked;
 
   useEffect(() => {
-    if (!CAL_LINK || !containerRef.current) return;
+    if (!calLink || !containerRef.current) return;
     const Cal = ensureCalLoader(CAL_ORIGIN);
     Cal("init", NAMESPACE, { origin: CAL_ORIGIN });
     const api = Cal.ns![NAMESPACE];
 
     api("inline", {
       elementOrSelector: containerRef.current,
-      calLink: CAL_LINK,
+      calLink,
       config: {
         layout: "month_view",
         theme: "light",
@@ -94,9 +94,9 @@ export function CalEmbed({ prefill, onBooked }: { prefill: CalPrefill; onBooked:
       api("off", { action: "bookingSuccessfulV2", callback: handler });
       api("off", { action: "bookingSuccessful", callback: handler });
     };
-  }, [prefill]);
+  }, [calLink, prefill]);
 
-  if (!CAL_LINK) {
+  if (!calLink) {
     return (
       <p className="rounded-xl border border-crimson/40 bg-crimson/10 p-4 text-sm text-cream">
         Booking calendar is not configured yet (NEXT_PUBLIC_CAL_LINK).

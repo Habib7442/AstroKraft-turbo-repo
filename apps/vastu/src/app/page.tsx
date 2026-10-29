@@ -8,8 +8,6 @@ import {
   House,
   KeyRound,
   Lightbulb,
-  Mail,
-  Phone,
   Search,
   Sparkles,
   Users,
@@ -20,13 +18,13 @@ import {
 import { BookingProvider, BookNowButton } from "@/components/booking";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { VideoStories } from "@/components/video-stories";
+import { SiteFooter, SiteHeader, StickyCta } from "@/components/site-chrome";
+import { TESTIMONIALS } from "@/lib/testimonials";
+import { AboutFounder } from "@/components/about-founder";
 import {
   BRAND,
   CONSULTATION_FEE_LABEL,
-  CONTACT_EMAIL,
-  CONTACT_PHONE,
   FOUNDER,
-  FOUNDER_PHOTO,
   WHATSAPP_URL
 } from "@/lib/site";
 
@@ -130,49 +128,14 @@ const FAQS = [
   }
 ];
 
-// Client testimonials for VASTU by Biprangshu consultations (provided by the
-// business; real clients). Add new ones here.
-const TESTIMONIALS: { name: string; business: string; quote: string }[] = [
-  {
-    name: "Rajesh Agarwal",
-    business: "Jewellery Retail",
-    quote:
-      "We wanted to understand how our showroom layout could be improved without disturbing our existing operations. The consultation was detailed, practical, and focused on customer movement, display positioning, and overall business space planning. I particularly appreciated the professional approach and clear recommendations."
-  },
-  {
-    name: "Arindam Chatterjee",
-    business: "Real Estate & Property Development",
-    quote:
-      "What impressed me was the combination of traditional Vastu principles with practical architectural understanding. The suggestions were explained logically, keeping both design requirements and commercial usability in mind. A very structured consultation that I would recommend to other developers."
-  },
-  {
-    name: "Sandeep Sharma",
-    business: "Hotel & Hospitality",
-    quote:
-      "Our hotel has multiple functional areas, so we needed guidance that considered the property as a whole. The consultation covered reception placement, room arrangements, entrance alignment, and operational spaces. The recommendations were practical and did not involve unnecessary structural changes."
-  },
-  {
-    name: "Vikram Mehta",
-    business: "Manufacturing & Industrial Operations",
-    quote:
-      "I was looking for a professional assessment of our factory layout rather than general Vastu advice. The consultation addressed important areas such as production flow, machinery placement, management cabins, and the overall layout. The explanations were clear, systematic, and relevant to our business environment."
-  },
-  {
-    name: "Dr. Ananya Sen",
-    business: "Healthcare & Diagnostics",
-    quote:
-      "The consultation offered a thoughtful perspective on space planning for our diagnostic centre. From the reception and waiting area to consultation rooms and staff spaces, every recommendation was discussed carefully. I appreciated the attention to functionality, comfort, and the practical limitations of an existing property."
-  }
-];
-
 export default function Home() {
   return (
     <BookingProvider>
-      <SiteHeader />
+      <SiteHeader whatsappUrl={WHATSAPP_URL} />
       <main className="pb-24 sm:pb-0">
         <Hero />
         <FlatProblems />
-        <About />
+        <AboutFounder />
         <VideoStories />
         <Offer />
         <WhoCanBook />
@@ -184,50 +147,8 @@ export default function Home() {
         <FinalCta />
       </main>
       <SiteFooter />
-      <StickyCta />
+      <StickyCta feeLabel={CONSULTATION_FEE_LABEL} whatsappUrl={WHATSAPP_URL} />
     </BookingProvider>
-  );
-}
-
-function Wordmark({ small = false, onDark = false }: { small?: boolean; onDark?: boolean }) {
-  return (
-    <span className="inline-flex flex-col items-center leading-none">
-      <span
-        className={`font-display font-bold tracking-[0.12em] ${onDark ? "text-gold-bright" : "gold-text"} ${small ? "text-xl" : "text-4xl"}`}
-      >
-        VASTU
-      </span>
-      <span
-        className={`font-display tracking-[0.25em] ${onDark ? "text-gold-bright" : "text-gold-soft"} ${small ? "mt-0.5 text-[8px]" : "mt-1 text-[11px]"}`}
-      >
-        by BIPRANGSHU<sup className="ml-0.5">™</sup>
-      </span>
-    </span>
-  );
-}
-
-function SiteHeader() {
-  return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-navy">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <a href="#top" aria-label={BRAND}>
-          <Wordmark small onDark />
-        </a>
-        <div className="flex items-center gap-2">
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/30 px-3 py-2 text-xs font-semibold text-white"
-          >
-            <WhatsAppIcon className="h-4 w-4" /> <span className="hidden sm:inline">WhatsApp</span>
-          </a>
-          <BookNowButton className="hidden rounded-full bg-gold-gradient px-4 py-2 text-xs font-extrabold uppercase text-navy sm:inline-flex">
-            Book Now
-          </BookNowButton>
-        </div>
-      </div>
-    </header>
   );
 }
 
@@ -338,53 +259,6 @@ function WhoCanBook() {
             <p className="mt-2 text-sm text-muted">{text}</p>
           </div>
         ))}
-      </div>
-    </section>
-  );
-}
-
-function About() {
-  return (
-    <section className="border-y border-gold-line/50 bg-night-800/40">
-      <div className="section grid items-center gap-8 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <div className="mx-auto w-full max-w-xs">
-          {FOUNDER_PHOTO ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={FOUNDER_PHOTO}
-              alt={FOUNDER}
-              width={720}
-              height={960}
-              fetchPriority="high"
-              className="aspect-[3/4] w-full rounded-2xl border border-gold/40 object-cover object-top"
-            />
-          ) : (
-            <div className="flex aspect-[4/5] w-full items-center justify-center rounded-2xl border border-gold/40 bg-gradient-to-b from-night-700 to-night-900">
-              <span className="gold-text font-display text-7xl font-bold">BB</span>
-            </div>
-          )}
-        </div>
-        <div>
-          <p className="eyebrow">Meet your consultant</p>
-          <h2 className="section-title">{FOUNDER}</h2>
-          <p className="mt-2 font-semibold text-gold-soft">Founder, {BRAND} &amp; AstroKraft · Business &amp; Vastu Consultant</p>
-          <p className="mt-4 text-cream">
-            Biprangshu brings a business lens to Vastu. He looks at your space the way you look at your business — sales,
-            customers, cash flow, team and growth — and connects Vastu principles to practical decisions you can actually act on.
-          </p>
-          <p className="mt-3 text-cream">
-            As the founder of AstroKraft, a Vedic astrology and certified-gemstone brand, he helps people apply traditional Indian wisdom to
-            real-life decisions. {BRAND} brings that same approach to business owners and their workplaces.
-          </p>
-          <ul className="mt-5 flex flex-wrap gap-2 text-xs font-semibold">
-            {["Founder of AstroKraft", "Every session 1:1 with Biprangshu", "Online across India"].map((t) => (
-              <li key={t} className="flex items-center gap-1.5 rounded-full border border-gold/40 px-3 py-1.5 text-gold-soft">
-                <BadgeCheck className="h-3.5 w-3.5" aria-hidden /> {t}
-              </li>
-            ))}
-          </ul>
-          <BookNowButton className="btn-gold mt-6">Book with Biprangshu</BookNowButton>
-        </div>
       </div>
     </section>
   );
@@ -530,54 +404,5 @@ function FinalCta() {
         </div>
       </div>
     </section>
-  );
-}
-
-function SiteFooter() {
-  return (
-    <footer className="bg-navy">
-      <div className="mx-auto max-w-5xl px-4 py-10 text-sm text-white/70 sm:px-6">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <Wordmark small onDark />
-          <div className="space-y-2">
-            <a href={`tel:+91${CONTACT_PHONE}`} className="flex items-center gap-2 hover:text-white">
-              <Phone className="h-4 w-4" aria-hidden /> +91 {CONTACT_PHONE}
-            </a>
-            <a href={`mailto:${CONTACT_EMAIL}`} className="flex items-center gap-2 hover:text-white">
-              <Mail className="h-4 w-4" aria-hidden /> {CONTACT_EMAIL}
-            </a>
-          </div>
-          <nav className="flex flex-col gap-2">
-            <a href="/policies#privacy" className="hover:text-white">Privacy Policy</a>
-            <a href="/policies#payment" className="hover:text-white">Payment Terms</a>
-            <a href="/policies#refunds" className="hover:text-white">Refund &amp; Rescheduling</a>
-          </nav>
-        </div>
-        <p className="mt-8 text-xs leading-relaxed text-white/50">
-          Disclaimer: Vastu consultation offers guidance based on traditional principles and is not a guarantee of any financial or business
-          outcome. It is not a substitute for professional legal, financial, structural or engineering advice.
-        </p>
-        <p className="mt-4 text-xs text-white/50">
-          © {new Date().getFullYear()} {BRAND}™. All rights reserved.
-        </p>
-      </div>
-    </footer>
-  );
-}
-
-function StickyCta() {
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gold-line bg-night/95 px-4 py-3 backdrop-blur sm:hidden">
-      <div className="flex items-center gap-3">
-        <div className="shrink-0 leading-tight">
-          <p className="text-[11px] uppercase tracking-wider text-muted">Report + Call</p>
-          <p className="text-xl font-extrabold text-cream">{CONSULTATION_FEE_LABEL}</p>
-        </div>
-        <BookNowButton className="btn-gold min-w-0 flex-1 px-4 py-3.5 text-sm" />
-        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="rounded-full border border-gold/50 p-3 text-gold">
-          <WhatsAppIcon className="h-5 w-5" />
-        </a>
-      </div>
-    </div>
   );
 }

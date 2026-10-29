@@ -1,7 +1,15 @@
 # apps/vastu — VASTU by Biprangshu landing page
 
-Single-page Meta-ads landing page for the ₹999 1:1 Business Vastu Consultation.
-Separate brand (black & gold) — does not use `@astrokraft/theme` or Clerk.
+Meta-ads landing pages for two 1:1 Vastu consultations sharing one booking flow:
+`/` = Flat Vastu (₹999), `/business-vastu` = Business Vastu (₹1,999).
+Separate brand (blue & white with gold CTAs) — does not use `@astrokraft/theme` or Clerk.
+
+- Offers live in `lib/site.ts` (`OFFERS`). A lead's offer is derived from
+  `business_category`: `Flat / Apartment` = flat, any business type = business
+  (`offerForCategory`). create-order, mark-paid (`amount_paid`), the pay page and
+  host emails all price from the stored lead, never from the client.
+- Header/footer/sticky CTA: `components/site-chrome.tsx`; client testimonials:
+  `lib/testimonials.ts`.
 
 Flow: Book Now → intake form (`components/booking.tsx`) → `POST /api/leads` inserts a
 `vastu_leads` row (with UTM/fbclid/_fbp/_fbc) → Cal.com inline embed prefilled with

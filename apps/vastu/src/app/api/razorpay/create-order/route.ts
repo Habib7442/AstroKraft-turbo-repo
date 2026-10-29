@@ -4,7 +4,7 @@ import { createRazorpayOrder, formatINRToPaise, getRazorpayClient } from "@astro
 import { markLeadPaid } from "@/lib/mark-paid";
 import type { VastuLead } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { CONSULTATION_FEE } from "@/lib/site";
+import { offerForCategory } from "@/lib/site";
 
 const bodySchema = z.object({ leadId: z.string().uuid() });
 
@@ -18,14 +18,16 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseAdminClient();
     const { data: lead } = await supabase
       .from("vastu_leads")
-      .select("id, full_name, whatsapp, attendee_email, payment_status, razorpay_order_id")
+      .select("id, full_name, whatsapp, attendee_email, business_category, payment_status, razorpay_order_id")
       .eq("id", leadId)
-      .maybeSingle<Pick<VastuLead, "id" | "full_name" | "whatsapp" | "attendee_email" | "payment_status" | "razorpay_order_id">>();
+      .maybeSingle<
+        Pick<VastuLead, "id" | "full_name" | "whatsapp" | "attendee_email" | "business_category" | "payment_status" | "razorpay_order_id">
+      >();
 
     if (!lead) return NextResponse.json({ error: "Booking not found." }, { status: 404 });
     if (lead.payment_status === "paid") return NextResponse.json({ alreadyPaid: true });
 
-    const amount = formatINRToPaise(CONSULTATION_FEE);
+    const amount = formatINRToPaise(offerForCategory(lead.business_category).fee);
 
     // Reuse the stored order while it can still be paid. A refresh, a second
     // tab or "Retry payment" must not replace an order that a slow UPI

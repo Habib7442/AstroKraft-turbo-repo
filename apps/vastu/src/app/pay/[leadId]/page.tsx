@@ -4,7 +4,7 @@ import { CalendarClock } from "lucide-react";
 import type { VastuLead } from "@astrokraft/db";
 import { PayPanel } from "@/components/pay-panel";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { BRAND, CONSULTATION_FEE_LABEL } from "@/lib/site";
+import { BRAND, offerForCategory } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -22,10 +22,11 @@ export default async function PayPage({ params }: { params: Promise<{ leadId: st
 
   const { data: lead } = await getSupabaseAdminClient()
     .from("vastu_leads")
-    .select("id, full_name, scheduled_start, payment_status, floor_plan_available")
+    .select("id, full_name, business_category, scheduled_start, payment_status, floor_plan_available")
     .eq("id", leadId)
-    .maybeSingle<Pick<VastuLead, "id" | "full_name" | "scheduled_start" | "payment_status" | "floor_plan_available">>();
+    .maybeSingle<Pick<VastuLead, "id" | "full_name" | "business_category" | "scheduled_start" | "payment_status" | "floor_plan_available">>();
   if (!lead) notFound();
+  const offer = offerForCategory(lead.business_category);
 
   const firstName = lead.full_name.trim().split(/\s+/)[0];
   const fmt = (opts: Intl.DateTimeFormatOptions) =>
@@ -42,16 +43,17 @@ export default async function PayPage({ params }: { params: Promise<{ leadId: st
         <div className="mt-4 flex items-start gap-3 rounded-xl border border-night-600 bg-night-700 p-4 text-sm">
           <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden />
           <div>
-            <p className="font-semibold text-cream">Flat Vastu Report + Expert Call</p>
+            <p className="font-semibold text-cream">{offer.name}</p>
             <p className="text-muted">{slot ? `${slot} (IST)` : "Slot details are in your SMS / email confirmation"}</p>
           </div>
         </div>
         <div className="mt-5 flex items-baseline justify-between border-t border-night-600 pt-4">
           <span className="text-muted">Consultation fee</span>
-          <span className="text-3xl font-extrabold text-cream">{CONSULTATION_FEE_LABEL}</span>
+          <span className="text-3xl font-extrabold text-cream">{offer.feeLabel}</span>
         </div>
         <PayPanel
           leadId={lead.id}
+          offerId={offer.id}
           initiallyPaid={lead.payment_status === "paid"}
           fullName={lead.full_name}
           slot={shortSlot}

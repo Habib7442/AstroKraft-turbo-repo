@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { VASTU_PRIVACY_NOTICE_VERSION } from "@astrokraft/validators";
-import { BRAND, CONSULTATION_FEE_LABEL, CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/site";
+import { BRAND, CONTACT_EMAIL, CONTACT_PHONE, OFFERS } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Policies | ${BRAND}`,
@@ -55,7 +55,8 @@ export default function PoliciesPage() {
       <section id="payment" className="mt-10 scroll-mt-20 space-y-3">
         <h2 className="text-xl font-bold text-gold-soft">Payment Terms</h2>
         <p>
-          The consultation fee is {CONSULTATION_FEE_LABEL} (inclusive of applicable taxes), payable in full online via Razorpay (UPI, cards,
+          The consultation fee is {OFFERS.flat.feeLabel} for a Flat Vastu consultation and {OFFERS.business.feeLabel} for a Business Vastu
+          consultation (inclusive of applicable taxes), payable in full online via Razorpay (UPI, cards,
           netbanking and wallets) right after you choose your slot. Your slot is held when you book and is confirmed only after successful
           payment. If a payment fails you can retry from the payment page; bookings left unpaid may be released.
         </p>

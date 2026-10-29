@@ -3,6 +3,7 @@ import { normalizeIndianMobile, vastuLeadSchema, VASTU_PRIVACY_NOTICE_VERSION } 
 import type { VastuLead } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { sendMetaEvent } from "@/lib/meta-capi";
+import { FLAT_CATEGORY } from "@/lib/site";
 
 // A person who abandons the Cal.com step and comes back the same day keeps
 // one lead row instead of piling up duplicates.
@@ -22,14 +23,16 @@ export async function POST(req: NextRequest) {
   }
 
   const whatsapp = normalizeIndianMobile(data.whatsapp);
+  // The category also decides the offer (and fee) — see offerForCategory.
+  const category = data.offer === "business" && data.businessType ? data.businessType : FLAT_CATEGORY;
   const row = {
     full_name: data.fullName,
     whatsapp,
     city: data.city,
-    // The short flat-Vastu form doesn't ask these; the columns predate it.
+    // The short booking forms don't ask these; the columns predate them.
     state: "",
-    business_category: "Flat / Apartment",
-    business_stage: "existing" as const,
+    business_category: category,
+    business_stage: data.concern === "Opening something new" ? ("new" as const) : ("existing" as const),
     problems: data.concern ? [data.concern] : [],
     // Optional question: omitted when skipped so the column stays NULL
     // ("not answered") rather than reading as "No".
@@ -72,7 +75,7 @@ export async function POST(req: NextRequest) {
       eventName: "Lead",
       eventId: `lead_${lead.id}`,
       lead: row,
-      customData: { content_category: data.concern ?? "Flat / Apartment" }
+      customData: { content_category: data.concern ?? category }
     });
 
     return NextResponse.json({ leadId: lead.id, whatsapp });
