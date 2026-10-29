@@ -1,22 +1,20 @@
 export const BRAND = "VASTU by Biprangshu";
 export const FOUNDER = "Biprangshu Bhattacharjee";
-// Two offers share one booking + payment flow: the Flat Vastu page (/) at
-// ₹999 and the Business Vastu page (/business-vastu) at ₹1,999. A lead's
-// offer is derived from its business_category (see offerForCategory), so the
-// amount charged is always decided server-side from the stored lead.
-// NEXT_PUBLIC_BUSINESS_CONSULTATION_FEE sets the business price (default
-// ₹1,999). NEXT_PUBLIC_CONSULTATION_FEE overrides BOTH fees (e.g. 20 for a
-// live end-to-end test payment) — remove it after testing. Fees drive the
-// amount charged (create-order) and every price shown, so a forgotten
-// override is visible on the landing pages themselves. Both are inlined at
-// build time: redeploy after changing them.
-const validFee = (value: string | undefined) => {
+// Two offers share one booking + payment flow: the Flat Vastu page (/) and
+// the Business Vastu page (/business-vastu). A lead's offer is derived from
+// its business_category (see offerForCategory), so the amount charged is
+// always decided server-side from the stored lead.
+// Each page's price has its own env var, in whole rupees:
+//   NEXT_PUBLIC_CONSULTATION_FEE           flat page, default ₹999
+//   NEXT_PUBLIC_BUSINESS_CONSULTATION_FEE  business page, default ₹1,999
+// They drive the amount charged (create-order) and every price shown, and
+// are inlined at build time: redeploy after changing them.
+const envFee = (value: string | undefined, fallback: number) => {
   const n = Number(value);
-  return Number.isInteger(n) && n >= 1 ? n : null;
+  return Number.isInteger(n) && n >= 1 ? n : fallback;
 };
-const feeOverride = validFee(process.env.NEXT_PUBLIC_CONSULTATION_FEE);
-const fee = (amount: number) => feeOverride ?? amount;
-const BUSINESS_FEE = validFee(process.env.NEXT_PUBLIC_BUSINESS_CONSULTATION_FEE) ?? 1999;
+const FLAT_FEE = envFee(process.env.NEXT_PUBLIC_CONSULTATION_FEE, 999);
+const BUSINESS_FEE = envFee(process.env.NEXT_PUBLIC_BUSINESS_CONSULTATION_FEE, 1999);
 const inr = (amount: number) => `₹${new Intl.NumberFormat("en-IN").format(amount)}`;
 
 export type OfferId = "flat" | "business";
@@ -41,8 +39,8 @@ const CAL_LINK = process.env.NEXT_PUBLIC_CAL_LINK || "";
 export const OFFERS: Record<OfferId, Offer> = {
   flat: {
     id: "flat",
-    fee: fee(999),
-    feeLabel: inr(fee(999)),
+    fee: FLAT_FEE,
+    feeLabel: inr(FLAT_FEE),
     name: "Flat Vastu Report + Expert Call",
     callName: "Flat Vastu Call",
     space: "flat",
@@ -50,8 +48,8 @@ export const OFFERS: Record<OfferId, Offer> = {
   },
   business: {
     id: "business",
-    fee: fee(BUSINESS_FEE),
-    feeLabel: inr(fee(BUSINESS_FEE)),
+    fee: BUSINESS_FEE,
+    feeLabel: inr(BUSINESS_FEE),
     name: "Business Vastu Report + Expert Call",
     callName: "Business Vastu Call",
     space: "business space",
