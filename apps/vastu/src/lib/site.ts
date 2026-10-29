@@ -4,12 +4,19 @@ export const FOUNDER = "Biprangshu Bhattacharjee";
 // ₹999 and the Business Vastu page (/business-vastu) at ₹1,999. A lead's
 // offer is derived from its business_category (see offerForCategory), so the
 // amount charged is always decided server-side from the stored lead.
-// NEXT_PUBLIC_CONSULTATION_FEE overrides BOTH fees (e.g. 20 for a live
-// end-to-end test payment) — remove it after testing. It drives the amount
-// charged (create-order) and every price shown, so a forgotten override is
-// visible on the landing pages themselves.
-const feeOverride = Number(process.env.NEXT_PUBLIC_CONSULTATION_FEE);
-const fee = (amount: number) => (Number.isInteger(feeOverride) && feeOverride >= 1 ? feeOverride : amount);
+// NEXT_PUBLIC_BUSINESS_CONSULTATION_FEE sets the business price (default
+// ₹1,999). NEXT_PUBLIC_CONSULTATION_FEE overrides BOTH fees (e.g. 20 for a
+// live end-to-end test payment) — remove it after testing. Fees drive the
+// amount charged (create-order) and every price shown, so a forgotten
+// override is visible on the landing pages themselves. Both are inlined at
+// build time: redeploy after changing them.
+const validFee = (value: string | undefined) => {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 ? n : null;
+};
+const feeOverride = validFee(process.env.NEXT_PUBLIC_CONSULTATION_FEE);
+const fee = (amount: number) => feeOverride ?? amount;
+const BUSINESS_FEE = validFee(process.env.NEXT_PUBLIC_BUSINESS_CONSULTATION_FEE) ?? 1999;
 const inr = (amount: number) => `₹${new Intl.NumberFormat("en-IN").format(amount)}`;
 
 export type OfferId = "flat" | "business";
@@ -43,8 +50,8 @@ export const OFFERS: Record<OfferId, Offer> = {
   },
   business: {
     id: "business",
-    fee: fee(1999),
-    feeLabel: inr(fee(1999)),
+    fee: fee(BUSINESS_FEE),
+    feeLabel: inr(fee(BUSINESS_FEE)),
     name: "Business Vastu Report + Expert Call",
     callName: "Business Vastu Call",
     space: "business space",
