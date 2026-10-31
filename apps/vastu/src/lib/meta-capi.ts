@@ -10,7 +10,7 @@ const GRAPH_VERSION = "v23.0";
 const sha256 = (value: string) => crypto.createHash("sha256").update(value.trim().toLowerCase()).digest("hex");
 
 type CapiEvent = {
-  eventName: "Lead" | "Schedule" | "Purchase";
+  eventName: "Lead" | "Schedule" | "InitiateCheckout" | "Purchase";
   /** Must equal the browser pixel's eventID for the same event so Meta dedupes them. */
   eventId: string;
   lead: Pick<VastuLead, "whatsapp" | "full_name" | "city" | "state" | "fbp" | "fbc" | "ip_address" | "user_agent"> & {

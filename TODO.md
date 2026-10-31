@@ -69,3 +69,7 @@ Any new env var added to Vercel must also be added to `turbo.json`'s `globalEnv`
 2. Razorpay live mode (business-critical — real payments).
 3. Clerk production instance (bigger lift, budget more time — the wizard is interactive).
 4. R2 custom domain (cosmetic — image URLs work fine on the temp domain today, lowest priority).
+
+
+remove card pricing
+

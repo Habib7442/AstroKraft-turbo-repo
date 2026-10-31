@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createRazorpayOrder, formatINRToPaise, getRazorpayClient } from "@astrokraft/payments";
 import { markLeadPaid } from "@/lib/mark-paid";
+import { sendMetaEvent } from "@/lib/meta-capi";
 import type { VastuLead } from "@astrokraft/db";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { offerForCategory } from "@/lib/site";
@@ -18,10 +19,25 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseAdminClient();
     const { data: lead } = await supabase
       .from("vastu_leads")
-      .select("id, full_name, whatsapp, attendee_email, business_category, payment_status, razorpay_order_id")
+      .select("id, full_name, whatsapp, attendee_email, business_category, payment_status, razorpay_order_id, city, state, fbp, fbc, ip_address, user_agent")
       .eq("id", leadId)
       .maybeSingle<
-        Pick<VastuLead, "id" | "full_name" | "whatsapp" | "attendee_email" | "business_category" | "payment_status" | "razorpay_order_id">
+        Pick<
+          VastuLead,
+          | "id"
+          | "full_name"
+          | "whatsapp"
+          | "attendee_email"
+          | "business_category"
+          | "payment_status"
+          | "razorpay_order_id"
+          | "city"
+          | "state"
+          | "fbp"
+          | "fbc"
+          | "ip_address"
+          | "user_agent"
+        >
       >();
 
     if (!lead) return NextResponse.json({ error: "Booking not found." }, { status: 404 });
@@ -64,6 +80,13 @@ export async function POST(req: NextRequest) {
       .eq("id", lead.id)
       .neq("payment_status", "paid");
     if (error) throw error;
+
+    void sendMetaEvent({
+      eventName: "InitiateCheckout",
+      eventId: `initiate_${lead.id}`,
+      lead,
+      customData: { currency: "INR", value: offerForCategory(lead.business_category).fee }
+    });
 
     return NextResponse.json({
       orderId: order.id,

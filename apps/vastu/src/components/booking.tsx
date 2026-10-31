@@ -22,8 +22,7 @@ export function BookingProvider({ offer: offerId = "flat", children }: { offer?:
   const [isOpen, setOpen] = useState(false);
   const open = useCallback(() => {
     setOpen(true);
-    trackPixel("InitiateCheckout", { value: offer.fee, currency: "INR" });
-  }, [offer]);
+  }, []);
   const value = useMemo(() => ({ open }), [open]);
 
   useEffect(() => captureAttribution(), []);

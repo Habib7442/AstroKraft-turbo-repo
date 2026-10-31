@@ -131,6 +131,12 @@ export function PayPanel({
     void pay();
   }, [pay, initiallyPaid]);
 
+  // Track InitiateCheckout when the visitor proceeds to payment
+  useEffect(() => {
+    if (initiallyPaid) return;
+    trackPixel("InitiateCheckout", { value: offer.fee, currency: "INR" }, `initiate_${leadId}`);
+  }, [initiallyPaid, leadId, offer.fee]);
+
   if (state.kind === "paid") {
     const copy =
       hasFloorPlan === null
