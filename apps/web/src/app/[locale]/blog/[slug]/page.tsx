@@ -23,13 +23,10 @@ import { BlogContent } from "@/components/blog/blog-content";
 // Same window as product pages - see blog/page.tsx.
 export const revalidate = 300;
 
-// Without this the route renders on every request (ƒ) instead of ISR.
-// Posts published after the build are rendered on first visit, then cached.
-export async function generateStaticParams() {
-  const posts = await getPublishedPosts();
-  return posts.map((post) => ({ locale: "en", slug: post.slug }));
-}
-
+// Deliberately no generateStaticParams: [locale]/layout.tsx sets
+// dynamicParams = false, which applies to every segment below it and can't be
+// overridden here. Listing slugs at build time would make any post published
+// after the deploy a permanent 404 until the next deploy.
 export async function generateMetadata({
   params
 }: {
