@@ -183,12 +183,23 @@ export function normalizeIndianMobile(value: string): string {
 // Two fields only; the form shows "+91" as a fixed prefix, so the visitor types
 // the 10-digit number (separators like "98765 43210" are tolerated).
 export const masterclassRegistrationSchema = z.object({
-  fullName: z.string().trim().min(2, "Please enter your full name").max(100, "Name is too long"),
+  // Must start with a letter: the name is written to a Google Sheet, where a
+  // value starting with = + - @ would be read as a formula.
+  fullName: z
+    .string()
+    .trim()
+    .min(2, "Please enter your full name")
+    .max(100, "Name is too long")
+    .regex(/^\p{L}/u, "Name must start with a letter"),
   whatsapp: z
     .string()
     .trim()
     .transform((v) => v.replace(/[\s\-()]/g, "").replace(/^(?:\+?91|0)(?=\d{10}$)/, ""))
     .pipe(z.string().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit WhatsApp number")),
+  // The visitor's own earlier attempt (kept in sessionStorage after
+  // create-order). A retry reuses that row only — never one looked up by
+  // phone, which anyone who knows the number could claim.
+  registrationId: z.string().uuid().optional(),
   attribution: z
     .object({
       utm_source: z.string().max(200).optional(),

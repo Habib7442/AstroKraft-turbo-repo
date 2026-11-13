@@ -14,12 +14,20 @@ export function PurchasePixel({ registrationId, value }: { registrationId: strin
     const key = `mc_purchase_${registrationId}`;
     try {
       if (sessionStorage.getItem(key)) return;
-      sessionStorage.setItem(key, "1");
     } catch {
       // storage blocked — eventID dedupe still prevents double counting
     }
     // The pixel script loads afterInteractive; give it a moment if needed.
-    const fire = () => trackPixel("Purchase", { value, currency: "INR", content_name: "Astro Vastu Masterclass" }, `purchase_mc_${registrationId}`);
+    // The flag is set only once the event was actually dispatched, so a timer
+    // cancelled by an early unmount doesn't suppress the next attempt.
+    const fire = () => {
+      trackPixel("Purchase", { value, currency: "INR", content_name: "Astro Vastu Masterclass" }, `purchase_mc_${registrationId}`);
+      try {
+        sessionStorage.setItem(key, "1");
+      } catch {
+        // see above
+      }
+    };
     const w = window as unknown as { fbq?: unknown };
     if (w.fbq) fire();
     else {

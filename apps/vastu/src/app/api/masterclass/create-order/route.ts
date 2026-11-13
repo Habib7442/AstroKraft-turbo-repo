@@ -14,8 +14,20 @@ import { WORKSHOP_DATE_LABEL } from "@/lib/workshop";
 const REUSE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const GENERIC_ERROR = "Could not start payment. Please try again or message us on WhatsApp.";
+const RETRY_ERROR = "We couldn't check your earlier payment just now. Please try again in a moment.";
 
-// The amount is fixed server-side; the client only sends name + WhatsApp.
+type RazorpayOrder = { id: string; amount: number | string; currency: string; status?: string };
+type RegistrationRow = Pick<MasterclassRegistration, "id" | "whatsapp" | "razorpay_order_id" | "payment_status" | "created_at">;
+
+const alreadyPaid = (registrationId: string) => NextResponse.json({ alreadyPaid: true, registrationId });
+const retryLater = () => NextResponse.json({ error: RETRY_ERROR }, { status: 503 });
+
+/** A Razorpay order the buyer can still complete at the current fee. */
+const isPayable = (order: RazorpayOrder) =>
+  (order.status === "created" || order.status === "attempted") && Number(order.amount) === MASTERCLASS_AMOUNT_PAISE;
+
+// The amount is fixed server-side; the client only sends name + WhatsApp (and,
+// on a retry, the registration id create-order gave it the first time).
 export async function POST(req: NextRequest) {
   const parsed = masterclassRegistrationSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -26,10 +38,12 @@ export async function POST(req: NextRequest) {
   if (data.website) return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
 
   const whatsapp = normalizeIndianMobile(data.whatsapp);
+  // amount_paise is deliberately absent: it's written only together with the
+  // order id it belongs to (insert / order claim below), so an outstanding
+  // older order never has its amount rewritten.
   const details = {
     full_name: data.fullName,
     whatsapp,
-    amount_paise: MASTERCLASS_AMOUNT_PAISE,
     session_label: WORKSHOP_DATE_LABEL,
     utm_source: data.attribution.utm_source ?? null,
     utm_medium: data.attribution.utm_medium ?? null,
@@ -48,59 +62,123 @@ export async function POST(req: NextRequest) {
 
   try {
     const supabase = getSupabaseAdminClient();
+    const razorpay = getRazorpayClient();
 
-    const { data: recent } = await supabase
-      .from("masterclass_registrations")
-      .select("id, razorpay_order_id, amount_paise")
-      .eq("whatsapp", whatsapp)
-      .in("payment_status", ["pending", "failed"])
-      .gte("created_at", new Date(Date.now() - REUSE_WINDOW_MS).toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle<Pick<MasterclassRegistration, "id" | "razorpay_order_id" | "amount_paise">>();
+    const loadRow = async (id: string) => {
+      const { data: row, error } = await supabase
+        .from("masterclass_registrations")
+        .select("id, whatsapp, razorpay_order_id, payment_status, created_at")
+        .eq("id", id)
+        .maybeSingle<RegistrationRow>();
+      if (error) throw error;
+      return row;
+    };
 
-    // Reuse the stored order while Razorpay says it can still be paid.
-    let reusableOrder: { id: string; amount: number | string; currency: string } | null = null;
-    if (recent?.razorpay_order_id) {
-      const existing = await getRazorpayClient().orders.fetch(recent.razorpay_order_id).catch(() => null);
-      if (existing?.status === "paid") {
-        // Paid but not yet recorded (verify call and webhook both missed so far).
-        const payments = await getRazorpayClient().orders.fetchPayments(existing.id);
-        const captured = payments.items.find((p) => p.status === "captured");
-        if (captured) {
-          const row = await markRegistrationPaid(existing.id, captured.id, recent.id);
-          if (row) return NextResponse.json({ alreadyPaid: true, registrationId: row.id });
-        }
-      } else if (existing && (existing.status === "created" || existing.status === "attempted") && Number(existing.amount) === MASTERCLASS_AMOUNT_PAISE) {
-        reusableOrder = existing;
+    // Only the visitor's own earlier attempt (id held in their browser) is
+    // reused, and only for the same number within the window. A stranger who
+    // knows someone's phone number gets a fresh row of their own.
+    let recent: RegistrationRow | null = null;
+    if (data.registrationId) {
+      const row = await loadRow(data.registrationId);
+      const fresh = row && Date.now() - new Date(row.created_at).getTime() < REUSE_WINDOW_MS;
+      if (row && fresh && row.whatsapp === whatsapp) {
+        if (row.payment_status === "paid") return alreadyPaid(row.id);
+        if (row.payment_status === "pending" || row.payment_status === "failed") recent = row;
       }
     }
 
-    const { data: row, error } = recent
-      ? await supabase
-          .from("masterclass_registrations")
-          .update({ ...details, payment_status: "pending" })
-          .eq("id", recent.id)
-          .select("id")
-          .single<Pick<MasterclassRegistration, "id">>()
-      : await supabase.from("masterclass_registrations").insert(details).select("id").single<Pick<MasterclassRegistration, "id">>();
-    if (error || !row) throw error ?? new Error("registration write returned no row");
+    // Reuse the stored order while Razorpay says it can still be paid. If its
+    // state can't be checked, stop: an unknown order may still be payable (a
+    // slow UPI approval), and a second order could charge the buyer twice.
+    let reusableOrder: RazorpayOrder | null = null;
+    if (recent?.razorpay_order_id) {
+      let existing: RazorpayOrder;
+      try {
+        existing = (await razorpay.orders.fetch(recent.razorpay_order_id)) as RazorpayOrder;
+      } catch (fetchError) {
+        console.error("masterclass create-order: could not fetch existing order", recent.razorpay_order_id, fetchError);
+        return retryLater();
+      }
+      if (existing.status === "paid") {
+        // Paid but not yet recorded (verify call and webhook both missed so far).
+        const payments = await razorpay.orders.fetchPayments(existing.id);
+        const captured = payments.items.find((p) => p.status === "captured");
+        const row = captured ? await markRegistrationPaid(existing.id, captured.id, recent.id, Number(captured.amount)) : null;
+        return row ? alreadyPaid(row.id) : retryLater();
+      }
+      if (isPayable(existing)) reusableOrder = existing;
+    }
 
-    const order =
-      reusableOrder ??
-      (await createRazorpayOrder({
+    let registrationId: string;
+    if (recent) {
+      // Never touch a row that turned paid meanwhile (a webhook can land
+      // between the lookup above and this write).
+      const { data: row, error } = await supabase
+        .from("masterclass_registrations")
+        .update({ ...details, payment_status: "pending" })
+        .eq("id", recent.id)
+        .neq("payment_status", "paid")
+        .select("id")
+        .maybeSingle<Pick<MasterclassRegistration, "id">>();
+      if (error) throw error;
+      if (!row) {
+        const current = await loadRow(recent.id);
+        if (current?.payment_status === "paid") return alreadyPaid(current.id);
+        throw new Error("masterclass registration update matched no row");
+      }
+      registrationId = row.id;
+    } else {
+      const { data: row, error } = await supabase
+        .from("masterclass_registrations")
+        .insert({ ...details, amount_paise: MASTERCLASS_AMOUNT_PAISE })
+        .select("id")
+        .single<Pick<MasterclassRegistration, "id">>();
+      if (error || !row) throw error ?? new Error("registration insert returned no row");
+      registrationId = row.id;
+    }
+
+    let order: RazorpayOrder;
+    if (reusableOrder) {
+      order = reusableOrder;
+    } else {
+      const created = (await createRazorpayOrder({
         amount: MASTERCLASS_AMOUNT_PAISE,
         currency: "INR",
-        receipt: `mc_${row.id.slice(0, 8)}_${Date.now()}`.slice(0, 40),
-        notes: { app: MASTERCLASS_APP, registrationId: row.id }
-      }));
+        receipt: `mc_${registrationId.slice(0, 8)}_${Date.now()}`.slice(0, 40),
+        notes: { app: MASTERCLASS_APP, registrationId }
+      })) as RazorpayOrder;
 
-    const { error: orderError } = await supabase
-      .from("masterclass_registrations")
-      .update({ razorpay_order_id: order.id })
-      .eq("id", row.id)
-      .neq("payment_status", "paid");
-    if (orderError) throw orderError;
+      // Compare-and-swap: store the new order only if the row still holds the
+      // order id we read. If two requests race, exactly one order is attached
+      // to the row and both return that one (the loser's order is never shown
+      // to the buyer, so it can't be paid).
+      const previousOrderId = recent?.razorpay_order_id ?? null;
+      let claim = supabase
+        .from("masterclass_registrations")
+        .update({ razorpay_order_id: created.id, amount_paise: MASTERCLASS_AMOUNT_PAISE })
+        .eq("id", registrationId)
+        .neq("payment_status", "paid");
+      claim = previousOrderId ? claim.eq("razorpay_order_id", previousOrderId) : claim.is("razorpay_order_id", null);
+      const { data: claimed, error: claimError } = await claim.select("id").maybeSingle();
+      if (claimError) throw claimError;
+
+      if (claimed) {
+        order = created;
+      } else {
+        const current = await loadRow(registrationId);
+        if (current?.payment_status === "paid") return alreadyPaid(current.id);
+        if (!current?.razorpay_order_id) throw new Error("masterclass order claim lost but no order stored");
+        let winner: RazorpayOrder;
+        try {
+          winner = (await razorpay.orders.fetch(current.razorpay_order_id)) as RazorpayOrder;
+        } catch (fetchError) {
+          console.error("masterclass create-order: could not fetch winning order", current.razorpay_order_id, fetchError);
+          return retryLater();
+        }
+        if (!isPayable(winner)) return retryLater();
+        order = winner;
+      }
+    }
 
     // Follow-up list for the team: everyone who started checkout, tab
     // "Leads - Not Paid" (status "Initiated", de-duplicated by phone; flipped
@@ -110,13 +188,13 @@ export async function POST(req: NextRequest) {
 
     void sendMetaEvent({
       eventName: "InitiateCheckout",
-      eventId: masterclassEventId("initiate", row.id),
+      eventId: masterclassEventId("initiate", registrationId),
       lead: { ...details, city: "", state: "" },
       customData: { currency: "INR", value: MASTERCLASS_AMOUNT_PAISE / 100 }
     });
 
     return NextResponse.json({
-      registrationId: row.id,
+      registrationId,
       orderId: order.id,
       amount: Number(order.amount),
       currency: order.currency,

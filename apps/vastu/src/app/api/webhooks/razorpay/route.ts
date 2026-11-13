@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     if (event.event === "payment.captured" || event.event === "order.paid") {
       if (app === MASTERCLASS_APP) {
         const registrationId = typeof notes.registrationId === "string" ? notes.registrationId : undefined;
-        await markRegistrationPaid(orderId, payment.id, registrationId);
+        await markRegistrationPaid(orderId, payment.id, registrationId, Number(payment.amount));
       } else {
         const leadId = typeof notes.leadId === "string" ? notes.leadId : undefined;
         await markLeadPaid(orderId, payment.id, leadId);

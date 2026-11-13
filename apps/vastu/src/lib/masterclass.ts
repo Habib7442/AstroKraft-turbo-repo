@@ -37,7 +37,8 @@ async function registrationIdFromOrder(razorpayOrderId: string): Promise<string 
 
 /**
  * Mark a registration paid for a captured Razorpay payment. Callers must have
- * verified the payment (checkout signature or signed webhook) first.
+ * verified the payment (signed webhook, or checkout signature plus a server
+ * fetch confirming it was captured) first.
  *
  * Idempotent: the browser's verify call and Razorpay's webhook both land here
  * for the same payment; only the call that flips the row sends the team email
@@ -49,14 +50,17 @@ async function registrationIdFromOrder(razorpayOrderId: string): Promise<string 
 export async function markRegistrationPaid(
   razorpayOrderId: string,
   razorpayPaymentId: string,
-  registrationIdHint?: string
+  registrationIdHint?: string,
+  /** The captured payment's amount from Razorpay — stored so emails, the Sheet and Meta report what was actually paid. */
+  amountPaise?: number
 ): Promise<MasterclassRegistration | null> {
   const supabase = getSupabaseAdminClient();
   const paidFields = {
     payment_status: "paid",
     razorpay_order_id: razorpayOrderId,
     razorpay_payment_id: razorpayPaymentId,
-    paid_at: new Date().toISOString()
+    paid_at: new Date().toISOString(),
+    ...(Number.isInteger(amountPaise) && amountPaise! >= 100 ? { amount_paise: amountPaise } : {})
   };
 
   let { data: updated, error } = await supabase
@@ -112,28 +116,37 @@ export async function markRegistrationPaid(
   return updated;
 }
 
+/** How long a Sheet-sync claim blocks other callers; longer than the 15s Sheets request timeout. */
+const SHEET_CLAIM_TTL_MS = 2 * 60 * 1000;
+
 /**
- * Append a PAID registration to the Google Sheet exactly once. Only ever
- * called with a row the database already records as paid — i.e. after a
- * verified checkout signature or a signed webhook — never on the client's word.
+ * Append a PAID registration to the Google Sheet. Only ever called with a row
+ * the database already records as paid — i.e. after a verified, captured
+ * payment — never on the client's word.
  *
- * Exactly-once across concurrent callers (verify + webhook arriving together):
- * the conditional UPDATE claims the row by setting sheet_synced_at only where it
- * is still NULL, so one caller wins. The Sheet's own Payment-ID check is a
- * second guard. If the Sheets API fails, the claim is released so the next
- * call — webhook redelivery or the thank-you page load — retries. Never throws.
+ * Concurrent callers (verify + webhook arriving together): a conditional
+ * UPDATE takes a short-lived claim (sheet_sync_claimed_at, only if unclaimed
+ * or expired), so one caller appends. sheet_synced_at is the completion
+ * marker and is set only AFTER the Sheet confirmed the append. If the append
+ * fails the claim is released; if the process dies mid-append the claim simply
+ * expires — either way the next webhook delivery / thank-you page load
+ * retries, and the script's Payment-ID check keeps a retry from duplicating
+ * the row. Never throws.
  */
 export async function syncRegistrationToSheet(row: MasterclassRegistration): Promise<void> {
   if (row.payment_status !== "paid" || row.sheet_synced_at || !isSheetConfigured()) return;
   if (!row.razorpay_payment_id || !row.razorpay_order_id) return;
 
   const supabase = getSupabaseAdminClient();
+  const now = new Date();
+  const staleBefore = new Date(now.getTime() - SHEET_CLAIM_TTL_MS).toISOString();
   const { data: claimed, error } = await supabase
     .from("masterclass_registrations")
-    .update({ sheet_synced_at: new Date().toISOString() })
+    .update({ sheet_sync_claimed_at: now.toISOString() })
     .eq("id", row.id)
     .eq("payment_status", "paid")
     .is("sheet_synced_at", null)
+    .or(`sheet_sync_claimed_at.is.null,sheet_sync_claimed_at.lt.${staleBefore}`)
     .select("id")
     .maybeSingle();
   if (error) {
@@ -153,8 +166,16 @@ export async function syncRegistrationToSheet(row: MasterclassRegistration): Pro
     });
   } catch (sheetError) {
     console.error("Google Sheet write failed for masterclass registration — will retry:", row.id, sheetError);
-    await supabase.from("masterclass_registrations").update({ sheet_synced_at: null }).eq("id", row.id);
+    await supabase.from("masterclass_registrations").update({ sheet_sync_claimed_at: null }).eq("id", row.id);
+    return;
   }
+
+  const { error: doneError } = await supabase
+    .from("masterclass_registrations")
+    .update({ sheet_synced_at: new Date().toISOString(), sheet_sync_claimed_at: null })
+    .eq("id", row.id);
+  // The row is in the Sheet; a later retry would be de-duplicated by Payment ID.
+  if (doneError) console.error("could not mark masterclass sheet sync done:", row.id, doneError);
 }
 
 function sendPurchaseEvent(row: MasterclassRegistration) {

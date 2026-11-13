@@ -15,6 +15,11 @@
 // Must equal SHEETS_WEBHOOK_SECRET in the app's env. Use a long random string.
 const SECRET = "CHANGE-ME-to-a-long-random-string";
 
+// Optional but recommended: the sheet's ID, the long part of its URL between
+// /d/ and /edit. When set, the script opens the sheet by ID instead of relying
+// on the "active" spreadsheet, which a web app isn't guaranteed to have.
+const SPREADSHEET_ID = "";
+
 const REGISTRATIONS = { name: "Registrations", headers: ["Timestamp (IST)", "Full Name", "WhatsApp", "Amount", "Payment ID", "Order ID", "Status"] };
 const LEADS = { name: "Leads - Not Paid", headers: ["Timestamp (IST)", "Full Name", "WhatsApp", "Status"] };
 
@@ -34,11 +39,13 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return reply({ ok: false, error: "spreadsheet not found - set SPREADSHEET_ID" });
+    const fullName = safeText(body.fullName);
     if (body.action === "paid") {
       const reg = getTab(ss, REGISTRATIONS);
       if (columnValues(reg, 5).indexOf(String(body.paymentId)) === -1) {
-        appendAsText(reg, [body.timestamp, body.fullName, body.whatsapp, String(body.amount), body.paymentId, body.orderId, "Paid"]);
+        appendAsText(reg, [body.timestamp, fullName, body.whatsapp, String(body.amount), body.paymentId, body.orderId, "Paid"]);
       }
       // The same person in the follow-up list is no longer a lead to chase.
       const leads = getTab(ss, LEADS);
@@ -49,12 +56,18 @@ function doPost(e) {
     if (body.action === "lead") {
       const leads = getTab(ss, LEADS);
       if (columnValues(leads, 3).indexOf(String(body.whatsapp)) === -1) {
-        appendAsText(leads, [body.timestamp, body.fullName, body.whatsapp, "Initiated"]);
+        // The paid call can arrive first (the lead call runs after the
+        // response); don't list an already-paid buyer as "Initiated".
+        const paid = columnValues(getTab(ss, REGISTRATIONS), 3).indexOf(String(body.whatsapp)) >= 1;
+        appendAsText(leads, [body.timestamp, fullName, body.whatsapp, paid ? "Paid" : "Initiated"]);
       }
       return reply({ ok: true });
     }
     return reply({ ok: false, error: "unknown action" });
   } finally {
+    // Commit pending writes before the next request can take the lock, or its
+    // duplicate check could miss the row just appended.
+    SpreadsheetApp.flush();
     lock.releaseLock();
   }
 }
@@ -78,8 +91,17 @@ function columnValues(sheet, col) {
 }
 
 /**
- * Append a row formatted as plain text first, so "+91…" stays text and a name
- * typed as "=SOMETHING(…)" is stored literally, never run as a formula.
+ * A user-typed value with any leading formula trigger (= + - @) removed. The
+ * app already rejects names that don't start with a letter; this is the
+ * second guard, so nothing a visitor typed can ever be read as a formula.
+ */
+function safeText(v) {
+  return String(v == null ? "" : v).replace(/^[\s=+\-@]+/, "");
+}
+
+/**
+ * Append a row formatted as plain text first, so "+91…" stays text instead of
+ * being turned into a number.
  */
 function appendAsText(sheet, values) {
   const range = sheet.getRange(sheet.getLastRow() + 1, 1, 1, values.length);

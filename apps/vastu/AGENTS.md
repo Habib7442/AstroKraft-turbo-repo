@@ -23,9 +23,14 @@ Separate brand (blue & white with gold CTAs) — does not use `@astrokraft/theme
   Migration `supabase/migrations/20261113000000_add_masterclass_registrations.sql`.
 - Google Sheet (`lib/google-sheets.ts` → Apps Script web app `google-apps-script/masterclass-sheet.gs`,
   no Cloud project/service account): every paid row is appended to tab "Registrations" by
-  `syncRegistrationToSheet` — claimed via `sheet_synced_at` (conditional UPDATE) so verify + webhook
-  can't double-append, re-checked by Payment ID inside the script (under LockService), released on
-  failure and retried by the next webhook delivery / thank-you page load. create-order appends to
+  `syncRegistrationToSheet` — claimed via an expiring `sheet_sync_claimed_at` (conditional UPDATE, 2-min
+  TTL) so verify + webhook can't double-append; `sheet_synced_at` is set only after the append succeeds.
+  Re-checked by Payment ID inside the script (under LockService + flush); a failed or crashed sync is
+  retried by the next webhook delivery / thank-you page load (migration `20261113000001`).
+  verify grants paid only for a payment Razorpay reports `captured` (authorized → 202, webhook finishes);
+  the stored `amount_paise` is the captured amount. create-order reuses a row only via the
+  `registrationId` the browser kept in sessionStorage (`mc_registration`) + same phone, never by phone
+  alone, and attaches new orders with a compare-and-swap on `razorpay_order_id`. create-order appends to
   "Leads - Not Paid" (status Initiated, de-duped by phone, via `after()`); payment flips it to Paid.
   Env: `SHEETS_WEBHOOK_URL`, `SHEETS_WEBHOOK_SECRET` (skipped when unset). Editing the script needs a
   new deployment version (Deploy → Manage deployments → Edit → New version) to go live.

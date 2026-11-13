@@ -23,6 +23,29 @@ function loadRazorpay(): Promise<RazorpayCtor | null> {
   });
 }
 
+// The visitor's own registration id from their last create-order call. Sent
+// back on a retry so the server reuses that row (and its still-payable order)
+// — the server never reuses a row looked up by phone number alone.
+const REGISTRATION_KEY = "mc_registration";
+const readRegistrationId = () => {
+  try {
+    return sessionStorage.getItem(REGISTRATION_KEY) || undefined;
+  } catch {
+    return undefined;
+  }
+};
+const saveRegistrationId = (id: string) => {
+  try {
+    sessionStorage.setItem(REGISTRATION_KEY, id);
+  } catch {
+    // private mode etc. — a retry just starts a fresh registration
+  }
+};
+
+// Longest the "confirming" overlay waits on the verify call before moving on;
+// the thank-you page then waits for the webhook itself.
+const VERIFY_TIMEOUT_MS = 15_000;
+
 const thankYouUrl = (registrationId: string) => `/vastu-masterclass/thank-you?id=${encodeURIComponent(registrationId)}`;
 
 type FieldErrors = Partial<Record<"fullName" | "whatsapp", string>>;
@@ -45,7 +68,13 @@ export function MasterclassForm({ feeLabel, fee }: { feeLabel: string; fee: numb
     e.preventDefault();
     setFormError(null);
 
-    const parsed = masterclassRegistrationSchema.safeParse({ fullName, whatsapp, website, attribution: getAttribution() });
+    const parsed = masterclassRegistrationSchema.safeParse({
+      fullName,
+      whatsapp,
+      website,
+      attribution: getAttribution(),
+      registrationId: readRegistrationId()
+    });
     if (!parsed.success) {
       const next: FieldErrors = {};
       for (const issue of parsed.error.issues) {
@@ -66,6 +95,7 @@ export function MasterclassForm({ feeLabel, fee }: { feeLabel: string; fee: numb
       });
       const order = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(order.error || "Could not start payment. Please try again.");
+      if (order.registrationId) saveRegistrationId(order.registrationId);
       if (order.alreadyPaid) {
         setConfirming(true);
         window.location.assign(thankYouUrl(order.registrationId));
@@ -98,10 +128,11 @@ export function MasterclassForm({ feeLabel, fee }: { feeLabel: string; fee: numb
             await fetch("/api/masterclass/verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature })
+              body: JSON.stringify({ orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature }),
+              signal: AbortSignal.timeout(VERIFY_TIMEOUT_MS)
             });
           } catch {
-            // handled by the thank-you page's pending state
+            // network error or timeout — handled by the thank-you page's pending state
           }
           window.location.assign(thankYouUrl(order.registrationId));
         },

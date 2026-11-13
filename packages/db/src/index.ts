@@ -292,6 +292,8 @@ export interface MasterclassRegistration {
   paid_at?: string | null;
   /** When the paid row was appended to the Google Sheet (null = not yet). */
   sheet_synced_at?: string | null;
+  /** Short-lived claim taken before the Sheet append; expires so a crashed worker can't block retries. */
+  sheet_sync_claimed_at?: string | null;
   utm_source?: string | null;
   utm_medium?: string | null;
   utm_campaign?: string | null;

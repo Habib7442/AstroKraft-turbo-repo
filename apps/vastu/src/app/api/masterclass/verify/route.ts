@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyRazorpaySignature } from "@astrokraft/payments";
+import { getRazorpayClient, verifyRazorpaySignature } from "@astrokraft/payments";
 import { markRegistrationPaid } from "@/lib/masterclass";
 
 const bodySchema = z.object({
@@ -20,8 +20,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payment could not be verified." }, { status: 400 });
   }
 
+  // The checkout signature only proves Razorpay issued this payment for this
+  // order — not that the money was captured. Paid access (the group invite)
+  // is granted only for a captured payment, confirmed from Razorpay itself.
+  let payment: { order_id?: string | null; status?: string; currency?: string; amount?: number | string };
   try {
-    const row = await markRegistrationPaid(orderId, paymentId);
+    payment = await getRazorpayClient().payments.fetch(paymentId);
+  } catch (error) {
+    console.error("masterclass verify: could not fetch payment", paymentId, error);
+    // The thank-you page keeps checking; the webhook records it once captured.
+    return NextResponse.json({ pending: true }, { status: 503 });
+  }
+  if (payment.order_id !== orderId || payment.currency !== "INR") {
+    console.error("masterclass verify: payment does not match order", { paymentId, orderId });
+    return NextResponse.json({ error: "Payment could not be verified." }, { status: 400 });
+  }
+  if (payment.status !== "captured") {
+    // e.g. "authorized" — the payment.captured webhook finishes the job.
+    return NextResponse.json({ pending: true }, { status: 202 });
+  }
+
+  try {
+    const row = await markRegistrationPaid(orderId, paymentId, undefined, Number(payment.amount));
     if (!row) return NextResponse.json({ error: "Registration not found for this payment." }, { status: 404 });
     return NextResponse.json({ paid: true, registrationId: row.id });
   } catch (error) {
