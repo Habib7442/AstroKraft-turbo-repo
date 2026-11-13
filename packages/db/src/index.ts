@@ -278,6 +278,36 @@ export type VastuLeadStatus = "lead" | "booked" | "rescheduled" | "cancelled" | 
 export type VastuPaymentStatus = "unpaid" | "pending" | "paid" | "failed" | "refunded";
 export type VastuFollowUpStatus = "pending" | "contacted" | "interested_premium" | "not_interested" | "converted";
 
+/** One row per checkout attempt on apps/vastu /vastu-masterclass (₹199 intro session). */
+export interface MasterclassRegistration {
+  id: string;
+  full_name: string;
+  /** E.164, +91XXXXXXXXXX */
+  whatsapp: string;
+  amount_paise: number;
+  session_label?: string | null;
+  payment_status: "pending" | "paid" | "failed" | "refunded";
+  razorpay_order_id?: string | null;
+  razorpay_payment_id?: string | null;
+  paid_at?: string | null;
+  /** When the paid row was appended to the Google Sheet (null = not yet). */
+  sheet_synced_at?: string | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  fbclid?: string | null;
+  fbp?: string | null;
+  fbc?: string | null;
+  user_agent?: string | null;
+  ip_address?: string | null;
+  consent_notice_version?: string | null;
+  consented_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** One row per prospect from the VASTU by Biprangshu landing page (apps/vastu). */
 export interface VastuLead {
   id: string;

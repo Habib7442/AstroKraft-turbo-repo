@@ -10,6 +10,25 @@ Separate brand (blue & white with gold CTAs) — does not use `@astrokraft/theme
   host emails all price from the stored lead, never from the client.
 - Header/footer/sticky CTA: `components/site-chrome.tsx`; client testimonials:
   `lib/testimonials.ts`.
+- `/vastu-masterclass` = ₹199 live group intro session (Astro Vastu Masterclass), AstroKraft-branded
+  one-screen page with its own Razorpay checkout (`mc-*` tokens, Anton + Poppins); not part of the
+  lead/Cal.com flow. Date/fee from `NEXT_PUBLIC_WORKSHOP_DATE` / `_FEE` (`lib/workshop.ts`); the
+  intro reel is self-hosted in `public/workshop-reel.mp4` (+ `-poster.webp`). Name + WhatsApp → `POST /api/masterclass/create-order`
+  (zod `masterclassRegistrationSchema`, amount = `NEXT_PUBLIC_WORKSHOP_FEE` server-side, row in
+  `masterclass_registrations`, order notes `app=vastu-masterclass`) → checkout →
+  `/api/masterclass/verify` → `/vastu-masterclass/thank-you?id=<registrationId>` (paid rows only:
+  "Join the WhatsApp Group" → server-only `WHATSAPP_GROUP_INVITE_LINK`, where the Zoom link/date live;
+  Purchase pixel `purchase_mc_<id>`). Both writers of 'paid' go through `lib/masterclass.ts`
+  `markRegistrationPaid` (idempotent, emails the team); `/api/webhooks/razorpay` routes on `notes.app`.
+  Migration `supabase/migrations/20261113000000_add_masterclass_registrations.sql`.
+- Google Sheet (`lib/google-sheets.ts` → Apps Script web app `google-apps-script/masterclass-sheet.gs`,
+  no Cloud project/service account): every paid row is appended to tab "Registrations" by
+  `syncRegistrationToSheet` — claimed via `sheet_synced_at` (conditional UPDATE) so verify + webhook
+  can't double-append, re-checked by Payment ID inside the script (under LockService), released on
+  failure and retried by the next webhook delivery / thank-you page load. create-order appends to
+  "Leads - Not Paid" (status Initiated, de-duped by phone, via `after()`); payment flips it to Paid.
+  Env: `SHEETS_WEBHOOK_URL`, `SHEETS_WEBHOOK_SECRET` (skipped when unset). Editing the script needs a
+  new deployment version (Deploy → Manage deployments → Edit → New version) to go live.
 
 Flow: Book Now → intake form (`components/booking.tsx`) → `POST /api/leads` inserts a
 `vastu_leads` row (with UTM/fbclid/_fbp/_fbc) → Cal.com inline embed prefilled with

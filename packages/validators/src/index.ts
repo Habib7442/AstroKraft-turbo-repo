@@ -179,6 +179,34 @@ export function normalizeIndianMobile(value: string): string {
   return `+91${value.replace(/\D/g, "").slice(-10)}`;
 }
 
+// Astro Vastu Masterclass (apps/vastu /vastu-masterclass) — ₹199 intro session.
+// Two fields only; the form shows "+91" as a fixed prefix, so the visitor types
+// the 10-digit number (separators like "98765 43210" are tolerated).
+export const masterclassRegistrationSchema = z.object({
+  fullName: z.string().trim().min(2, "Please enter your full name").max(100, "Name is too long"),
+  whatsapp: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/[\s\-()]/g, "").replace(/^(?:\+?91|0)(?=\d{10}$)/, ""))
+    .pipe(z.string().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit WhatsApp number")),
+  attribution: z
+    .object({
+      utm_source: z.string().max(200).optional(),
+      utm_medium: z.string().max(200).optional(),
+      utm_campaign: z.string().max(200).optional(),
+      utm_content: z.string().max(200).optional(),
+      utm_term: z.string().max(200).optional(),
+      fbclid: z.string().max(500).optional(),
+      fbp: z.string().max(200).optional(),
+      fbc: z.string().max(600).optional()
+    })
+    .default({}),
+  // Honeypot — see purohitBookingSchema.
+  website: z.string().optional()
+});
+
+export type MasterclassRegistrationInput = z.infer<typeof masterclassRegistrationSchema>;
+
 // --------------------------------------------------------
 // Blog (authored in apps/admin, rendered at /en/blog)
 // --------------------------------------------------------

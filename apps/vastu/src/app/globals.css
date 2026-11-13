@@ -43,7 +43,36 @@ body {
     @apply w-full rounded-xl border border-night-600 bg-night-700 px-4 py-3 text-[15px] text-cream placeholder:text-muted/70 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold;
   }
 
+  /* ---------- /vastu-masterclass (mockup: navy + bright gold) ---------- */
+  .mc-cta {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(180deg,#FFE08A_0%,#F2C14E_45%,#D4A531_100%)] px-6 py-3.5 font-mc-display text-2xl uppercase tracking-wide text-mc-ink shadow-[0_0_28px_rgba(242,193,78,0.55),inset_0_1px_0_rgba(255,255,255,0.6)] transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/70 active:scale-[0.99] disabled:cursor-wait disabled:opacity-80 sm:text-3xl;
+  }
+
+  .mc-card {
+    @apply rounded-2xl border-2 border-mc-gold/80 bg-mc-ink/80 shadow-[0_0_30px_-8px_rgba(242,193,78,0.45)] backdrop-blur;
+  }
+
+  .mc-chip {
+    @apply inline-flex items-center gap-3 rounded-2xl border-2 border-mc-gold/80 bg-mc-ink/70 px-5 py-3 text-base font-semibold text-white;
+  }
+
   .chip {
     @apply cursor-pointer rounded-full border border-night-600 bg-night-700 px-3.5 py-2 text-sm text-cream transition has-[:checked]:border-gold has-[:checked]:bg-gold/15 has-[:checked]:text-gold-soft has-[:focus-visible]:ring-1 has-[:focus-visible]:ring-gold;
   }
+}
+
+/* Faint starfield behind /vastu-masterclass and its thank-you page — pure CSS, no image requests. */
+.mc-stars {
+  background-image:
+    radial-gradient(1.5px 1.5px at 8% 12%, rgba(243, 217, 138, 0.7), transparent),
+    radial-gradient(1px 1px at 22% 68%, rgba(245, 241, 230, 0.55), transparent),
+    radial-gradient(1.5px 1.5px at 37% 28%, rgba(243, 217, 138, 0.45), transparent),
+    radial-gradient(1px 1px at 51% 84%, rgba(245, 241, 230, 0.5), transparent),
+    radial-gradient(1px 1px at 63% 9%, rgba(245, 241, 230, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 74% 52%, rgba(243, 217, 138, 0.55), transparent),
+    radial-gradient(1px 1px at 86% 24%, rgba(245, 241, 230, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 93% 76%, rgba(243, 217, 138, 0.6), transparent),
+    radial-gradient(1px 1px at 15% 92%, rgba(245, 241, 230, 0.4), transparent),
+    radial-gradient(1px 1px at 44% 47%, rgba(245, 241, 230, 0.35), transparent);
+  background-size: 520px 520px;
 }

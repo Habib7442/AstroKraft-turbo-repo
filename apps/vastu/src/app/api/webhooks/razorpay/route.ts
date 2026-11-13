@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { markLeadPaid } from "@/lib/mark-paid";
+import { MASTERCLASS_APP, markRegistrationPaid } from "@/lib/masterclass";
 
 // Backup to /api/razorpay/verify: marks the lead paid even if the visitor
 // closes the tab before the browser's verify call. Razorpay Dashboard →
@@ -26,17 +27,24 @@ export async function POST(req: NextRequest) {
   const orderId: string | undefined = payment?.order_id;
   // Same Razorpay account may serve AstroKraft too — only touch our orders.
   // Notes are set on both the order (create-order) and the checkout (payment).
-  const isVastu = payment?.notes?.app === "vastu" || event.payload?.order?.entity?.notes?.app === "vastu";
-  if (!orderId || !isVastu) return NextResponse.json({ ignored: true });
+  const notes = { ...event.payload?.order?.entity?.notes, ...payment?.notes };
+  const app = notes.app;
+  // "vastu" = 1:1 consultation (vastu_leads); "vastu-masterclass" = /vastu-masterclass.
+  if (!orderId || (app !== "vastu" && app !== MASTERCLASS_APP)) return NextResponse.json({ ignored: true });
+  const table = app === MASTERCLASS_APP ? "masterclass_registrations" : "vastu_leads";
 
   try {
     if (event.event === "payment.captured" || event.event === "order.paid") {
-      const notes = { ...event.payload?.order?.entity?.notes, ...payment?.notes };
-      const leadId = typeof notes.leadId === "string" ? notes.leadId : undefined;
-      await markLeadPaid(orderId, payment.id, leadId);
+      if (app === MASTERCLASS_APP) {
+        const registrationId = typeof notes.registrationId === "string" ? notes.registrationId : undefined;
+        await markRegistrationPaid(orderId, payment.id, registrationId);
+      } else {
+        const leadId = typeof notes.leadId === "string" ? notes.leadId : undefined;
+        await markLeadPaid(orderId, payment.id, leadId);
+      }
     } else if (event.event === "payment.failed") {
       await getSupabaseAdminClient()
-        .from("vastu_leads")
+        .from(table)
         .update({ payment_status: "failed" })
         .eq("razorpay_order_id", orderId)
         .neq("payment_status", "paid");
